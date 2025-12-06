@@ -4,21 +4,21 @@ import Image from "next/image";
 import {useState, useEffect} from "react";
 
 export default function Home() {
-    const [count, setCount] = useState(0)
+  //   const [count, setCount] = useState(0)
 
-    // Load counter when page loads
-    useEffect(() => {
-    fetch("http://localhost:4000/api/counter")
-      .then(res => res.json())
-      .then(data => setCount(data.count));
-  }, []);
+  //   // Load counter when page loads
+  //   useEffect(() => {
+  //   fetch("http://localhost:4000/api/counter")
+  //     .then(res => res.json())
+  //     .then(data => setCount(data.count));
+  // }, []);
 
-  // Increase the counter
-  const handleClick = () => {
-    fetch("http://localhost:4000/api/counter/increment", { method: "POST" })
-      .then(res => res.json())
-      .then(data => setCount(data.count));
-  };
+  // // Increase the counter
+  // const handleClick = () => {
+  //   fetch("http://localhost:4000/api/counter/increment", { method: "POST" })
+  //     .then(res => res.json())
+  //     .then(data => setCount(data.count));
+  // };
 
   return (
     <div style={{ 
@@ -29,7 +29,7 @@ export default function Home() {
       gap: "20px"
     }}>
 
-      <button onClick={handleClick}
+      {/* <button onClick={handleClick}
       style={{
         backgroundColor: "#AC7F5E",
         color: "#371c01ff",
@@ -55,7 +55,7 @@ export default function Home() {
        color: "#AC7F5E" 
     }}>
       {count}
-    </div>
+    </div> */}
 
       <div style={{ marginTop: '20px' }}>
         <Link href="/signin">
@@ -73,6 +73,5 @@ export default function Home() {
         </Link>
       </div>
   </div>
-  
   );
 }
