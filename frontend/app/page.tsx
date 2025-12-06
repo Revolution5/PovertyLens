@@ -1,4 +1,5 @@
 "use client";
+import Link from 'next/link';
 import Image from "next/image";
 import {useState, useEffect} from "react";
 
@@ -55,6 +56,23 @@ export default function Home() {
     }}>
       {count}
     </div>
+
+      <div style={{ marginTop: '20px' }}>
+        <Link href="/signin">
+          <button style={{
+            padding: '10px 20px',
+            backgroundColor: '#0070f3',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px'
+          }}>
+            Sign In / Log In
+          </button>
+        </Link>
+      </div>
   </div>
+  
   );
 }

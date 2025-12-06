@@ -6,7 +6,12 @@ const { MongoClient } = require('mongodb')
 const app = express()
 const port = 4000
 
+const fetch = require('node-fetch')
+
 app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+
 const uri = process.env.CONNECTION_URI
 const client = new MongoClient(uri)
 
@@ -27,6 +32,197 @@ app.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
+
+// 12.15.2025 12:46pm
+
+// Sign up
+app.post('/api/signup', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ 
+        message: 'Email and password are required' 
+      });
+    }
+    
+    // Check if user already exists
+    const usersCollection = db.collection('users');
+    const existingUser = await usersCollection.findOne({ email });
+    
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: 'Email already exists' 
+      });
+    }
+    
+    // Create new user
+    const newUser = {
+      email,
+      password, // Storing plain text (temporary!)
+      createdAt: new Date()
+    };
+    
+    const result = await usersCollection.insertOne(newUser);
+    
+    console.log(`New user created: ${email}`);
+    
+    res.status(201).json({ 
+      success: true,
+      message: 'User created successfully',
+      user: { 
+        email: newUser.email, 
+        id: result.insertedId 
+      }
+    });
+    
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during signup' 
+    });
+  }
+});
+
+// Log in
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email and password are required' 
+      });
+    }
+    
+    // Find user by email
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne({ email });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+    
+    // Check password (plain text comparison for now)
+    if (user.password !== password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Invalid password' 
+      });
+    }
+    
+    console.log(`User logged in: ${email}`);
+    
+    res.json({ 
+      success: true,
+      message: 'Login successful',
+      user: { 
+        email: user.email, 
+        id: user._id 
+      }
+    });
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during login' 
+    });
+  }
+});
+
+// /api/poverty - done by Christella
+// Returns poverty statistics from "povertyStats" collection.
+app.get('/api/poverty', async(req, res) => {
+  try{
+    const stats = await db.collection('povertyStats').find({}).toArray()
+    res.json({
+      success: true,
+      stats,
+    })
+  } catch (err) {
+    console.error('Error fetching poverty stats:', err)
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching poverty stats',
+    })
+  }
+}) 
+
+// poverty live stats - done by Christella
+app.get('/api/poverty/live', async (req, res) => {
+  try {
+    const country = (req.query.country || '').toUpperCase()
+    const year = parseInt(req.query.year || '', 10)
+    const line = parseFloat(req.query.line || '')
+
+    if (!country || country.length !== 3){
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a 3-letter ISO country code (e.g. USA, IND, NGA)'
+      });
+    }
+    
+    const cacheCollection = db.collection('povertyLiveStats')
+    const cacheKey = { country, year, povline: line }
+
+    const cached = await cacheCollection.findOne(cacheKey)
+
+    if (cached) {
+      return res.json({
+        success: true,
+        source: 'MongoDB cache',
+        country,
+        year,
+        povline: line,
+        fetchedAt: cached.fetchedAt,
+        data: cached.data,
+      })
+    }
+
+    const pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${line}&fill_gaps=true&welfare_type=all`
+
+    const pipRes = await fetch(pipUrl)
+    if(!pipRes.ok){
+      console.error('PIP API error status: ', pipRes.status)
+      return res.status(502).json({
+        success: false,
+        message: 'Error fetching data from World Bank PIP API'
+      })
+    }
+
+    const pipData = await pipRes.json()
+
+    const docToStore = {
+      ...cacheKey,
+      fetchedAt: new Date(),
+      data: pipData,
+    }
+
+    await cacheCollection.updateOne(cacheKey, { $set: docToStore }, { upsert: true })
+
+    res.json({
+      success: true,
+      source: 'World Bank PIP (fresh)',
+      country,
+      year,
+      povline: line,
+      fetchedAt: docToStore.fetchedAt,
+      data: pipData,
+    })
+    } catch (err) {
+      console.error('Error in /api/poverty/live:', err)
+      res.status(500).json({
+        success: false,
+        message: 'Server error fetching live poverty data',
+      })
+    }
+  })
 
 // Setting up code for button counter
 app.get('/api/counter', async (req, res) => {
