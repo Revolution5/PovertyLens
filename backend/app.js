@@ -6,9 +6,12 @@ const { MongoClient } = require('mongodb')
 const app = express()
 const port = 4000
 
+const fetch = require('node-fetch')
+
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
 const uri = process.env.CONNECTION_URI
 const client = new MongoClient(uri)
 
@@ -24,33 +27,6 @@ app.get('/', async (req, res) => {
   try {
     const data = await db.collection('names').find({}).limit(10).toArray()
     res.json(data)
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Internal Server Error' })
-  }
-})
-
-// Setting up code for button counter
-app.get('/api/counter', async (req, res) => {
-  try {
-    let counter = await db.collection('counters').findOne({ name: 'button-clicks' })
-    res.json({ count: counter.count })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Internal Server Error' })
-  }
-})
-
-app.post('/api/counter/increment', async (req, res) => {
-  try {
-    const result = await db.collection('counters').findOneAndUpdate(
-      { name: 'button-clicks' },              // Find this document
-      { $inc: { count: 1 } },                 // Add 1 to count
-      { upsert: true, returnDocument: 'after' } // Return the new value
-    )
-    
-    console.log(`Total clicks: ${result.count}`) // Log to server console
-    res.json({ count: result.count })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Internal Server Error' })
@@ -159,6 +135,94 @@ app.post('/api/login', async (req, res) => {
     });
   }
 });
+
+// /api/poverty - done by Christella
+// Returns poverty statistics from "povertyStats" collection.
+app.get('/api/poverty', async(req, res) => {
+  try{
+    const stats = await db.collection('povertyStats').find({}).toArray()
+    res.json({
+      success: true,
+      stats,
+    })
+  } catch (err) {
+    console.error('Error fetching poverty stats:', err)
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching poverty stats',
+    })
+  }
+}) 
+
+// poverty live stats - done by Christella
+app.get('/api/poverty/live', async (req, res) => {
+  try {
+    const country = (req.query.country || '').toUpperCase()
+    const year = parseInt(req.query.year || '', 10)
+    const line = parseFloat(req.query.line || '')
+
+    if (!country || country.length !== 3){
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a 3-letter ISO country code (e.g. USA, IND, NGA)'
+      });
+    }
+    
+    const cacheCollection = db.collection('povertyLiveStats')
+    const cacheKey = { country, year, povline: line }
+
+    const cached = await cacheCollection.findOne(cacheKey)
+
+    if (cached) {
+      return res.json({
+        success: true,
+        source: 'MongoDB cache',
+        country,
+        year,
+        povline: line,
+        fetchedAt: cached.fetchedAt,
+        data: cached.data,
+      })
+    }
+
+    const pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${line}&fill_gaps=true&welfare_type=all`
+
+    const pipRes = await fetch(pipUrl)
+    if(!pipRes.ok){
+      console.error('PIP API error status: ', pipRes.status)
+      return res.status(502).json({
+        success: false,
+        message: 'Error fetching data from World Bank PIP API'
+      })
+    }
+
+    const pipData = await pipRes.json()
+
+    const docToStore = {
+      ...cacheKey,
+      fetchedAt: new Date(),
+      data: pipData,
+    }
+
+    await cacheCollection.updateOne(cacheKey, { $set: docToStore }, { upsert: true })
+
+    res.json({
+      success: true,
+      source: 'World Bank PIP (fresh)',
+      country,
+      year,
+      povline: line,
+      fetchedAt: docToStore.fetchedAt,
+      data: pipData,
+    })
+    } catch (err) {
+      console.error('Error in /api/poverty/live:', err)
+      res.status(500).json({
+        success: false,
+        message: 'Server error fetching live poverty data',
+      })
+    }
+  })
 
 
 app.listen(port, async () => {
