@@ -32,8 +32,8 @@ Thumbs.db
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-frontend//node_modules
-frontend//.pnp
+frontend/node_modules
+frontend/.pnp
 frontend/.pnp.*
 frontend/.yarn/*
 !.yarn/patches
@@ -42,14 +42,14 @@ frontend/.yarn/*
 !.yarn/versions
 
 # testing
-frontend//coverage
+frontend/coverage
 
 # next.js
-frontend//.next/
-frontend//out/
+frontend/.next/
+frontend/out/
 
 # production
-frontend//build
+frontend/build
 
 # misc
 frontend/.DS_Store
