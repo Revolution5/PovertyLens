@@ -224,6 +224,135 @@ app.get('/api/poverty/live', async (req, res) => {
     }
   })
 
+// Profile Update Route
+app.put('/api/profile/update', async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    
+    if (!email || !currentPassword) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email and current password are required' 
+      });
+    }
+    
+    const usersCollection = db.collection('users');
+    
+    // Find user by email
+    const user = await usersCollection.findOne({ email });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+    
+    // Verify current password
+    if (user.password !== currentPassword) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Current password is incorrect' 
+      });
+    }
+    
+    // Prepare update data
+    const updateData = {};
+    
+    // Update email if changed (check if new email exists)
+    if (email !== user.email) {
+      const emailExists = await usersCollection.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Email already in use' 
+        });
+      }
+      updateData.email = email;
+    }
+    
+    // Update password if provided
+    if (newPassword) {
+      updateData.password = newPassword;
+    }
+    
+    // Only update if there are changes
+    if (Object.keys(updateData).length > 0) {
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $set: updateData }
+      );
+      
+      console.log(`Profile updated for: ${user.email}`);
+    }
+    
+    res.json({ 
+      success: true,
+      message: 'Profile updated successfully'
+    });
+    
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during profile update' 
+    });
+  }
+});
+
+// Delete Account Route
+app.delete('/api/profile/delete', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email and password are required' 
+      });
+    }
+    
+    const usersCollection = db.collection('users');
+    
+    // Find user
+    const user = await usersCollection.findOne({ email });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'User not found' 
+      });
+    }
+    
+    // Verify password
+    if (user.password !== password) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Password is incorrect' 
+      });
+    }
+    
+    // Delete user
+    await usersCollection.deleteOne({ _id: user._id });
+    
+    console.log(`Account deleted: ${email}`);
+    
+    res.json({ 
+      success: true,
+      message: 'Account deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during account deletion' 
+    });
+  }
+});
+
+
+
 // Setting up code for button counter
 app.get('/api/counter', async (req, res) => {
   try {

@@ -33,6 +33,9 @@ export default function SignInPage() {
 
       if (response.ok) {
         setMessage(`Success! ${data.message}`);
+        // Store user email
+        localStorage.setItem('userEmail', email)
+
         // Redirect to home page after successful login/signup
         setTimeout(() => {
           router.push('/');
