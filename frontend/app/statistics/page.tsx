@@ -23,7 +23,7 @@ export default function PovertyLivePage(){
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const darkerText = { color: "#111", fontSize: "16px", fontWeight: 600};
+    const darkerText = { color: "#623100", fontSize: "16px", fontWeight: 600, textAlign: "left" as const};
 
     const inputStyle = {
         width: "100%",
@@ -59,19 +59,20 @@ export default function PovertyLivePage(){
     };
     return (
         <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 16px'}}>
-            <h1 style={{ marginBottom: 16 }}>Live Poverty Data</h1>
-            <p style={{ marginBottom: 24, color: '#111', fontSize: "16px" }}>
+            <h1 style={{ marginBottom: 16, color:"#623100", fontSize:"70px",fontWeight:"bolder", textAlign:"center"}}>
+                Statistics
+            </h1>
+            <p style={{ marginBottom: 24, color: '#623100', fontSize: "30px", textAlign:"-webkit-left"}}>
                 This calls the backend <code>/api/poverty/live</code>, which fetches from the World Bank PIP API and stores the result in MongoDB as a cache.
             </p>
 
             <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', maxWidth: '400px'}}
-            >
+                style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', maxWidth: '400px'}}>
                 <label style={darkerText}>Country (ISO3):</label>
                     <input 
                         value={country}
                         onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                        style={{ width: '100%', padding: '8px', fontSize: "15px", border: "1px solid #444", borderRadius: 6, color: "#000",}}
+                        style={{ width: '100%', padding: '8px', fontSize: "15px", border: "1px solid #444", borderRadius: 6, color: "#623100",}}
                         placeholder=""
                     />
                 <label style={darkerText}>Year:</label>
@@ -94,7 +95,7 @@ export default function PovertyLivePage(){
                     disabled={loading}
                     style={{
                         padding: '10px 16px',
-                        backgroundColor: "#0070f3",
+                        backgroundColor: "#AC7F5E",
                         color: '#fff',
                         border: 'none',
                         borderRadius: 6,
@@ -156,14 +157,6 @@ export default function PovertyLivePage(){
                     </details>
                 </div>
             )}
-            <div style={{ marginTop: 24}}>
-                <a href="/poverty" style={{ color: '#0070f3', textDecoration: 'underline', marginRight: 16 }}>
-                    Static Mongo Poverty Page
-                </a>
-                <a href='/' style={{ color: '#0070f3', textDecoration: 'underline' }}>
-                    Home                    
-                </a>
-            </div>
         </div>
     );
 }
