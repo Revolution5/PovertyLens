@@ -38,7 +38,7 @@ export default function SignInPage() {
 
         // Redirect to home page after successful login/signup
         setTimeout(() => {
-          router.push('/');
+          window.location.href = '/';
         }, 1500);
       } else {
         setMessage(`Error: ${data.message}`);
