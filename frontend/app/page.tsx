@@ -34,25 +34,25 @@ export default function Home() {
                 {/* Four interactive buttons */}
                 <div className="flex gap-8 justify-center pt-16">
                     <Link href="/upload-story">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#A67C52] transition-colors">
+                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
                             Upload a story
                         </button>
                     </Link>
 
                     <Link href="/view-stories">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#A67C52] transition-colors">
+                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
                             View your stories
                         </button>
                     </Link>
 
                     <Link href="/play-freerice">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#A67C52] transition-colors">
+                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
                             Play FreeRice
                         </button>
                     </Link>
 
                     <Link href="/donations-volunteer">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#A67C52] transition-colors">
+                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
                             Donate Now!
                         </button>
                     </Link>
