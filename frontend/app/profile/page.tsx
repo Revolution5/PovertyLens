@@ -8,6 +8,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState({
     email: '',
+    username: '',
     password: '',
     newPassword: '',
     confirmPassword: ''
@@ -17,8 +18,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
+    const storedUsername = localStorage.getItem('username');
     if (storedEmail) {
-      setUser(prev => ({ ...prev, email: storedEmail }));
+      setUser(prev => ({ ...prev, email: storedEmail, username: storedUsername || '' }));
     } else {
       // Redirect to home if not logged in
       router.push('/');
@@ -118,6 +120,7 @@ export default function ProfilePage() {
       }
       
       localStorage.removeItem('userEmail');
+      localStorage.removeItem('username');
       setMessage('✅ Account deleted successfully');
       
       setTimeout(() => {
@@ -133,6 +136,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('username');
     router.push('/');
   };
 
@@ -149,6 +153,9 @@ export default function ProfilePage() {
               <div>
                 <p className="text-lg text-[#623100] mb-2">
                   <span className="font-semibold">Current Email:</span> {user.email || 'Not logged in'}
+                </p>
+                <p className="text-lg text-[#623100] mb-2">
+                  <span className="font-semibold">Current Username:</span> {user.username || 'Not set'}
                 </p>
                 <p className="text-sm text-[#8B4513]">
                   Member since: {new Date().toLocaleDateString()}

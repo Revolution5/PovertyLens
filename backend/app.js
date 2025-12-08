@@ -38,40 +38,48 @@ app.get('/', async (req, res) => {
 // Sign up
 app.post('/api/signup', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
+    const { email, password, username } = req.body;
+
+    if (!email || !password || !username) {
       return res.status(400).json({ 
-        message: 'Email and password are required' 
+        message: 'Email, username and password are required' 
       });
     }
-    
-    // Check if user already exists
+
+    // Check if user already exists (by email or username)
     const usersCollection = db.collection('users');
-    const existingUser = await usersCollection.findOne({ email });
-    
-    if (existingUser) {
+    const existingUserByEmail = await usersCollection.findOne({ email });
+    if (existingUserByEmail) {
       return res.status(400).json({ 
         message: 'Email already exists' 
       });
     }
-    
-    // Create new user
+
+    const existingUserByUsername = await usersCollection.findOne({ username });
+    if (existingUserByUsername) {
+      return res.status(400).json({ 
+        message: 'Username already taken' 
+      });
+    }
+
+    // Create new user (note: passwords are still stored plaintext here)
     const newUser = {
       email,
-      password, // Storing plain text (temporary!)
+      username,
+      password,
       createdAt: new Date()
     };
-    
+
     const result = await usersCollection.insertOne(newUser);
-    
-    console.log(`New user created: ${email}`);
-    
+
+    console.log(`New user created: ${email} (${username})`);
+
     res.status(201).json({ 
       success: true,
       message: 'User created successfully',
       user: { 
         email: newUser.email, 
+        username: newUser.username,
         id: result.insertedId 
       }
     });
