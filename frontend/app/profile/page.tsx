@@ -19,8 +19,11 @@ export default function ProfilePage() {
     const storedEmail = localStorage.getItem('userEmail');
     if (storedEmail) {
       setUser(prev => ({ ...prev, email: storedEmail }));
+    } else {
+      // Redirect to home if not logged in
+      router.push('/');
     }
-  }, []);
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,16 +35,43 @@ export default function ProfilePage() {
     setIsLoading(true);
     setMessage('');
 
+    if (!user.password) {
+      setMessage('❌ Please enter your current password');
+      setIsLoading(false);
+      return;
+    }
+
     if (user.newPassword && user.newPassword !== user.confirmPassword) {
       setMessage('❌ New passwords do not match');
       setIsLoading(false);
       return;
     }
 
+    if (user.newPassword && user.newPassword.length < 6) {
+      setMessage('❌ New password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // For now, simulate API call
-      console.log('Updating profile:', user);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:4000/api/profile/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          currentPassword: user.password,
+          newPassword: user.newPassword || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(`❌ ${data.message || 'Error updating profile'}`);
+        return;
+      }
       
       setMessage('✅ Profile updated successfully!');
       setUser(prev => ({ ...prev, password: '', newPassword: '', confirmPassword: '' }));
@@ -59,12 +89,33 @@ export default function ProfilePage() {
       return;
     }
 
+    const password = window.prompt('Please enter your password to confirm account deletion:');
+    if (!password) {
+      return;
+    }
+
     setIsLoading(true);
     setMessage('');
 
     try {
-      console.log('Deleting account...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:4000/api/profile/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(`❌ ${data.message || 'Error deleting account'}`);
+        setIsLoading(false);
+        return;
+      }
       
       localStorage.removeItem('userEmail');
       setMessage('✅ Account deleted successfully');
@@ -76,7 +127,6 @@ export default function ProfilePage() {
     } catch (error) {
       setMessage('❌ Error deleting account');
       console.error('Error:', error);
-    } finally {
       setIsLoading(false);
     }
   };
