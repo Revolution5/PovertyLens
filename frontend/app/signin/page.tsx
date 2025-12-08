@@ -7,6 +7,7 @@ export default function SignInPage() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,12 +22,13 @@ export default function SignInPage() {
     const endpoint = isLogin ? '/api/login' : '/api/signup';
     
     try {
+      const payload = isLogin ? { email, password } : { email, username, password };
       const response = await fetch(`${backendUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -35,6 +37,11 @@ export default function SignInPage() {
         setMessage(`Success! ${data.message}`);
         // Store user email
         localStorage.setItem('userEmail', email)
+
+        // store username when available
+        if (!isLogin && data.user && data.user.username) {
+          localStorage.setItem('username', data.user.username);
+        }
 
         // Redirect to home page after successful login/signup
         setTimeout(() => {
@@ -66,6 +73,30 @@ export default function SignInPage() {
       </h1>
       
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {!isLogin && (
+          <div>
+            <label htmlFor="username" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: "#222" }}>
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              placeholder="Choose a username"
+              style={{ 
+                width: '100%', 
+                padding: '12px',
+                border: '1px solid #0a0a0aff',
+                borderRadius: '6px',
+                fontSize: '16px',
+                boxSizing: 'border-box',
+                color: '#222'
+              }}
+            />
+          </div>
+        )}
         <div>
           <label htmlFor="email" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: "#222" }}>
             Email Address
@@ -154,6 +185,7 @@ export default function SignInPage() {
             setMessage('');
             setEmail('');
             setPassword('');
+            setUsername('');
           }}
           style={{
             background: 'none',
