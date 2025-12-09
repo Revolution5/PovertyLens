@@ -359,6 +359,53 @@ app.delete('/api/profile/delete', async (req, res) => {
   }
 });
 
+// Create a story
+app.post('/api/stories', async(req, res) => {
+  try {
+    const {title, storyText, displayName, displayPhoto, userEmail } = req.body;
+
+    if (!storyText || !storyText.trim()){
+      return res.status(400).json({
+        success: false,
+        message: 'Story text is required',
+      });
+    }
+
+    const words = storyText.trim().split(/\s+/);
+    if (words.length > 7000){
+      return res.status(400).json({
+        success: false,
+        message: 'Story exceeds the 7,000 word limit',
+      });
+    }
+    
+    const storiesCollection = db.collection('stories');
+
+    const newStory = {
+      title: title || '',
+      storyText,
+      displayName: !!displayName,
+      displayPhoto: !!displayPhoto,
+      userEmail: userEmail || null,
+      createdAt: new Date(),
+    };
+
+    const result = await storiesCollection.insertOne(newStory);
+
+    res.status(201).json({
+      success: true,
+      message: 'Story uploaded successfully',
+      storyId: result.insertedId,
+    });
+  } catch (err) {
+    console.error('Error creating story:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while saving the story',
+    });
+  }
+});
+
 
 
 // Setting up code for button counter

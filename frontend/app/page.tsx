@@ -33,7 +33,7 @@ export default function Home() {
 
                 {/* Four interactive buttons */}
                 <div className="flex gap-8 justify-center pt-16">
-                    <Link href="/upload-story">
+                    <Link href="/uploadstory">
                         <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
                             Upload a story
                         </button>
