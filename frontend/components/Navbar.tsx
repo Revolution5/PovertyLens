@@ -62,7 +62,7 @@ export default function Navbar() {
                             <Link href="/educational-resources" className="block px-4 py-2 text-[#623100] hover:bg-[#D8B99B] transition-colors">
                                 Educational Resources
                             </Link>
-                            <Link href="/donations-volunteer" className="block px-4 py-2 text-[#623100] hover:bg-[#D8B99B] transition-colors">
+                            <Link href="/donationspages" className="block px-4 py-2 text-[#623100] hover:bg-[#D8B99B] transition-colors">
                                 Donations & Volunteer
                             </Link>
                         </div>
