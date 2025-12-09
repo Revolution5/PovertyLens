@@ -174,7 +174,7 @@ function Card({ name, description, url }: OrgCardProps){
                 (e.currentTarget as HTMLElement).style.transform = 'translateY(0px)';
             }}
         >
-            <h3 style={{ margin: '0 0 10px 0', fontSize: 20, fontWeight: 700 }}>{name}</h3>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: 30, fontWeight: 700 }}>{name}</h3>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55 }}>{description}</p>
         </a>
     );

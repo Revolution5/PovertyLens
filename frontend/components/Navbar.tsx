@@ -59,7 +59,7 @@ export default function Navbar() {
                     
                     {resourcesOpen && (
                         <div className="absolute top-full left-0 mt-0 bg-[#C8AB8F] shadow-lg rounded-lg py-2 w-56 z-50">
-                            <Link href="/educational-resources" className="block px-4 py-2 text-[#623100] hover:bg-[#D8B99B] transition-colors">
+                            <Link href="/eduresource" className="block px-4 py-2 text-[#623100] hover:bg-[#D8B99B] transition-colors">
                                 Educational Resources
                             </Link>
                             <Link href="/donationspages" className="block px-4 py-2 text-[#623100] hover:bg-[#D8B99B] transition-colors">
