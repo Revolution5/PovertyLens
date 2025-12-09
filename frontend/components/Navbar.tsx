@@ -73,7 +73,7 @@ export default function Navbar() {
                     FAQ
                 </Link>
 
-                <Link href="AboutUs" className="text-[#623100] font-bold text-[30px] hover:opacity-70 transition-opacity">
+                <Link href="/AboutUs" className="text-[#623100] font-bold text-[30px] hover:opacity-70 transition-opacity">
                     About Us
                 </Link>
 
