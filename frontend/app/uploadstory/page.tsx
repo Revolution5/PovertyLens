@@ -10,6 +10,7 @@ const BACKEND_URL = 'http://localhost:4000';
 export default function UploadStoryPage() {
     const [title, setTitle] = useState('');
     const [story, setStory] = useState('');
+    const [country, setCountry] = useState('');
     const [displayName, setDisplayName] = useState(true);
     const [displayPhoto, setDisplayPhoto] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +45,7 @@ export default function UploadStoryPage() {
                     displayName,
                     displayPhoto,
                     userEmail,
+                    country,
                 }),
             });
             const data = await res.json();
@@ -58,6 +60,7 @@ export default function UploadStoryPage() {
             // Resets form
             setTitle('');
             setStory('');
+            setCountry('');
             setDisplayName(true);
             setDisplayPhoto(true);
         } catch (err){
@@ -114,6 +117,28 @@ export default function UploadStoryPage() {
                             boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
                         }}
                     />    
+                </div>
+                {/* Country Input for Statistics page */}
+                <div style={{ marginBottom: 10}}>
+                    <input
+                        type="text"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                        placeholder='Country (ISO3, e.g. USA, IND, CHN)'
+                        style={{
+                            width: '100%',
+                            padding: '14px 18px',
+                            borderRadius: 16,
+                            border: 'none',
+                            backgroundColor: fieldBg,
+                            fontSize: 16,
+                            color: textBrown,
+                            outline: 'none',
+                            resize: 'vertical',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                            marginBottom: 4,
+                        }}
+                    />
                 </div>
                 {/* Story Textures */}
                 <div style={{ marginBottom: 10}}>

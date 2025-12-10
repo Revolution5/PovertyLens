@@ -362,7 +362,7 @@ app.delete('/api/profile/delete', async (req, res) => {
 // Create a story
 app.post('/api/stories', async(req, res) => {
   try {
-    const {title, storyText, displayName, displayPhoto, userEmail } = req.body;
+    const {title, country, storyText, displayName, displayPhoto, userEmail } = req.body;
 
     if (!storyText || !storyText.trim()){
       return res.status(400).json({
@@ -383,6 +383,7 @@ app.post('/api/stories', async(req, res) => {
 
     const newStory = {
       title: title || '',
+      country: country ? String(country).toUpperCase():null,
       storyText,
       displayName: !!displayName,
       displayPhoto: !!displayPhoto,
@@ -414,6 +415,9 @@ app.get('/api/stories', async (req, res) => {
     const filter = {};
     if (userEmail) {
       filter.userEmail = userEmail;
+    }
+    if (country) {
+      filter.country = String(country).toUpperCase();
     }
     // Hide archived stories by default
     if (!includeArchived || includeArchived === 'false') {
