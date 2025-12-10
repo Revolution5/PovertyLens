@@ -39,7 +39,7 @@ export default function Home() {
                         </button>
                     </Link>
 
-                    <Link href="/view-stories">
+                    <Link href="/viewstories">
                         <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
                             View your stories
                         </button>

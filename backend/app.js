@@ -1,7 +1,7 @@
 require('dotenv').config()
 const cors = require('cors')
 const express = require('express')
-const { MongoClient } = require('mongodb')
+const { MongoClient, ObjectId } = require('mongodb')
 
 const app = express()
 const port = 4000
@@ -406,7 +406,163 @@ app.post('/api/stories', async(req, res) => {
   }
 });
 
+// List of stories for editing, deleting, or archiving
+app.get('/api/stories', async (req, res) => {
+  try {
+    const { userEmail, includeArchived } = req.query;
 
+    const filter = {};
+    if (userEmail) {
+      filter.userEmail = userEmail;
+    }
+    // Hide archived stories by default
+    if (!includeArchived || includeArchived === 'false') {
+      filter.archived = { $ne: true};
+    }
+
+    const stories = await db
+      .collection('stories')
+      .find(filter)
+      .sort({createdAt: -1})
+      .limit(50)
+      .toArray();
+    
+    res.json({
+      success: true,
+      stories,
+    });
+  } catch (err) {
+    console.error('Error fetching stories:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching stories.',
+    });
+  }
+});
+
+// Edit route for the stories
+app.put('/api/stories/:id', async (req, res) => {
+  try {
+    const {id} = req.params;
+    const {title, storyText, displayName, displayPhoto} = req.body;
+
+    if (!storyText || !storyText.trim()){
+      return res.status(400).json({
+        success: false,
+        message: 'Story text is required',
+      });
+    }
+
+    const words = storyText.trim().split(/\s+/);
+    if (words.length > 7000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Story exceeds 7,000 word limit',
+      });
+    }
+
+    const storiesCollection = db.collection('stories');
+
+    const result = await storiesCollection.updateOne(
+      {_id: new ObjectId(id)},
+      {
+        $set: {
+          title: title || '',
+          storyText,
+          displayName: !!displayName,
+          displayPhoto: !!displayPhoto,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (!result.matchedCount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Edits saved successfully!',
+    });
+  } catch (err) {
+    console.error('Error updating story:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating story',
+    });
+  }
+});
+
+// Archive/unarchive
+app.patch('/api/stories/:id/archive', async (req, res) => {
+  try {
+    const {id} = req.params;
+    const {archived} = req.body;
+
+    console.log('Archive route called. id=', id, 'archived=', archived);
+
+    const storiesCollection = db.collection('stories');
+
+    const result = await storiesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          archived: !!archived,
+          archivedAt: archived ? new Date() : null,
+        },
+      }
+    );
+    if (!result.matchedCount){
+      return res. status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+    res.json({
+      success: true,
+      message: archived ? 'Story archive.' : 'Story unarchived.',
+    });
+  } catch (err) {
+    console.error('Error archiving story:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while archiving story',
+    });
+  }
+});
+
+// Deleting stories
+app.delete('/api/stories/:id', async (req, res) => {
+  try {
+    const {id} = req.params;
+
+    const storiesCollection = db.collection('stories');
+
+    const result = await storiesCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (!result.deletedCount) {
+      return res.status(404).json({
+        success: false,
+        message: "Story not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: 'Successfully deleted story.',
+    });
+  } catch(err){
+    console.error('Error: could not delete story:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while deleting the story',
+    });
+  }
+});
 
 // Setting up code for button counter
 app.get('/api/counter', async (req, res) => {
