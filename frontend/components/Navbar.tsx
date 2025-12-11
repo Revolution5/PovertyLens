@@ -2,27 +2,58 @@
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
+    // Hooks initialization
+    const router = useRouter();
+    
     // Code for the dropdown menus (Resources and User Menu)
     const [resourcesOpen, setResourcesOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    
+    // State for toggling search bar visibility
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    
+    // State for the search input value
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Add state to track if user is logged in
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     // Check if user is logged in on component mount
     useEffect(() => {
-        // Check if user is logged in
         const userEmail = localStorage.getItem('userEmail');
-        setIsLoggedIn(!!userEmail);
+        if (userEmail) {
+            setIsLoggedIn(true);
+        }
     }, []);
 
     // Handle logout function
     const handleLogout = () => {
         localStorage.removeItem('userEmail');
         setIsLoggedIn(false);
-        window.location.href = '/';
+        router.push('/'); 
+    };
+
+    // Search logic: Handles the form submission (when Enter is pressed)
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (searchQuery.trim()) {
+            const query = searchQuery.trim().toLowerCase();
+            
+            // Check for known exact navigation pages
+            if (query === 'Home') {
+                router.push('/');
+                setIsSearchOpen(false);
+                return;
+            }
+            
+            // Proceed to the general search results page
+            const searchUrl = `/search?q=${encodeURIComponent(searchQuery)}`;
+            router.push(searchUrl);
+        }
     };
 
     return (
@@ -77,14 +108,39 @@ export default function Navbar() {
                     About Us
                 </Link>
 
-                <Link href="/search" className="hover:opacity-70 transition-opacity">
-                    <Image
-                        src="/search.png" 
-                        alt="search icon" 
-                        width={45} 
-                        height={45}
-                        className="object-contain"/>
-                </Link>
+                {/* --- TOGGLE SEARCH BAR IMPLEMENTATION --- */}
+                <div className="flex items-center gap-2">
+                    {isSearchOpen && (
+                        // Display the input field if isSearchOpen is true
+                        <form onSubmit={handleSearch} className="relative">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Quick Search..."
+                                className="w-48 p-2 text-base border border-[#AC7F5E] rounded-full focus:outline-none focus:ring-2 focus:ring-[#623100] text-[#623100] placeholder:text-[#AC7F5E]/70"
+                                autoFocus 
+                            />
+                            {/* Hidden submit button (Enter key works) */}
+                            <button type="submit" className="hidden" aria-label="Submit Search"></button>
+                        </form>
+                    )}
+                    
+                    {/* The Search Icon that toggles the input field */}
+                    <button 
+                        onClick={() => setIsSearchOpen(!isSearchOpen)} 
+                        className="p-1 hover:opacity-70 transition-opacity"
+                        aria-label={isSearchOpen ? "Close Search" : "Open Search"}
+                    >
+                        <Image
+                            src="/search.png" 
+                            alt="search icon" 
+                            width={45} 
+                            height={45}
+                            className="object-contain"/>
+                    </button>
+                </div>
+                {/* -------------------------------------- */}
             
                 { /* Drop down menu for user*/}
                 <div
