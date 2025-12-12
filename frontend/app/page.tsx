@@ -11,12 +11,14 @@ export default function Home() {
 
     // Check if user is logged in when page loads
     useEffect(() => {
-        const userEmail = localStorage.getItem('userEmail');
-        if (userEmail) {
-            setIsLoggedIn(true);
-            // Extract username from email (everything before @)
-            const name = userEmail.split('@')[0];
-            setUsername(name);
+    const userEmail = localStorage.getItem('userEmail');
+    const storedUsername = localStorage.getItem('username');
+    
+    if (userEmail) {
+        setIsLoggedIn(true);
+        if (storedUsername) {
+            setUsername(storedUsername);
+            }
         }
     }, []);
 

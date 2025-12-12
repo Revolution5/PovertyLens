@@ -39,7 +39,7 @@ export default function SignInPage() {
         localStorage.setItem('userEmail', email)
 
         // store username when available
-        if (!isLogin && data.user && data.user.username) {
+        if (data.user && data.user.username) {
           localStorage.setItem('username', data.user.username);
         }
 
