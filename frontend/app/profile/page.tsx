@@ -141,7 +141,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F0E6] to-[#E8DFCA] p-8">
+    <div className="min-h-screen bg-white p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-[#D9D1B7] rounded-2xl shadow-lg p-8 mb-8">
           <h1 className="text-4xl font-bold text-[#623100] text-center mb-8">
