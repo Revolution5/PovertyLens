@@ -38,19 +38,19 @@ export default function ProfilePage() {
     setMessage('');
 
     if (!user.password) {
-      setMessage('❌ Please enter your current password');
+      setMessage('Please enter your current password');
       setIsLoading(false);
       return;
     }
 
     if (user.newPassword && user.newPassword !== user.confirmPassword) {
-      setMessage('❌ New passwords do not match');
+      setMessage('New passwords do not match');
       setIsLoading(false);
       return;
     }
 
     if (user.newPassword && user.newPassword.length < 6) {
-      setMessage('❌ New password must be at least 6 characters');
+      setMessage('New password must be at least 6 characters');
       setIsLoading(false);
       return;
     }
@@ -71,15 +71,15 @@ export default function ProfilePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(`❌ ${data.message || 'Error updating profile'}`);
+        setMessage(`${data.message || 'Error updating profile'}`);
         return;
       }
       
-      setMessage('✅ Profile updated successfully!');
+      setMessage('Profile updated successfully!');
       setUser(prev => ({ ...prev, password: '', newPassword: '', confirmPassword: '' }));
       
     } catch (error) {
-      setMessage('❌ Error updating profile');
+      setMessage('Error updating profile');
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -114,21 +114,21 @@ export default function ProfilePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(`❌ ${data.message || 'Error deleting account'}`);
+        setMessage(`${data.message || 'Error deleting account'}`);
         setIsLoading(false);
         return;
       }
       
       localStorage.removeItem('userEmail');
       localStorage.removeItem('username');
-      setMessage('✅ Account deleted successfully');
+      setMessage('Account deleted successfully');
       
       setTimeout(() => {
         router.push('/');
       }, 2000);
       
     } catch (error) {
-      setMessage('❌ Error deleting account');
+      setMessage('Error deleting account');
       console.error('Error:', error);
       setIsLoading(false);
     }
@@ -232,14 +232,7 @@ export default function ProfilePage() {
 
             {/* Account Settings */}
             <div className="space-y-8">
-              {/* Danger Zone */}
               <div className="bg-[#C8AB8F] rounded-xl p-6 shadow-inner border-2 border-[#8B0000]">
-                <h2 className="text-2xl font-bold text-[#8B0000] mb-4">
-                  ⚠️ Danger Zone
-                </h2>
-                <p className="text-[#623100] mb-6">
-                  Once you delete your account, there is no going back. Please be certain.
-                </p>
                 <button
                   onClick={handleDeleteAccount}
                   disabled={isLoading}
@@ -274,17 +267,11 @@ export default function ProfilePage() {
 
           {/* Message Display */}
           {message && (
-            <div className={`mt-8 p-4 rounded-lg text-center font-semibold ${
-              message.includes('✅') 
-                ? 'bg-green-100 text-green-800 border border-green-300' 
-                : 'bg-red-100 text-red-800 border border-red-300'
-            }`}>
+            <div className="mt-8 p-4 rounded-lg text-center font-semibold bg-[#C8AB8F] text-black">
               {message}
             </div>
           )}
         </div>
-
-        {/* Removed the Account Overview section */}
       </div>
     </div>
   );
