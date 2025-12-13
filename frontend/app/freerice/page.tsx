@@ -22,7 +22,7 @@ export default function FreeRicePage() {
 
           {/* Center: description box */}
           <section className="mx-auto lg:mx-0 lg:w-[409px] h-[547px] flex">
-            <div className="bg-[#D9D1B7] border border-[#AC7F5E] rounded-lg p-8 w-full h-full flex flex-col">
+            <div className="bg-[#D9D1B7] border border-[#AC7F5E] rounded-lg p-8 w-full h-full flex flex-col overflow-y-auto hide-scrollbar">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#623100] text-center mb-4">FreeRice: What is it?</h2>
               <p className="text-lg md:text-l leading-relaxed text-justify text-[#623100] mb-4 flex-grow">
                 FreeRice is owned by the U.N. World Food Programme (WFP). For every correct answer in the trivia games, a private sponsor will pay cash equivalent to 10 grains of rice to the WFP. This model supports the WFP’s global emergency relief and hunger programs.
