@@ -236,7 +236,7 @@ app.get('/api/poverty/live', async (req, res) => {
 // Profile Update Route
 app.put('/api/profile/update', async (req, res) => {
   try {
-    const { email, currentPassword, newPassword } = req.body;
+    const { email, currentPassword, newPassword, newUsername } = req.body;
     
     if (!email || !currentPassword) {
       return res.status(400).json({ 
@@ -283,6 +283,18 @@ app.put('/api/profile/update', async (req, res) => {
     // Update password if provided
     if (newPassword) {
       updateData.password = newPassword;
+    }
+
+    // Update username if provided (check if exists)
+    if (newUsername && newUsername !== user.username) {
+      const usernameExists = await usersCollection.findOne({ username: newUsername });
+      if (usernameExists) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Username already taken' 
+        });
+      }
+      updateData.username = newUsername;
     }
     
     // Only update if there are changes
