@@ -9,6 +9,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState({
     email: '',
     username: '',
+    newUsername: '',
     password: '',
     newPassword: '',
     confirmPassword: ''
@@ -80,6 +81,61 @@ export default function ProfilePage() {
       
     } catch (error) {
       setMessage('Error updating profile');
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage('');
+
+    if (!user.newUsername) {
+      setMessage('Please enter a new username');
+      setIsLoading(false);
+      return;
+    }
+    if (user.newUsername === user.username) {
+      setMessage('New username must be different than current username');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!user.password) {
+      setMessage('Please enter your current password to confirm change');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:4000/api/profile/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          currentPassword: user.password,
+          newUsername: user.newUsername,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(`${data.message || 'Error updating username'}`);
+        setIsLoading(false);
+        return;
+      }
+
+      // Update local storage and local state
+      localStorage.setItem('username', user.newUsername);
+      setUser(prev => ({ ...prev, username: user.newUsername, newUsername: '', password: '' }));
+      setMessage('Username updated successfully!');
+    } catch (error) {
+      setMessage('Error updating username');
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -232,6 +288,43 @@ export default function ProfilePage() {
 
             {/* Account Settings */}
             <div className="space-y-8">
+              {/* Update Username Box (separate from Update Profile) */}
+              <div className="bg-[#C8AB8F] rounded-xl p-6 shadow-inner">
+                <h2 className="text-2xl font-bold text-[#623100] mb-6">Update Username</h2>
+                <form onSubmit={handleUpdateUsername} className="space-y-6">
+                  <div>
+                    <label className="block text-[#623100] font-semibold mb-2">New Username</label>
+                    <input
+                      type="text"
+                      name="newUsername"
+                      value={user.newUsername}
+                      onChange={handleChange}
+                      placeholder="Enter new username"
+                      className="w-full px-4 py-3 bg-[#F5F0E6] border border-[#8B4513] rounded-lg text-[#623100] focus:outline-none focus:ring-2 focus:ring-[#623100]" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#623100] font-semibold mb-2">Confirm with Current Password</label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={user.password}
+                      onChange={handleChange}
+                      placeholder="Enter current password"
+                      className="w-full px-4 py-3 bg-[#F5F0E6] border border-[#8B4513] rounded-lg text-[#623100] focus:outline-none focus:ring-2 focus:ring-[#623100]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 bg-[#623100] text-white font-bold rounded-lg hover:bg-[#8B4513] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? 'Updating...' : 'Update Username'}
+                  </button>
+                </form>
+              </div>
               <div className="bg-[#C8AB8F] rounded-xl p-6 shadow-inner border-2 border-[#8B0000]">
                 <button
                   onClick={handleDeleteAccount}
