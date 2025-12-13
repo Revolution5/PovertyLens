@@ -16,7 +16,7 @@ export default function FreeRicePage() {
         <main className="flex flex-col lg:flex-row lg:justify-between items-start gap-2 lg:gap-30">
           {/* Left: large logo + play button */}
           <div className="mx-auto lg:mx-0 lg:w-[409px] h-[547px] flex flex-col items-center gap-4 justify-start pt-12 lg:pt-16">
-            <Image src="/WFP.png" alt="WFP" width={460} height={460} className="object-contain rounded-md shadow-sm -mt-16 lg:-mt-20 mx-auto w-96 h-96 md:w-[380px] md:h-[380px] lg:w-[460px] lg:h-[460px]" />
+            <Image src="/WFP-trans.png" alt="WFP" width={460} height={460} className="object-contain rounded-md shadow-sm -mt-16 lg:-mt-20 mx-auto w-96 h-96 md:w-[380px] md:h-[380px] lg:w-[460px] lg:h-[460px]" />
             <a href="https://freerice.com/" target="_blank" rel="noopener noreferrer" className="mt-4 px-8 md:px-10 py-3 md:py-3 bg-[#AC7F5E] text-[#623100] rounded-lg hover:bg-[#C9956E] transition-colors font-semibold text-xl md:text-2xl lg:text-3xl">Play now</a>
           </div>
 
