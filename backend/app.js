@@ -411,7 +411,7 @@ app.post('/api/stories', async(req, res) => {
 // List of stories for editing, deleting, or archiving
 app.get('/api/stories', async (req, res) => {
   try {
-    const { userEmail, includeArchived } = req.query;
+    const { userEmail, includeArchived, country } = req.query;
 
     const filter = {};
     if (userEmail) {
