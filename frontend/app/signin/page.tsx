@@ -51,7 +51,7 @@ export default function SignInPage() {
         setMessage(`Error: ${data.message}`);
       }
     } catch (error) {
-      setMessage('🚨 Error connecting to server. Check if backend is running.');
+      setMessage('Error connecting to server. Check if backend is running.');
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -60,162 +60,191 @@ export default function SignInPage() {
 
   return (
     <div style={{ 
-      maxWidth: '400px', 
-      margin: '50px auto', 
-      padding: '30px',
-      border: '1px solid #f8f6f6ff',
-      borderRadius: '10px',
-      boxShadow: '0 2px 10px rgba(5, 5, 5, 0.1)',
-      backgroundColor: 'white'
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      background: 'white',
+      padding: '40px 20px 20px 20px',
+      paddingTop: '80px'
     }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#000000ff' }}>
-        {isLogin ? 'Welcome Back!' : 'Create Account'}
-      </h1>
-      
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {!isLogin && (
+      <div style={{ 
+        maxWidth: '400px', 
+        width: '100%',
+        padding: '40px',
+        border: '1px solid #D9D1B7',
+        borderRadius: '20px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        backgroundColor: '#D9D1B7'
+      }}>
+        <h1 style={{ 
+          textAlign: 'center', 
+          marginBottom: '30px', 
+          color: '#623100',
+          fontSize: '28px',
+          fontWeight: 'bold'
+        }}>
+          {isLogin ? 'Welcome Back!' : 'Create Account'}
+        </h1>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {!isLogin && (
+            <div>
+              <label htmlFor="username" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: "#623100" }}>
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="Choose a username"
+                style={{ 
+                  width: '100%', 
+                  padding: '14px',
+                  border: '1px solid #8B4513',
+                  borderRadius: '10px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box',
+                  color: '#623100',
+                  backgroundColor: '#F5F0E6',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          )}
           <div>
-            <label htmlFor="username" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: "#222" }}>
-              Username
+            <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: "#623100" }}>
+              Email Address
             </label>
             <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="Choose a username"
+              placeholder="Enter your email"
               style={{ 
                 width: '100%', 
-                padding: '12px',
-                border: '1px solid #0a0a0aff',
-                borderRadius: '6px',
+                padding: '14px',
+                border: '1px solid #8B4513',
+                borderRadius: '10px',
                 fontSize: '16px',
                 boxSizing: 'border-box',
-                color: '#222'
+                color: '#623100',
+                backgroundColor: '#F5F0E6',
+                outline: 'none'
               }}
             />
           </div>
-        )}
-        <div>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: "#222" }}>
-            Email Address
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="Enter your email"
+          
+          <div>
+            <label htmlFor="password" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: "#623100" }}>
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="Enter your password"
+              style={{ 
+                width: '100%', 
+                padding: '14px',
+                border: '1px solid #8B4513',
+                borderRadius: '10px',
+                fontSize: '16px',
+                boxSizing: 'border-box',
+                color: '#623100',
+                backgroundColor: '#F5F0E6',
+                outline: 'none'
+              }}
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            disabled={isLoading}
             style={{ 
-              width: '100%', 
-              padding: '12px',
-              border: '1px solid #0a0a0aff',
-              borderRadius: '6px',
+              padding: '14px', 
+              backgroundColor: isLoading ? '#8B4513' : '#623100', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '10px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
               fontSize: '16px',
-              boxSizing: 'border-box',
-              color: '#222'
+              fontWeight: '600',
+              transition: 'background-color 0.2s',
+              marginTop: '10px'
             }}
-          />
-        </div>
+          >
+            {isLoading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
+          </button>
+        </form>
         
-        <div>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: "#222" }}>
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            placeholder="Enter your password"
-            style={{ 
-              width: '100%', 
-              padding: '12px',
-              border: '1px solid #0f0f0fff',
-              borderRadius: '6px',
-              fontSize: '16px',
-              boxSizing: 'border-box',
-              color: '#0a0a0aff'
-            }}
-          />
-        </div>
-        
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          style={{ 
-            padding: '12px', 
-            backgroundColor: isLoading ? '#000000ff' : '#0070f3', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '6px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontSize: '16px',
-            fontWeight: '600',
-            transition: 'background-color 0.2s'
-          }}
-        >
-          {isLoading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
-        </button>
-      </form>
-      
-      {message && (
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '12px', 
-          backgroundColor: message.includes('Error') || message.includes('🚨') ? '#ecaaaaff' : '#f0ececff',
-          borderRadius: '6px',
-          border: message.includes('Error') || message.includes('🚨') ? '1px solid #ecaaaaff' : '1px solid #4caf50',
-          color: message.includes('Error') || message.includes('🚨') ? '#050505ff' : '#2e7d32'
-        }}>
-          {message}
-        </div>
-      )}
-      
-      <div style={{ marginTop: '25px', textAlign: 'center', paddingTop: '20px', borderTop: '1px solid #1a1919ff' }}>
-        <p style={{ color: '#0f0f0fff', marginBottom: '10px' }}>
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-        </p>
-        <button
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setMessage('');
-            setEmail('');
-            setPassword('');
-            setUsername('');
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#0070f3',
-            textDecoration: 'underline',
-            cursor: 'pointer',
-            fontSize: '16px',
+        {message && (
+          <div style={{ 
+            marginTop: '20px', 
+            padding: '14px', 
+            backgroundColor: '#C8AB8F',
+            borderRadius: '10px',
+            border: '1px solid #8B4513',
+            color: '#623100',
+            textAlign: 'center',
             fontWeight: '500'
-          }}
-        >
-          {isLogin ? 'Create a new account' : 'Login to existing account'}
-        </button>
-      </div>
-      
-      <div style={{ marginTop: '30px', textAlign: 'center' }}>
-        <button
-          onClick={() => router.push('/')}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#f5f5f5',
-            border: '1px solid #ddd',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: '#666'
-          }}
-        >
-          ← Back to Home Page
-        </button>
+          }}>
+            {message}
+          </div>
+        )}
+        
+        <div style={{ marginTop: '25px', textAlign: 'center', paddingTop: '20px', borderTop: '1px solid #8B4513' }}>
+          <p style={{ color: '#623100', marginBottom: '10px', fontWeight: '500' }}>
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+          </p>
+          <button
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setMessage('');
+              setEmail('');
+              setPassword('');
+              setUsername('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#623100',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '600',
+              padding: '5px'
+            }}
+          >
+            {isLogin ? 'Create a new account' : 'Login to existing account'}
+          </button>
+        </div>
+        
+        <div style={{ marginTop: '30px', textAlign: 'center' }}>
+          <button
+            onClick={() => router.push('/')}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#C8AB8F',
+              border: '1px solid #8B4513',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              color: '#623100',
+              fontWeight: '500',
+              transition: 'background-color 0.2s',
+              width: '100%'
+            }}
+          >
+            ← Back to Home Page
+          </button>
+        </div>
       </div>
     </div>
   );
