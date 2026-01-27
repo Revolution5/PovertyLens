@@ -13,7 +13,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 const uri = process.env.CONNECTION_URI
-const client = new MongoClient(uri)
+// edited by Christella, 1/26/2026
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true});
 
 let db
 
@@ -21,6 +22,47 @@ async function connectDB() {
   await client.connect()
   db = client.db('povertylensapp')
   console.log('Connected to MongoDB')
+
+  // added by Christella, 1/26/2026
+  try {
+    await db.collection('povertyLiveStats').createIndex({country: 1, year: -1, povline: 1, fetchedAt: -1 });
+    await db.collection('povertyLiveStats').createIndex({ povline: 1, country: 1, year: -1, fetchedAt: -1});
+    console.log('Indexes created on povertyLiveStats');
+  } catch (err) {
+    console.warn('Could not create indexes for povertyLiveStats:', err.message || err);
+  }
+}
+
+const ISO3_LIST = ['USA', 'CAN', 'MEX', 'BRA', 'ARG', 'GBR', 'FRA','DEU','ESP', 'ITA', 'IND', 'CHN', 'JPN', 'KOR', 'NGA', 'ZAF', 'EGY', 'ETH', 'PAK', 'BGD', 'IDN', 'VNM', 'PHL', 'THA', 'AUS', 'NZL'];
+
+async function fetchPip({ country, year, povline }){
+  let pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&povline=${povline}&fill_gaps=true&welfare_type=all`;
+  if (year) pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${povline}&fill_gaps=true&welfare_type=all`;
+
+  const pipRes = await fetch(pipUrl);
+  if (!pipRes.ok) throw new Error(`PIP error status ${pipRes.status}`);
+  const pipData = await pipRes.json();
+  const row = Array.isArray(pipData) ? pipData[0] : null;
+  return {pipData, row};
+}
+
+function extractMetricAndMeta(row){
+  const metric = {
+    headcount: typeof row?.headcount === 'number' ? row.headcount : null,
+    poverty_gap: typeof row?.poverty_gap === 'number' ? row.poverty_gap : null,
+    poverty_severity: typeof row?.poverty_severity === 'number' ? row.poverty_severity : null,
+  };
+
+  const meta = {
+    reporting_year: row?.reporting_year ?? null,
+    welfare_type: row?.welfare_type ?? null,
+    reporting_level: row?.reporting_level ?? null,
+    estimate_type: row?.estimate_type ?? null,
+    country_name: row?.country_name ?? null,
+    country_code: row?.country_code ?? null,
+    poverty_line: row?.poverty_line ?? null,
+  }
+  return {metric, meta};
 }
 
 app.get('/', async (req, res) => {
@@ -166,19 +208,36 @@ app.get('/api/poverty', async(req, res) => {
 // poverty live stats - done by Christella
 app.get('/api/poverty/live', async (req, res) => {
   try {
-    const country = (req.query.country || '').toUpperCase()
-    const year = parseInt(req.query.year || '', 10)
-    const line = parseFloat(req.query.line || '')
+    const country = String(req.query.country || '').toUpperCase().trim();
+    const yearRaw = String(req.query.year || '').trim();
+    const lineRaw = (req.query.line !== undefined &&  req.query.line !== null) ? String(req.query.line).trim() : '';
 
-    if (!country || country.length !== 3){
+    if (!/^[A-Z]{3}$/.test(country)){
       return res.status(400).json({
         success: false,
-        message: 'Please enter a 3-letter ISO country code (e.g. USA, IND, NGA)'
+        message: 'Please enter a 3-letter ISO country code (e.g. USA)'
+      });
+    }
+
+    let year = null;
+    if (yearRaw){
+      year = Number.parseInt(yearRaw, 10);
+      const currentYear = new Date().getUTCFullYear();
+      if (!Number.isFinite(year) || year < 1960 || year > currentYear + 1){
+        return res.status(400).json({ success: false, message: 'Invalid year'});
+      }
+    }
+
+    const povline = lineRaw ? Number.parseFloat(lineRaw) : 2.15;
+    if (!Number.isFinite(povline) || povline <= 0 || povline > 100){
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid poverty line'
       });
     }
     
     const cacheCollection = db.collection('povertyLiveStats')
-    const cacheKey = { country, year, povline: line }
+    const cacheKey = year ? { country, year, povline } : { country, povline };
 
     const cached = await cacheCollection.findOne(cacheKey)
 
@@ -187,14 +246,15 @@ app.get('/api/poverty/live', async (req, res) => {
         success: true,
         source: 'MongoDB cache',
         country,
-        year,
-        povline: line,
+        year: cached.year ?? year,
+        povline,
         fetchedAt: cached.fetchedAt,
+        metric: cached.metric ?? null,
+        meta: cached.meta ?? null,
         data: cached.data,
       })
     }
 
-    const pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${line}&fill_gaps=true&welfare_type=all`
 
     const pipRes = await fetch(pipUrl)
     if(!pipRes.ok){
