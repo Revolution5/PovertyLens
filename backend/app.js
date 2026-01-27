@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }))
 
 const uri = process.env.CONNECTION_URI
 // edited by Christella, 1/26/2026
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true});
+const client = new MongoClient(uri);
 
 let db
 
