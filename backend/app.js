@@ -2,6 +2,7 @@ require('dotenv').config()
 const cors = require('cors')
 const express = require('express')
 const { MongoClient, ObjectId } = require('mongodb')
+const bcrypt = require('bcryptjs')
 
 const app = express()
 const port = 4000
@@ -104,11 +105,14 @@ app.post('/api/signup', async (req, res) => {
       });
     }
 
-    // Create new user (note: passwords are still stored plaintext here)
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user with hashed password
     const newUser = {
       email,
       username,
-      password,
+      password: hashedPassword,
       createdAt: new Date()
     };
 
@@ -158,8 +162,9 @@ app.post('/api/login', async (req, res) => {
       });
     }
     
-    // Check password (plain text comparison for now)
-    if (user.password !== password) {
+    // Compare hashed password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(400).json({ 
         success: false,
         message: 'Invalid password' 
@@ -317,8 +322,9 @@ app.put('/api/profile/update', async (req, res) => {
       });
     }
     
-    // Verify current password
-    if (user.password !== currentPassword) {
+    // Verify current password using bcrypt
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) {
       return res.status(400).json({ 
         success: false,
         message: 'Current password is incorrect' 
@@ -342,7 +348,7 @@ app.put('/api/profile/update', async (req, res) => {
     
     // Update password if provided
     if (newPassword) {
-      updateData.password = newPassword;
+      updateData.password = await bcrypt.hash(newPassword, 10);
     }
 
     // Update username if provided (check if exists)
