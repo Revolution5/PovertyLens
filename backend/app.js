@@ -194,6 +194,167 @@ app.post('/api/login', async (req, res) => {
 
 // /api/poverty - done by Christella
 // Returns poverty statistics from "povertyStats" collection.
+app.get('/api/poverty/summary', async(req,res) => {
+  try {
+    const country = String(req.query.country || '').toUpperCase().trim();
+    if (!/^[A-Z]{3}$/.test(country)){
+      return res.status(400).json({success: false, message: 'country must be ISO3'});
+    }
+
+    const povline = Number(req.query.povline ?? DEFAULT_POVLINE);
+    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS);
+
+    if (!Number.isFinite(povline) || povline <= 0 || povline > 100) {
+      return res.status(400).json({ success: false, message: 'Invalid povline'});
+    }
+
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+    const col = db.collection('povertyLiveStats');
+
+    // Find most recent cached doc for country + poverty line
+    const cached = await col
+      .find({country, povline})
+      .sort({year: -1, fetchedAt: -1})
+      .limit(1)
+      .next();
+    
+    if (cached && cached.fetchedAt && new Date(cached.fetchedAt) >= cutoff) {
+      return res.json({
+        success: true,
+        source: 'MongoDB cache (PIP-backed)',
+        country,
+        year: cached.year ?? null,
+        povline,
+        fetchedAt: cached.fetchedAt,
+        metric: cached.metric ?? null,
+        meta: cached.meta ?? null,
+        data: cached.data ?? null,
+      });
+    }
+
+    const yearToFetch = cached?.year ?? DEFAULT_YEAR;
+
+    const { pipData, row } = await fetchPip({ country, year: yearToFetch, povline });
+    const { metric, meta } = extractMetricAndMeta(row);
+
+    const docToStore = {
+      country,
+      povline,
+      year: yearToFetch,
+      fetchedAt: new Date(),
+      data: pipData,
+      metric,
+      meta,
+    };
+
+    await col.updateOne({ country, povline, year: yearToFetch }, {$set: docToStore}, {upsert: true});
+
+    return res.json({
+      success: true,
+      source: 'World Bank PIP (Fresh)',
+      country,
+      year: yearToFetch,
+      povline,
+      fetchedAt: docToStore.fetchedAt,
+      metric,
+      meta,
+      data: pipData,
+    });
+  } catch (err) {
+    console.error('Error in /api/poverty/summary:', err);
+    res.status(500).json({ success: false, message: 'Server error'});
+  }
+});
+
+app.get('/api/poverty/pip-map', async (req, res) => {
+  try {
+    const povline = Number(req.query.povline ?? DEFAULT_POVLINE);
+    const year = Number(req.query.year ?? DEFAULT_YEAR);
+    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS);
+
+    if (!Number.isFinite(povline) || povline <= 0 || povline > 100) {
+      return res.status(400).json({success: false, message: 'Invalid povline'});
+    }
+    if (!Number.isFinite(year) || year < 1960 || year > 2100){
+      return res.status(400).json({success: false, message: 'Invalid year'});
+    }
+
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60* 1000);
+    const col = db.collection('povertyLiveStats');
+
+    const CONCURRENCY = 8;
+    const rows = [];
+    let idx = 0;
+
+    async function worker(){
+      while (idx < ISO3_LIST.length){
+        const country = ISO3_LIST[idx++];
+        const cacheKey = { country, povline, year };
+
+        const cached = await col.findOne({...cacheKey, fetchedAt: {$gte: cutoff }});
+        if (cached) {
+          rows.push({
+            country,
+            year,
+            povline,
+            headcount: cached.metric?.headcount ?? (Array.isArray(cached.data) ? cached.data[0]?.headcount : null),
+            source: 'cache',
+            fetchedAt: cached.fetchedAt,
+          });
+          continue;
+        }
+
+        try {
+          const { pipDate, row } = await fetchPip({country, year, povline});
+          const { metric, meta } = extractMetricAndMeta(row);
+
+          const docToStore = {
+            ...cacheKey,
+            fetchedAt: new Date(),
+            data: pipData,
+            metric,
+            meta,
+          };
+
+          await col.updateOne(cache, { $set: docToStore }, {upsert: true});
+
+          rows.push({
+            country,
+            year,
+            povline,
+            headcount: metric.headcount,
+            source: 'pip',
+            fetchedAt: docToStore.fetchedAt,
+          });
+        } catch (e) {
+          rows.push({
+            country,
+            year,
+            povline,
+            headcount: null,
+            source: 'error',
+            error: String(e?.message || e),
+          });
+        }
+      }
+    }
+
+    await Promise.all(Array.from({length: CONCURRENCY }, () => ServiceWorkerRegistration()));
+
+    res.json({
+      success: true,
+      source: 'World Bank PIP (cached)',
+      year,
+      povline,
+      maxAgeDays,
+      rows,
+    });
+  } catch (err) {
+    console.error('Error in /api/poverty/pip-map:', err);
+    res.status(500).json({success: false, message: 'Server error building map dataset'});
+  }
+});
+
 app.get('/api/poverty', async(req, res) => {
   try{
     const stats = await db.collection('povertyStats').find({}).toArray()
@@ -646,34 +807,6 @@ app.delete('/api/stories/:id', async (req, res) => {
     });
   }
 });
-
-
-// Setting up code for button counter
-app.get('/api/counter', async (req, res) => {
-  try {
-    let counter = await db.collection('counters').findOne({ name: 'button-clicks' })
-    res.json({ count: counter.count })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Internal Server Error' })
-  }
-})
-
-app.post('/api/counter/increment', async (req, res) => {
-  try {
-    const result = await db.collection('counters').findOneAndUpdate(
-      { name: 'button-clicks' },              // Find this document
-      { $inc: { count: 1 } },                 // Add 1 to count
-      { upsert: true, returnDocument: 'after' } // Return the new value
-    )
-    
-    console.log(`Total clicks: ${result.count}`) // Log to server console
-    res.json({ count: result.count })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Internal Server Error' })
-  }
-})
 
 app.listen(port, async () => {
   await connectDB()
