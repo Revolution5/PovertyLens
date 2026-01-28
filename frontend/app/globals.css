@@ -1,8 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F9F7F2;
-  --foreground: #171717;
+  /* Main Background Colors */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  
+  /* Brand Colors - Cheerful Palette */
+  --color-cyan: #8CE4FF;
+  --color-yellow: #FEEE91;
+  --color-orange: #FFA239;
+  --color-red: #FF5656;
+  
+  /* Neutral Colors */
+  --color-gray-light: #f5f5f5;
+  --color-gray: #666666;
+  --color-gray-dark: #333333;
+  
+  /* Accent & Hover States */
+  --color-primary: #8CE4FF;
+  --color-primary-hover: #6DD5FF;
+  --color-secondary: #FFA239;
+  --color-secondary-hover: #FF8E1A;
+  --color-accent: #FF5656;
+  
+  /* Subtle Background Gradients */
+  --gradient-light: linear-gradient(135deg, rgba(140, 228, 255, 0.1) 0%, rgba(254, 238, 145, 0.1) 100%);
+  --gradient-cyan-yellow: linear-gradient(135deg, #8CE4FF 0%, #FEEE91 100%);
+  --gradient-orange-red: linear-gradient(135deg, #FFA239 0%, #FF5656 100%);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-base: 0.2s ease-in-out;
+  --transition-slow: 0.3s ease-in-out;
 }
 
 @theme inline {
@@ -14,15 +56,41 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #F9F7F2;
-    --foreground: #ededed;
+    /* Keep light theme even in dark mode preference */
+    /* The cheerful colors work best on light backgrounds */
+    --background: #ffffff;
+    --foreground: #1a1a1a;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection colors */
+::selection {
+  background-color: var(--color-cyan);
+  color: var(--foreground);
+}
+
+::-moz-selection {
+  background-color: var(--color-cyan);
+  color: var(--foreground);
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
 }
 
 /* Utility to hide scrollbars while keeping content scrollable */
@@ -32,4 +100,298 @@ body {
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
+}
+
+/* Custom scrollbar styling for browsers that support it */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-light);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-cyan);
+  border-radius: var(--radius-full);
+  border: 3px solid var(--color-gray-light);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Utility classes for quick access to brand colors */
+.bg-gradient-light {
+  background: var(--gradient-light);
+}
+
+.bg-gradient-primary {
+  background: var(--gradient-cyan-yellow);
+}
+
+.bg-gradient-accent {
+  background: var(--gradient-orange-red);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+/* Button reset for better styling control */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+/* Link reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  transition: all var(--transition-base);
+}
+
+/* Card component utility */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-md);
+  border: 2px solid transparent;
+  transition: all var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+}
+
+.card-cyan {
+  border-color: var(--color-cyan);
+}
+
+.card-yellow {
+  border-color: var(--color-yellow);
+}
+
+.card-orange {
+  border-color: var(--color-orange);
+}
+
+.card-red {
+  border-color: var(--color-red);
+}
+/* Dashboard Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+}
+
+.dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  opacity: 0.1;
+  transition: all 0.3s;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+}
+
+.dashboard-card:hover::before {
+  transform: scale(1.2);
+  opacity: 0.15;
+}
+
+/* Primary card takes more space */
+.dashboard-card-primary {
+  grid-column: span 1;
+  grid-row: span 2;
+}
+
+/* Color-specific backgrounds for the decorative circle */
+.dashboard-card-cyan::before {
+  background: #8CE4FF;
+}
+
+.dashboard-card-yellow::before {
+  background: #FEEE91;
+}
+
+.dashboard-card-orange::before {
+  background: #FFA239;
+}
+
+.dashboard-card-red::before {
+  background: #FF5656;
+}
+
+/* Dashboard Card Top Section */
+.dashboard-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+/* Icon Boxes with vibrant colors */
+.dashboard-card-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-card-icon-cyan {
+  background: #8CE4FF;
+  color: #000;
+}
+
+.dashboard-card-icon-yellow {
+  background: #FEEE91;
+  color: #000;
+}
+
+.dashboard-card-icon-orange {
+  background: #FFA239;
+  color: #000;
+}
+
+.dashboard-card-icon-red {
+  background: #FF5656;
+  color: #fff;
+}
+
+/* Arrow indicator */
+.dashboard-card-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all 0.3s;
+  color: #666;
+}
+
+.dashboard-card:hover .dashboard-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Dashboard Card Text */
+.dashboard-card-text {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.dashboard-card-title-primary {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.dashboard-card-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.dashboard-card-description-primary {
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-card-primary {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-card-primary {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+  
+  .dashboard-card {
+    padding: 28px;
+  }
+  
+  .dashboard-card-title {
+    font-size: 20px;
+  }
+  
+  .dashboard-card-title-primary {
+    font-size: 24px;
+  }
+}
+
+/* Prevent flash before GSAP animation */
+.dashboard-header {
+  opacity: 0;
+}
+
+.dashboard-card {
+  opacity: 0;
 }
