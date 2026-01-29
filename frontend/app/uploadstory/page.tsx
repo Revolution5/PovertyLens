@@ -7,6 +7,18 @@ const fieldBg = '#D7C6B4';
 const pageBg = '#ffffff';
 const BACKEND_URL = 'http://localhost:4000';
 
+const COUNTRY_OPTIONS = [
+    {code: '', name: 'Select a country (optional)'},
+    {code: 'USA', name: 'United States'},
+    {code: 'CAN', name: 'Canada'},
+    {code: 'MEX', name: 'Mexico'},
+    {code: 'BRA', name: 'Brazil'},
+    {code: 'ARG', name: 'Argentina'},
+    {code: 'GBR', name: 'United Kingdom'},
+    {code: 'FRA', name: 'France'},
+    {code: 'DEU', name: 'Germany'} // will add more later
+]
+
 export default function UploadStoryPage() {
     const [title, setTitle] = useState('');
     const [story, setStory] = useState('');
@@ -118,27 +130,35 @@ export default function UploadStoryPage() {
                         }}
                     />    
                 </div>
-                {/* Country Input for Statistics page */}
+                {/* Country Dropdown for Statistics page */}
                 <div style={{ marginBottom: 10}}>
-                    <input
-                        type="text"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                        placeholder='Country (ISO3, e.g. USA, IND, CHN)'
+                    <label style={{display: 'block', marginBottom: 8, fontWeight: 700}}>
+                        Country (optional)
+                    </label>
+                    <select
+                        value = {country}
+                        onChange={(e) => setCountry(e.target.value)}
                         style={{
                             width: '100%',
-                            padding: '14px 18px',
-                            borderRadius: 16,
+                            padding: '12 px 14px',
+                            borderRadius: 12,
                             border: 'none',
                             backgroundColor: fieldBg,
                             fontSize: 16,
                             color: textBrown,
                             outline: 'none',
-                            resize: 'vertical',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.12)',
                             marginBottom: 4,
+                            appearance: 'none' as const,
                         }}
-                    />
+                        aria-label="Select country"
+                    >
+                        {COUNTRY_OPTIONS.map((c) => (
+                            <option key={c.code || 'none'} value={c.code}>
+                                {c.code ? `${c.name} (${c.code})` : c.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
                 {/* Story Textures */}
                 <div style={{ marginBottom: 10}}>
