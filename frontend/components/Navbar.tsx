@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
     // Hooks initialization
@@ -140,6 +141,7 @@ export default function Navbar() {
                             height={40}
                             className="object-contain w-5 h-auto sm:w-6 md:w-7 lg:w-10"/>
                     </button>
+                    {isLoggedIn && <NotificationBell />}
                 </div>
                 {/* -------------------------------------- */}
             

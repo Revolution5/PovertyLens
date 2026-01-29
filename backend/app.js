@@ -34,6 +34,34 @@ async function connectDB() {
   }
 }
 
+// notifications array
+const notifications = [];
+
+// Generate unique ID
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Create notification function
+function createNotification(userId, message) {
+  const newNotification = {
+    id: generateId(),
+    userId,
+    message,
+    createdAt: new Date(),
+    read: false
+  };
+  
+  notifications.unshift(newNotification); // Add to beginning
+  
+  // Keep only last 50 notifications to save memory
+  if (notifications.length > 50) {
+    notifications.length = 50;
+  }
+  
+  return newNotification;
+}
+
 const ISO3_LIST = ['USA', 'CAN', 'MEX', 'BRA', 'ARG', 'GBR', 'FRA','DEU','ESP', 'ITA', 'IND', 'CHN', 'JPN', 'KOR', 'NGA', 'ZAF', 'EGY', 'ETH', 'PAK', 'BGD', 'IDN', 'VNM', 'PHL', 'THA', 'AUS', 'NZL'];
 
 async function fetchPip({ country, year, povline }){
@@ -117,8 +145,10 @@ app.post('/api/signup', async (req, res) => {
     };
 
     const result = await usersCollection.insertOne(newUser);
-
+    
     console.log(`New user created: ${email} (${username})`);
+
+    createNotification(email, `Welcome to PovertyLens, ${username}!`);
 
     res.status(201).json({ 
       success: true,
@@ -633,6 +663,10 @@ app.post('/api/stories', async(req, res) => {
 
     const result = await storiesCollection.insertOne(newStory);
 
+    if (userEmail) {
+      createNotification(userEmail, `Your story "${title || 'Untitled'}" was published successfully!`);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Story uploaded successfully',
@@ -805,6 +839,38 @@ app.delete('/api/stories/:id', async (req, res) => {
       success: false,
       message: 'Server error while deleting the story',
     });
+  }
+});
+
+// Get notifications
+app.get('/api/notifications', (req, res) => {
+  const { userId } = req.query;
+  
+  if (!userId) {
+    return res.json({ success: true, notifications: [] });
+  }
+  
+  // Filter for this user's notifications, newest first
+  const userNotifications = notifications
+    .filter(note => note.userId === userId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  
+  res.json({ 
+    success: true, 
+    notifications: userNotifications.slice(0, 10) // Return last 10
+  });
+});
+
+// Mark notification as read
+app.post('/api/notifications/:id/read', (req, res) => {
+  const { id } = req.params;
+  
+  const noteIndex = notifications.findIndex(n => n.id === id);
+  if (noteIndex !== -1) {
+    notifications[noteIndex].read = true;
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, message: 'Notification not found' });
   }
 });
 
