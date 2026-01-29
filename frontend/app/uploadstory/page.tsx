@@ -386,7 +386,7 @@ export default function UploadStoryPage() {
                   borderRadius: '8px',
                   border: 'none',
                   backgroundColor: accentColor,
-                  color: '#ffffff',
+                  color: '#000000',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   opacity: isSubmitting ? 0.5 : 1,
                   transition: 'opacity 0.2s',
