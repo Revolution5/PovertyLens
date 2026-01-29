@@ -1,8 +1,58 @@
 "use client";
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
+import { FileText, BookOpen, Gamepad2, Heart } from 'lucide-react';
+
+// ActionCard Component (integrated)
+interface ActionCardProps {
+  title: string;
+  description: string;
+  icon: any;
+  bgColor: string;
+  href: string;
+}
+
+function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCardProps) {
+  // Derive a darker accent color from the light background
+  const accentColor = bgColor === "#E5F8FF" ? "#8CE4FF" 
+    : bgColor === "#FFFCEB" ? "#F5D547"
+    : bgColor === "#FFE8D6" ? "#FFA239"
+    : "#FF5656";
+
+  return (
+    <Link
+      href={href}
+      className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300 hover:-translate-y-1 text-left w-full block"
+      style={{ backgroundColor: bgColor }}
+    >
+      {/* Icon */}
+      <div 
+        className="inline-flex items-center justify-center w-14 h-14 rounded-xl mb-4 transition-transform duration-300 group-hover:scale-110"
+        style={{ backgroundColor: accentColor }}
+      >
+        <Icon className="w-7 h-7 text-white" />
+      </div>
+
+      {/* Content */}
+      <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-gray-900 transition-colors">
+        {title}
+      </h3>
+      <p className="text-gray-600 text-sm leading-relaxed">
+        {description}
+      </p>
+
+      {/* Arrow indicator */}
+      <div className="mt-4 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>
+        Get Started
+        <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
     // state to track if user is logged in
@@ -12,13 +62,13 @@ export default function Home() {
 
     // Check if user is logged in when page loads
     useEffect(() => {
-    const userEmail = localStorage.getItem('userEmail');
-    const storedUsername = localStorage.getItem('username');
-    
-    if (userEmail) {
-        setIsLoggedIn(true);
-        if (storedUsername) {
-            setUsername(storedUsername);
+        const userEmail = localStorage.getItem('userEmail');
+        const storedUsername = localStorage.getItem('username');
+        
+        if (userEmail) {
+            setIsLoggedIn(true);
+            if (storedUsername) {
+                setUsername(storedUsername);
             }
         }
     }, []);
@@ -45,139 +95,164 @@ export default function Home() {
                     y: 0,
                     scale: 1,
                     duration: 0.7,
-                    stagger: 0.15, // Each card delays by 0.15s
+                    stagger: 0.15,
                     ease: 'power3.out',
-                    delay: 0.2 // Start after header animation
+                    delay: 0.2
+                }
+            );
+
+            // Animate stats section
+            gsap.fromTo('.stats-section',
+                { opacity: 0, y: 30 },
+                { 
+                    opacity: 1, 
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'power3.out',
+                    delay: 0.8
                 }
             );
         }
     }, [isLoggedIn]);
 
+    // Action cards configuration
+    const actionCards = [
+        {
+            title: "Upload a Story",
+            description: "Share your experience or insights about poverty and help build awareness in the community",
+            icon: FileText,
+            bgColor: "#E5F8FF",
+            href: "/uploadstory"
+        },
+        {
+            title: "View Stories",
+            description: "Browse your contributions and explore stories shared by others in the community",
+            icon: BookOpen,
+            bgColor: "#FFFCEB",
+            href: "/viewstories"
+        },
+        {
+            title: "Play FreeRice",
+            description: "Answer trivia & donate rice to help fight hunger. Every correct answer makes a difference!",
+            icon: Gamepad2,
+            bgColor: "#FFE8D6",
+            href: "/freerice"
+        },
+        {
+            title: "Donate Now",
+            description: "Discover and contribute to verified causes working to alleviate poverty worldwide",
+            icon: Heart,
+            bgColor: "#FFE5E5",
+            href: "/donationspages"
+        }
+    ];
+
     if (isLoggedIn) {
         // display this for is the user is logged in
         return (
-            <div className="min-h-screen bg-gradient-light">
-                <div className="max-w-7xl mx-auto px-6 md:px-12 py-12">
-                    {/* Header */}
-                    <div className="mb-10 dashboard-header">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
-                            Welcome back, {username}
+            <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    {/* Welcome Section */}
+                    <div className="mb-12 dashboard-header">
+                        <h1 className="text-4xl sm:text-5xl font-bold mb-3">
+                            Welcome back, <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">{username}</span>
                         </h1>
-                        <p className="text-lg text-gray-600">Here's your dashboard</p>
+                        <p className="text-gray-600 text-lg">Here's your dashboard</p>
                     </div>
 
-                    {/* Dashboard Grid */}
-                    <div className="dashboard-grid">
-                        {/* Primary Card - Upload Story */}
-                        <Link href="/uploadstory" className="dashboard-card dashboard-card-primary dashboard-card-cyan">
-                            <div className="dashboard-card-top">
-                                <div className="dashboard-card-icon-box dashboard-card-icon-cyan">
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="12" y1="18" x2="12" y2="12"></line>
-                                        <line x1="9" y1="15" x2="15" y2="15"></line>
-                                    </svg>
-                                </div>
-                                <div className="dashboard-card-arrow">→</div>
-                            </div>
-                            <div className="dashboard-card-text">
-                                <h3 className="dashboard-card-title dashboard-card-title-primary">Upload a Story</h3>
-                                <p className="dashboard-card-description dashboard-card-description-primary">Share your experience or insights about poverty and help build awareness in the community</p>
-                            </div>
-                        </Link>
-
-                        {/* View Stories */}
-                        <Link href="/viewstories" className="dashboard-card dashboard-card-yellow">
-                            <div className="dashboard-card-top">
-                                <div className="dashboard-card-icon-box dashboard-card-icon-yellow">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                    </svg>
-                                </div>
-                                <div className="dashboard-card-arrow">→</div>
-                            </div>
-                            <div className="dashboard-card-text">
-                                <h3 className="dashboard-card-title">View Stories</h3>
-                                <p className="dashboard-card-description">Browse your contributions</p>
-                            </div>
-                        </Link>
-
-                        {/* Play FreeRice */}
-                        <Link href="/freerice" className="dashboard-card dashboard-card-orange">
-                            <div className="dashboard-card-top">
-                                <div className="dashboard-card-icon-box dashboard-card-icon-orange">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
-                                        <path d="M2 12A10 10 0 0 0 12 22"></path>
-                                    </svg>
-                                </div>
-                                <div className="dashboard-card-arrow">→</div>
-                            </div>
-                            <div className="dashboard-card-text">
-                                <h3 className="dashboard-card-title">Play FreeRice</h3>
-                                <p className="dashboard-card-description">Answer trivia & donate</p>
-                            </div>
-                        </Link>
-
-                        {/* Donate Now */}
-                        <Link href="/donationspages" className="dashboard-card dashboard-card-red">
-                            <div className="dashboard-card-top">
-                                <div className="dashboard-card-icon-box dashboard-card-icon-red">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                    </svg>
-                                </div>
-                                <div className="dashboard-card-arrow">→</div>
-                            </div>
-                            <div className="dashboard-card-text">
-                                <h3 className="dashboard-card-title">Donate Now</h3>
-                                <p className="dashboard-card-description">Support the cause</p>
-                            </div>
-                        </Link>
+                    {/* Action Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
+                        {actionCards.map((card, index) => (
+                            <ActionCard
+                                key={index}
+                                title={card.title}
+                                description={card.description}
+                                icon={card.icon}
+                                bgColor={card.bgColor}
+                                href={card.href}
+                            />
+                        ))}
                     </div>
-                </div>
+
+                    {/* Quick Stats Section */}
+                    <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-600 text-sm mb-1">Stories Shared</p>
+                                    <p className="text-3xl font-semibold">24</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-[#8CE4FF]/20 flex items-center justify-center">
+                                    <FileText className="w-6 h-6 text-[#8CE4FF]" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-600 text-sm mb-1">Rice Donated</p>
+                                    <p className="text-3xl font-semibold">1,250</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-[#FFA239]/20 flex items-center justify-center">
+                                    <Gamepad2 className="w-6 h-6 text-[#FFA239]" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-600 text-sm mb-1">Total Impact</p>
+                                    <p className="text-3xl font-semibold">342</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-[#FF5656]/20 flex items-center justify-center">
+                                    <Heart className="w-6 h-6 text-[#FF5656]" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
             </div>
         )
     }
 
     // display this for if the user is not logged in
     return (
-        <div className="min-h-screen bg-gradient-light pb-12">
-                <h1 className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" style={{ color: 'var(--foreground)' }}>
-                    Welcome To PovertyLens!
-                </h1>
-                
-                {/* Creating the columns*/}
-                <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
-                    {/* Left column - Introductory text */}
-                    <div className="flex-[11] card card-cyan p-8 md:p-10">
-                        <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
-                            Our Mission:
-                        </h2>
-                        <p className="text-lg md:text-xl mb-5 leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
-                            Poverty affects millions worldwide, yet it remains 
-                            one of the most misunderstood and underrepresented global issues.
-                            PovertyLens hopes to bridges this gap by transforming complex data and real-world stories into meaningful,
-                            easy-to-understand insights.
-                        </p>
-                        <p className="text-lg md:text-xl leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
-                            We hope to empower everyone, whether that's supporting global initiatives, 
-                            donating, or spreading awareness within their own communities.
-                        </p>
-                    </div>
-
-                    {/* Right column - Logo */}
-                    <div className="flex-[9] flex justify-center items-center">
-                            <Image
-                                src="/logov3.png" 
-                                alt="PovertyLens Logo" 
-                                width={450} 
-                                height={450}
-                                className="object-contain drop-shadow-2xl"/>
-                    </div>
+        <div className="min-h-screen pb-12" style={{ background: 'var(--background)' }}>
+            <h1 className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" style={{ color: 'var(--foreground)' }}>
+                Welcome To PovertyLens!
+            </h1>
+            
+            {/* Creating the columns*/}
+            <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
+                {/* Left column - Introductory text */}
+                <div className="flex-[11] card card-cyan p-8 md:p-10">
+                    <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
+                        Our Mission:
+                    </h2>
+                    <p className="text-lg md:text-xl mb-5 leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
+                        Poverty affects millions worldwide, yet it remains 
+                        one of the most misunderstood and underrepresented global issues.
+                        PovertyLens hopes to bridges this gap by transforming complex data and real-world stories into meaningful,
+                        easy-to-understand insights.
+                    </p>
+                    <p className="text-lg md:text-xl leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
+                        We hope to empower everyone, whether that's supporting global initiatives, 
+                        donating, or spreading awareness within their own communities.
+                    </p>
                 </div>
+
+                {/* Right column - Logo */}
+                <div className="flex-[9] flex justify-center items-center">
+                    <Image
+                        src="/logov3.png" 
+                        alt="PovertyLens Logo" 
+                        width={450} 
+                        height={450}
+                        className="object-contain drop-shadow-2xl"/>
+                </div>
+            </div>
         </div>
     );
 }

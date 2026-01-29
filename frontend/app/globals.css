@@ -197,195 +197,6 @@ button, a, input, select, textarea {
 .card-red {
   border-color: var(--color-red);
 }
-/* Dashboard Grid Layout */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr;
-  gap: 20px;
-}
-
-/* Dashboard Cards */
-.dashboard-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 36px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid transparent;
-  position: relative;
-  overflow: hidden;
-  text-decoration: none;
-  display: block;
-}
-
-.dashboard-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  opacity: 0.1;
-  transition: all 0.3s;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
-}
-
-.dashboard-card:hover::before {
-  transform: scale(1.2);
-  opacity: 0.15;
-}
-
-/* Primary card takes more space */
-.dashboard-card-primary {
-  grid-column: span 1;
-  grid-row: span 2;
-}
-
-/* Color-specific backgrounds for the decorative circle */
-.dashboard-card-cyan::before {
-  background: #8CE4FF;
-}
-
-.dashboard-card-yellow::before {
-  background: #FEEE91;
-}
-
-.dashboard-card-orange::before {
-  background: #FFA239;
-}
-
-.dashboard-card-red::before {
-  background: #FF5656;
-}
-
-/* Dashboard Card Top Section */
-.dashboard-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-/* Icon Boxes with vibrant colors */
-.dashboard-card-icon-box {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.dashboard-card-icon-cyan {
-  background: #8CE4FF;
-  color: #000;
-}
-
-.dashboard-card-icon-yellow {
-  background: #FEEE91;
-  color: #000;
-}
-
-.dashboard-card-icon-orange {
-  background: #FFA239;
-  color: #000;
-}
-
-.dashboard-card-icon-red {
-  background: #FF5656;
-  color: #fff;
-}
-
-/* Arrow indicator */
-.dashboard-card-arrow {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: all 0.3s;
-  color: #666;
-}
-
-.dashboard-card:hover .dashboard-card-arrow {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Dashboard Card Text */
-.dashboard-card-text {
-  position: relative;
-  z-index: 1;
-}
-
-.dashboard-card-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-
-.dashboard-card-title-primary {
-  font-size: 28px;
-  margin-bottom: 12px;
-}
-
-.dashboard-card-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-}
-
-.dashboard-card-description-primary {
-  font-size: 16px;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .dashboard-card-primary {
-    grid-column: span 2;
-    grid-row: span 1;
-  }
-}
-
-@media (max-width: 640px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .dashboard-card-primary {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-  
-  .dashboard-card {
-    padding: 28px;
-  }
-  
-  .dashboard-card-title {
-    font-size: 20px;
-  }
-  
-  .dashboard-card-title-primary {
-    font-size: 24px;
-  }
-}
 
 /* Prevent flash before GSAP animation */
 .dashboard-header {
@@ -394,4 +205,71 @@ button, a, input, select, textarea {
 
 .dashboard-card {
   opacity: 0;
+}
+
+.stats-section {
+  opacity: 0;
+}
+
+/* Enhanced ActionCard styles for new design */
+.dashboard-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Responsive Design Improvements */
+@media (max-width: 768px) {
+  .dashboard-card {
+    padding: 1.5rem;
+  }
+  
+  .dashboard-card h3 {
+    font-size: 1.125rem;
+  }
+}
+
+/* Stats cards animation support */
+.stats-section > div {
+  transition: all 0.3s ease;
+}
+
+.stats-section > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Navbar enhancements */
+nav a {
+  position: relative;
+}
+
+nav a:not(.no-underline)::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-orange);
+  transition: width 0.3s ease;
+}
+
+nav a:not(.no-underline):hover::after {
+  width: 100%;
+}
+
+/* Search input enhancement */
+input[type="text"]:focus {
+  transform: translateY(-1px);
+}
+
+/* Profile dropdown smooth transitions */
+.group:hover .group-hover\:opacity-100 {
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* Lucide icons consistent sizing */
+svg {
+  flex-shrink: 0;
 }
