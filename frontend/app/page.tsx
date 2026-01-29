@@ -1,7 +1,58 @@
 "use client";
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from 'next/image';
 import Link from 'next/link';
+import gsap from 'gsap';
+import { FileText, BookOpen, Gamepad2, Heart } from 'lucide-react';
+
+// ActionCard Component (integrated)
+interface ActionCardProps {
+  title: string;
+  description: string;
+  icon: any;
+  bgColor: string;
+  href: string;
+}
+
+function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCardProps) {
+  // Derive a darker accent color from the light background
+  const accentColor = bgColor === "#E5F8FF" ? "#8CE4FF" 
+    : bgColor === "#FFFCEB" ? "#F5D547"
+    : bgColor === "#FFE8D6" ? "#FFA239"
+    : "#FF5656";
+
+  return (
+    <Link
+      href={href}
+      className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300 hover:-translate-y-1 text-left w-full block"
+      style={{ backgroundColor: bgColor }}
+    >
+      {/* Icon */}
+      <div 
+        className="inline-flex items-center justify-center w-14 h-14 rounded-xl mb-4 transition-transform duration-300 group-hover:scale-110"
+        style={{ backgroundColor: accentColor }}
+      >
+        <Icon className="w-7 h-7 text-white" />
+      </div>
+
+      {/* Content */}
+      <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-gray-900 transition-colors">
+        {title}
+      </h3>
+      <p className="text-gray-600 text-sm leading-relaxed">
+        {description}
+      </p>
+
+      {/* Arrow indicator */}
+      <div className="mt-4 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>
+        Get Started
+        <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
     // state to track if user is logged in
@@ -11,98 +62,197 @@ export default function Home() {
 
     // Check if user is logged in when page loads
     useEffect(() => {
-    const userEmail = localStorage.getItem('userEmail');
-    const storedUsername = localStorage.getItem('username');
-    
-    if (userEmail) {
-        setIsLoggedIn(true);
-        if (storedUsername) {
-            setUsername(storedUsername);
+        const userEmail = localStorage.getItem('userEmail');
+        const storedUsername = localStorage.getItem('username');
+        
+        if (userEmail) {
+            setIsLoggedIn(true);
+            if (storedUsername) {
+                setUsername(storedUsername);
             }
         }
     }, []);
 
+    // GSAP Staggered Entrance Animation
+    useEffect(() => {
+        if (isLoggedIn) {
+            // Animate header first
+            gsap.fromTo('.dashboard-header',
+                { opacity: 0, y: -20 },
+                { 
+                    opacity: 1, 
+                    y: 0, 
+                    duration: 0.6,
+                    ease: 'power3.out'
+                }
+            );
+
+            // Then animate cards with stagger
+            gsap.fromTo('.dashboard-card',
+                { opacity: 0, y: 40, scale: 0.95 },
+                { 
+                    opacity: 1, 
+                    y: 0,
+                    scale: 1,
+                    duration: 0.7,
+                    stagger: 0.15,
+                    ease: 'power3.out',
+                    delay: 0.2
+                }
+            );
+
+            // Animate stats section
+            gsap.fromTo('.stats-section',
+                { opacity: 0, y: 30 },
+                { 
+                    opacity: 1, 
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'power3.out',
+                    delay: 0.8
+                }
+            );
+        }
+    }, [isLoggedIn]);
+
+    // Action cards configuration
+    const actionCards = [
+        {
+            title: "Upload a Story",
+            description: "Share your experience or insights about poverty and help build awareness in the community",
+            icon: FileText,
+            bgColor: "#E5F8FF",
+            href: "/uploadstory"
+        },
+        {
+            title: "View Stories",
+            description: "Browse your contributions and explore stories shared by others in the community",
+            icon: BookOpen,
+            bgColor: "#FFFCEB",
+            href: "/viewstories"
+        },
+        {
+            title: "Play FreeRice",
+            description: "Answer trivia & donate rice to help fight hunger. Every correct answer makes a difference!",
+            icon: Gamepad2,
+            bgColor: "#FFE8D6",
+            href: "/freerice"
+        },
+        {
+            title: "Donate Now",
+            description: "Discover and contribute to verified causes working to alleviate poverty worldwide",
+            icon: Heart,
+            bgColor: "#FFE5E5",
+            href: "/donationspages"
+        }
+    ];
+
     if (isLoggedIn) {
         // display this for is the user is logged in
         return (
-            <div className="min-h-screen">
-                <h1 className="pt-10 pb-1 text-center text-[70px] text-[#623100] font-black">
-                    Hello, {username}!
-                </h1>
-                <h1 className="text-center text-[70px] text-[#623100] font-black">
-                    Welcome back to PovertyLens!
-                </h1>
+            <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                    {/* Welcome Section */}
+                    <div className="mb-12 dashboard-header">
+                        <h1 className="text-4xl sm:text-5xl font-bold mb-3">
+                            Welcome back, <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">{username}</span>
+                        </h1>
+                        <p className="text-gray-600 text-lg">Here's your dashboard</p>
+                    </div>
 
-                {/* Four interactive buttons */}
-                <div className="flex gap-8 justify-center pt-16">
-                    <Link href="/uploadstory">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
-                            Upload a story
-                        </button>
-                    </Link>
+                    {/* Action Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
+                        {actionCards.map((card, index) => (
+                            <ActionCard
+                                key={index}
+                                title={card.title}
+                                description={card.description}
+                                icon={card.icon}
+                                bgColor={card.bgColor}
+                                href={card.href}
+                            />
+                        ))}
+                    </div>
 
-                    <Link href="/viewstories">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
-                            View your stories
-                        </button>
-                    </Link>
+                    {/* Quick Stats Section */}
+                    <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-600 text-sm mb-1">Stories Shared</p>
+                                    <p className="text-3xl font-semibold">24</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-[#8CE4FF]/20 flex items-center justify-center">
+                                    <FileText className="w-6 h-6 text-[#8CE4FF]" />
+                                </div>
+                            </div>
+                        </div>
 
-                    <Link href="/freerice">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
-                            Play FreeRice
-                        </button>
-                    </Link>
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-600 text-sm mb-1">Rice Donated</p>
+                                    <p className="text-3xl font-semibold">1,250</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-[#FFA239]/20 flex items-center justify-center">
+                                    <Gamepad2 className="w-6 h-6 text-[#FFA239]" />
+                                </div>
+                            </div>
+                        </div>
 
-                    <Link href="/donationspages">
-                        <button className="bg-[#AC7F5E] px-12 py-12 rounded-3xl text-[#623100] text-[30px] font-semibold hover:bg-[#C9956E] transition-colors">
-                            Donate Now!
-                        </button>
-                    </Link>
-                </div>
-                {/* Thank you message */}
-                <div className="text-center pt-16">
-                    <h3 className="text-center text-[70px] text-[#623100] font-black">
-                        Thank you for coming back!
-                    </h3>
-                </div>
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-gray-600 text-sm mb-1">Total Impact</p>
+                                    <p className="text-3xl font-semibold">342</p>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-[#FF5656]/20 flex items-center justify-center">
+                                    <Heart className="w-6 h-6 text-[#FF5656]" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
             </div>
         )
     }
 
     // display this for if the user is not logged in
     return (
-        <div className="min-h-screen">
-                <h1 className="pt-10 pb-1 text-center text-[70px] text-[#623100] font-black ">
-                    Welcome To PovertyLens!
-                </h1>
-                
-                {/* Creating the columns*/}
-                <div className="flex gap-10 px-10">
-                    {/* Left column - Introductory text */}
-                    <div className="flex-[11]">
-                        <p className="text-[#623100] font-bold text-[40px] mb-4">Our Mission:</p>
-                        <p className="text-[#623100] text-[30px] mb-4">
-                            Poverty affects millions worldwide, yet it remains 
-                            one of the most misunderstood and underrepresented global issues.
-                            PovertyLens hopes to bridges this gap by transforming complex data and real-world stories into meaningful,
-                            easy-to-understand insights.
-                        </p>
-                        <p className="text-[#623100] text-[30px]">
-                            We hope to empower everyone, whether that’s supporting global initiatives, 
-                            donating, or spreading awareness within their own communities.
-                        </p>
-                    </div>
-
-                    {/* Right column - Logo */}
-                    <div className="flex-[9] flex justify-center items-start mt-15">
-                            <Image
-                                src="/logov2.png" 
-                                alt="PovertyLens Logo" 
-                                width={500} 
-                                height={500}
-                                className="object-contain"/>
-                    </div>
+        <div className="min-h-screen pb-12" style={{ background: 'var(--background)' }}>
+            <h1 className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" style={{ color: 'var(--foreground)' }}>
+                Welcome To PovertyLens!
+            </h1>
+            
+            {/* Creating the columns*/}
+            <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
+                {/* Left column - Introductory text */}
+                <div className="flex-[11] card card-cyan p-8 md:p-10">
+                    <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
+                        Our Mission:
+                    </h2>
+                    <p className="text-lg md:text-xl mb-5 leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
+                        Poverty affects millions worldwide, yet it remains 
+                        one of the most misunderstood and underrepresented global issues.
+                        PovertyLens hopes to bridges this gap by transforming complex data and real-world stories into meaningful,
+                        easy-to-understand insights.
+                    </p>
+                    <p className="text-lg md:text-xl leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
+                        We hope to empower everyone, whether that's supporting global initiatives, 
+                        donating, or spreading awareness within their own communities.
+                    </p>
                 </div>
+
+                {/* Right column - Logo */}
+                <div className="flex-[9] flex justify-center items-center">
+                    <Image
+                        src="/logov3.png" 
+                        alt="PovertyLens Logo" 
+                        width={450} 
+                        height={450}
+                        className="object-contain drop-shadow-2xl"/>
+                </div>
+            </div>
         </div>
     );
 }
