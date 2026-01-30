@@ -659,6 +659,8 @@ app.post('/api/stories', async(req, res) => {
       displayPhoto: !!displayPhoto,
       userEmail: userEmail || null,
       createdAt: new Date(),
+      updatedAt: now,
+      archieved: false,
     };
 
     const result = await storiesCollection.insertOne(newStory);
@@ -670,7 +672,7 @@ app.post('/api/stories', async(req, res) => {
     res.status(201).json({
       success: true,
       message: 'Story uploaded successfully',
-      storyId: result.insertedId,
+      story: {...newStory, _id: result.insertedId },
     });
   } catch (err) {
     console.error('Error creating story:', err);
@@ -741,7 +743,7 @@ app.put('/api/stories/:id', async (req, res) => {
 
     const storiesCollection = db.collection('stories');
 
-    const result = await storiesCollection.updateOne(
+    const result = await storiesCollection.findOneAndUpdate(
       {_id: new ObjectId(id)},
       {
         $set: {
@@ -751,10 +753,11 @@ app.put('/api/stories/:id', async (req, res) => {
           displayPhoto: !!displayPhoto,
           updatedAt: new Date(),
         },
-      }
+      },
+      {returnDocument: 'after'}
     );
 
-    if (!result.matchedCount) {
+    if (!result.value) {
       return res.status(404).json({
         success: false,
         message: 'Story not found',
@@ -764,6 +767,7 @@ app.put('/api/stories/:id', async (req, res) => {
     res.json({
       success: true,
       message: 'Edits saved successfully!',
+      story: result.value,
     });
   } catch (err) {
     console.error('Error updating story:', err);
