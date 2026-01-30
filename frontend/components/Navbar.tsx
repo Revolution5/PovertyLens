@@ -224,7 +224,7 @@ export default function Navbar() {
                                                 className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                                                 onClick={() => setUserMenuOpen(false)}
                                             >
-                                                My Profile
+                                                Account Settings
                                             </Link>
                                             <hr className="my-2 border-gray-200" />
                                             <button
