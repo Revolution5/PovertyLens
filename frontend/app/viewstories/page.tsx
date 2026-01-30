@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BookOpen, Eye, Heart, Calendar, Edit2, Archive, Trash2, ArchiveRestore, Save, X } from 'lucide-react';
 
 const BACKEND_URL = 'http://localhost:4000';
+const cardBg = '#D7C6B4';
+const textBrown = '#623100';
+const pageBg = '#ffffff';
 
 type Story = {
     _id: string;
@@ -12,19 +14,15 @@ type Story = {
     displayName: boolean;
     displayPhoto: boolean;
     createdAt?: string;
-    updatedAt?: string;
     archived?: boolean;
-    views?: number;
-    likes?: number;
-    status?: 'published';
 };
 
 export default function ViewStoriesPage() {
     const [stories, setStories] = useState<Story[]>([]);
+    const [selectedIndex, setSelectedIndex] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState<string | null>(null);
+    const [editing, setEditing] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>('active');
 
     const [editTitle, setEditTitle] = useState('');
     const [editText, setEditText] = useState('');
@@ -32,20 +30,13 @@ export default function ViewStoriesPage() {
     const [editDisplayPhoto, setEditDisplayPhoto] = useState(true);
     const [savingEdit, setSavingEdit] = useState(false);
 
-    const showMessage = (msg: string, duration = 5000) => {
-    setMessage(msg);
-    if (duration > 0) {
-        setTimeout(() => {
-            setMessage(null);
-        }, duration);
-    }
-};
+    const selectedStory = stories[selectedIndex];
 
     useEffect(() => {
         const fetchStories = async () => {
             try {
-                const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
-                if (!userEmail) {
+                const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail'):null;
+                if (!userEmail){
                     setMessage('You must be logged in to view your stories.');
                     setLoading(false);
                     return;
@@ -54,13 +45,14 @@ export default function ViewStoriesPage() {
                 const res = await fetch(`${BACKEND_URL}/api/stories?userEmail=${encodeURIComponent(userEmail)}&includeArchived=true`);
                 const data = await res.json();
 
-                if (!res.ok || !data.success) {
-                    showMessage(data.message || 'Error fetching stories.');
+                if (!res.ok || !data.success){
+                    setMessage(data.message || 'Error fetching stories.');
                     setLoading(false);
                     return;
                 }
 
                 setStories(data.stories || []);
+                setSelectedIndex(0);
                 setMessage(null);
             } catch (err) {
                 console.error(err);
@@ -72,36 +64,45 @@ export default function ViewStoriesPage() {
         fetchStories();
     }, []);
 
-    const startEdit = (story: Story) => {
-        setEditing(story._id);
-        setEditTitle(story.title || '');
-        setEditText(story.storyText || '');
-        setEditDisplayName(story.displayName);
-        setEditDisplayPhoto(story.displayPhoto);
+    // Prefill fields when user enters edit mode
+    useEffect(() => {
+        if(selectedStory && editing){
+            setEditTitle(selectedStory.title || '');
+            setEditText(selectedStory.storyText || '');
+            setEditDisplayName(selectedStory.displayName);
+            setEditDisplayPhoto(selectedStory.displayPhoto);
+        }
+    }, [selectedStory, editing]);
+
+    const startEdit = () => {
+        if (!selectedStory) return;
+        setEditing(true);
         setMessage(null);
     };
 
     const cancelEdit = () => {
-        setEditing(null);
+        setEditing(false);
         setMessage(null);
     };
 
-    const handleSaveEdit = async (storyId: string) => {
-        if (!editText.trim()) {
+    const handleSaveEdit = async () => {
+        if (!selectedStory) return;
+
+        if (!editText.trim()){
             setMessage('Story text cannot be empty.');
             return;
         }
         const words = editText.trim().split(/\s+/).length;
-        if (words > 7000) {
+        if (words > 7000){
             setMessage('Story exceeds 7,000 word limit.');
             return;
         }
 
         try {
             setSavingEdit(true);
-            const res = await fetch(`${BACKEND_URL}/api/stories/${storyId}`, {
+            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     title: editTitle,
                     storyText: editText,
@@ -110,408 +111,290 @@ export default function ViewStoriesPage() {
                 }),
             });
 
-            let data;
-            // const data = await res.json();
-            try {
-                data = await res.json();
-            } catch (parseErr) {
-                console.error('Failed to parse JSON from PUT /api/stories/:id', parseErr);
-                setMessage('Server returned an invalid response.');
-                setSavingEdit(false);
-                return;
-            }
+            const data = await res.json();
+
             if (!res.ok || !data.success) {
-                console.error('PUT /api/stories/:id returned error', res.status, data);
                 setMessage(data.message || 'Error saving changes.');
                 setSavingEdit(false);
                 return;
             }
 
-            if (!data.story){
-                console.warn('PUT returned success but with no story object. Data:', data);
-                setStories(prev => prev.map(s => s._id === storyId ? {
-                    ...s,
-                    title: editTitle,
-                    storyText: editText,
-                    displayName: editDisplayName,
-                    displayPhoto: editDisplayPhoto,
-                    updatedAt: new Date().toISOString(),
-                }
-            :s
-        ));
-            } else {
-                setStories(prev => prev.map(s => s._id === storyId ? {
-                ...s, ...data.story 
-            } : s
-        ));
-            }
-            showMessage('Changes saved successfully!');
-            setEditing(null);
+            // Updating the local list
+            const updated = [...stories];
+            updated[selectedIndex] = {
+                ...selectedStory,
+                title: editTitle,
+                storyText: editText,
+                displayName: editDisplayName,
+                displayPhoto: editDisplayPhoto,
+            };
+            setStories(updated);
+            setMessage('Changes saved successfully!');
+            setEditing(false);
         } catch (err) {
             console.error(err);
-            showMessage('Error connecting to server to save changes.');
+            setMessage('Error connecting to server to save changes.');
         } finally {
             setSavingEdit(false);
         }
     };
 
-    const handleArchive = async (storyId: string, currentArchived: boolean) => {
-        const newArchived = !currentArchived;
-        const confirmed = window.confirm(newArchived ?
-            'Are you sure you want to archive this story?\nYou will still be able to access it later on.' : 
-            'Are you sure you want to unarchive this story?');
-        if (!confirmed) return;
+    const handleArchive = async () => {
+        if (!selectedStory) return;
 
+        const newArchived = !selectedStory.archived;
+
+        const confirmed = window.confirm(newArchived ?
+            'Are you sure you want to archive this story?\nYou will still be able to access it later on.' : 'Are you sure you want to unarchive this story?');
+        if (!confirmed) return;
         try {
-            const res = await fetch(`${BACKEND_URL}/api/stories/${storyId}/archive`, {
+            console.log('Sending archive state:', newArchived);
+            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}/archive`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ archived: newArchived }),
-            });
+                body: JSON.stringify({ archived: newArchived}),
+                }                
+            );
             const data = await res.json();
 
-            if (!res.ok || !data.success) {
-                showMessage(data.message || 'Error archiving story.');
+            if (!res.ok || !data.success){
+                setMessage(data.message || 'Error archiving story.');
                 return;
             }
 
-            setStories(stories.map(s => s._id === storyId ? { ...s, archived: newArchived } : s));
-            showMessage(newArchived ? 'Story archived successfully.' : 'Story unarchived successfully.');
+            // Update list on the user's page
+            const updated = [...stories];
+            updated[selectedIndex] = { ...selectedStory, archived: newArchived };
+            setStories(updated);
+            setEditing(false);
+            setMessage(newArchived ? 'Story archived successfully.' : 'Story unarchived successfully.');
         } catch (err) {
             console.error(err);
-            showMessage('Error connecting to server to update archive status.');
+            setMessage('Error connecting to server to update archive status.');
         }
     };
 
-    const handleDelete = async (storyId: string, storyTitle: string) => {
-        const confirmed = window.confirm('Are you sure you want to delete this story?\nThis action CANNOT be undone.');
+    const handleDelete = async () => {
+        if (!selectedStory) return;
+        const confirmed = window.confirm('Are you sure you want to delete this story?\n This action CANNOT be undone.');
         if (!confirmed) return;
 
         try {
-            const res = await fetch(`${BACKEND_URL}/api/stories/${storyId}`, {
+            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}`, {
                 method: 'DELETE',
             });
             const data = await res.json();
 
-            if (!res.ok || !data.success) {
-                showMessage(data.message || 'Error deleting story.');
+            if (!res.ok || !data.success){
+                setMessage(data.message || 'Error deleting story.');
                 return;
             }
 
-            setStories(stories.filter(s => s._id !== storyId));
-            showMessage(`Story "${storyTitle}" deleted successfully`);
+            // Remove from the UI list on the user's page
+            const updated = stories.filter((_, idx) => idx !== selectedIndex);
+            setStories(updated);
+            setSelectedIndex(0);
+            setEditing(false);
+            setMessage('Story deleted.');
         } catch (err) {
             console.error(err);
-            showMessage('Error connecting to server to delete story.');
+            setMessage('Error connecting to server to archive story.');
+        }
+    };
+    const handleReturn = () => {
+        if (typeof window !== 'undefined'){
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = '/';
         }
     };
 
-    const activeStories = stories.filter(s => !s.archived);
-    const archivedStories = stories.filter(s => s.archived);
-
-    const getFilteredStories = () => {
-        if (activeTab === 'active') return activeStories;
-        if (activeTab === 'archived') return archivedStories;
-        return stories;
-    };
-
-    const filteredStories = getFilteredStories();
-
     return (
-        <div className="min-h-screen bg-white">
-            <div className="max-w-5xl mx-auto p-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-[#8CE4FF] rounded-lg">
-                            <BookOpen className="h-8 w-8 text-gray-900" />
-                        </div>
-                        <h1 className="text-4xl font-bold text-black">
-                            Your Stories
-                        </h1>
-                    </div>
-                    <p className="text-gray-700">Manage all your published and draft stories in one place</p>
-                </div>
+        <div
+            style={{
+                backgroundColor: pageBg,
+                minHeight: '100vh',
+                padding: '40px 80px 80px',
+                color: textBrown,
+            }}
+        >
+            {/* Heading */}
+            <h1
+                style={{
+                    fontSize: 48,
+                    fontWeight: 800,
+                    textAlign: 'center',
+                    marginBottom: 32,
+                }}
+            >
+                View your Stories
+            </h1>
+            {loading && <p style={{ textAlign: 'center'}}>Loading your stories...</p>}
 
-                {/* Toast Message */}
-                {message && (
-                    <div className={`mb-6 p-4 rounded-lg font-medium ${
-                        message.includes('Error') || message.includes('cannot') || message.includes('exceeds')
-                            ? 'bg-red-50 border border-red-200 text-red-800'
-                            : message.includes('success') || message.includes('saved') || message.includes('deleted')
-                            ? 'bg-green-50 border border-green-200 text-green-800'
-                            : 'bg-blue-50 border border-blue-200 text-blue-800'
-                    }`}>
-                        {message}
-                    </div>
-                )}
-
-                {loading ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <p>Loading your stories...</p>
-                    </div>
-                ) : stories.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <p>No stories found</p>
-                    </div>
-                ) : (
-                    <div className="w-full">
-                        {/* Tabs */}
-                        <div className="mb-6 inline-flex rounded-full border border-[#8CE4FF] bg-white/80 p-1">
-                            <button
-                                onClick={() => setActiveTab('active')}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeTab === 'active'
-                                        ? '!bg-[#FF5656] text-black'
-                                        : 'text-gray-600 hover:!bg-[#FF5656] hover:text-gray-900'
-                                }`}
+            {!loading && stories.length === 0 && (<p style={{ textAlign: 'center' }}>You have not uploaded any stories</p>)}
+                <div
+                    style={{display: 'grid', gridTemplateColumns: '2.2fr 0.8fr', gap: 24, alignItems: 'flex-start',}}
+                >
+                    <div>
+                        {!editing && selectedStory && (<div style={{backgroundColor: cardBg, borderRadius: 16, padding: '18px 20px', boxShadow: '0 2px 4px rgba(0,0,0,0.15)', minHeight: 260, marginBottom: 18}}>
+                            <h2
+                                style={{fontSize: 24, margin: '0 0 12px 0'}}
                             >
-                                Active Stories ({activeStories.length})
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('archived')}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeTab === 'archived'
-                                        ? '!bg-[#FEEE91] text-black'
-                                        : 'text-gray-600 hover:!bg-[#FEEE91] hover:text-gray-900'
-                                }`}
-                            >
-                                Archived ({archivedStories.length})
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('all')}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeTab === 'all'
-                                        ? '!bg-[#FFA239] text-black'
-                                        : 'text-gray-600 hover:!bg-[#FFA239] hover:text-gray-900'
-                                }`}
-                            >
-                                All Stories ({stories.length})
-                            </button>
+                                {selectedStory.title || 'Story'}
+                            </h2>
+                            <p style={{margin: 0, fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap',}}> {selectedStory.storyText} </p>
                         </div>
+                    )}
 
-                        {/* Story Cards */}
-                        <div className="space-y-4">
-                            {filteredStories.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    <p>No {activeTab} stories found</p>
-                                </div>
-                            ) : (
-                                filteredStories.map((story) => (
-                                    <StoryCard
-                                        key={story._id}
-                                        story={story}
-                                        isEditing={editing === story._id}
-                                        editTitle={editTitle}
-                                        editText={editText}
-                                        editDisplayName={editDisplayName}
-                                        editDisplayPhoto={editDisplayPhoto}
-                                        savingEdit={savingEdit}
-                                        onEditTitleChange={setEditTitle}
-                                        onEditTextChange={setEditText}
-                                        onEditDisplayNameChange={setEditDisplayName}
-                                        onEditDisplayPhotoChange={setEditDisplayPhoto}
-                                        onEdit={() => startEdit(story)}
-                                        onSave={() => handleSaveEdit(story._id)}
-                                        onCancel={cancelEdit}
-                                        onArchive={() => handleArchive(story._id, story.archived || false)}
-                                        onDelete={() => handleDelete(story._id, story.title || 'Untitled')}
-                                    />
-                                ))
-                            )}
+                    {editing && selectedStory && (
+                        <div style={{backgroundColor: cardBg, borderRadius: 16, padding: '18px 20px', boxShadow: '0 2px 4px 4gba(0,0,0.15)', marginBottom: 18,}}>
+                            <h2 style={{fontSize: 26, margin: '0 0 16px 0', textAlign: 'center'}}>Edit your story</h2>
+                            <div style={{ marginBottom: 12}}>
+                                <input
+                                    type='text'
+                                    value={editTitle}
+                                    onChange={(e) => setEditTitle(e.target.value)}
+                                    placeholder="Enter a title here (optional)"
+                                    style={{
+                                        width:'100%',
+                                        padding: '10px 12px',
+                                        borderRadius: 16,
+                                        border: 'none',
+                                        backgroundColor: '#e3cfb9',
+                                        fontSize: 16,
+                                        color: textBrown,
+                                        outline: 'none',
+                                        marginBottom: 12,
+                                    }}
+                                />
+                                <textarea
+                                    value={editText}
+                                    onChange={(e) => setEditText(e.target.value)}
+                                    placeholder='Type your story here (max. 7,000 words)'
+                                    style={{
+                                        width: '100%',
+                                        height: 260,
+                                        padding: '14px 18px',
+                                        borderRadius: 16,
+                                        border: 'none',
+                                        backgroundColor: '#e3cfb9',
+                                        fontSize: 16,
+                                        color: textBrown,
+                                        outline: 'none',
+                                        resize: 'vertical',
+                                    }}
+                                />
+                            </div>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    gap: 80,
+                                    alignItems: 'center',
+                                    marginBottom: 16,
+                                }}
+                            >
+                                <ToggleRow
+                                    label = "Display name?"
+                                    checked={editDisplayName}
+                                    onToggle={()  => setEditDisplayName((v) => !v)}
+                                />
+                                <ToggleRow
+                                    label = "Display photo?"
+                                    checked={editDisplayPhoto}
+                                    onToggle={()  => setEditDisplayPhoto((v) => !v)}
+                                />
+                            </div>
+                            <div style={{ textAlign: 'center', marginTop: 8}}>
+                                <button
+                                    type='button'
+                                    disabled={savingEdit}
+                                    onClick = {handleSaveEdit}
+                                    style={{padding: '8px 40px', fontSize: 16, fontWeight: 700, color: '#fff', backgroundColor: '#a66532', borderRadius: 10, border: '2px solid #7a4520', boxShadow: '0 3px 4px rgba(0,0,0,0.2)', cursor: savingEdit ? 'not-allowed' : 'pointer', marginRight: 12,}}
+                                >
+                                    {savingEdit ? 'Saving story...' : 'Upload Changes'}
+                                </button>
+
+                                <button
+                                    type='button'
+                                    onClick={cancelEdit}
+                                    style={{padding: '8px 24px', fontSize: 14, fontWeight: 600, color: textBrown, backgroundColor: '#f2e4d5', borderRadius: 10, border: '1px solid #b18a64', cursor: 'pointer'}}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
-
-function StoryCard({
-    story,
-    isEditing,
-    editTitle,
-    editText,
-    editDisplayName,
-    editDisplayPhoto,
-    savingEdit,
-    onEditTitleChange,
-    onEditTextChange,
-    onEditDisplayNameChange,
-    onEditDisplayPhotoChange,
-    onEdit,
-    onSave,
-    onCancel,
-    onArchive,
-    onDelete,
-}: {
-    story: Story;
-    isEditing: boolean;
-    editTitle: string;
-    editText: string;
-    editDisplayName: boolean;
-    editDisplayPhoto: boolean;
-    savingEdit: boolean;
-    onEditTitleChange: (val: string) => void;
-    onEditTextChange: (val: string) => void;
-    onEditDisplayNameChange: (val: boolean) => void;
-    onEditDisplayPhotoChange: (val: boolean) => void;
-    onEdit: () => void;
-    onSave: () => void;
-    onCancel: () => void;
-    onArchive: () => void;
-    onDelete: () => void;
-}) {
-    const formatDateTime = (dateString?: string) => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        });
-    };
-
-    if (isEditing) {
-        return (
-            <div className="bg-white rounded-3xl overflow-hidden p-6 shadow-xl hover:shadow-2x1 hover:-translate-y-1 border-2 border-[#8CE4FF]/30 hover:border-[#8CE4FF]/70 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
-                    Edit Your Story
-                </h3>
-                <div className="space-y-4">
-                    <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => onEditTitleChange(e.target.value)}
-                        placeholder="Story title (optional)"
-                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#FFA239] focus:bg-white transition-all text-gray-900 font-medium"
-                    />
-                    <textarea
-                        value={editText}
-                        onChange={(e) => onEditTextChange(e.target.value)}
-                        placeholder="Type your story here (max 7,000 words)"
-                        rows={12}
-                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#FFA239] focus:bg-white transition-all resize-vertical text-gray-900"
-                    />
-                    
-                    <div className="flex justify-center gap-12 py-2">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <span className="text-gray-700 font-medium">Display name?</span>
-                            <ToggleSwitch checked={editDisplayName} onChange={() => onEditDisplayNameChange(!editDisplayName)} />
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <span className="text-gray-700 font-medium">Display photo?</span>
-                            <ToggleSwitch checked={editDisplayPhoto} onChange={() => onEditDisplayPhotoChange(!editDisplayPhoto)} />
-                        </label>
-                    </div>
-
-                    <div className="flex justify-center gap-3 pt-4">
-                        <button
-                            onClick={onSave}
-                            disabled={savingEdit}
-                            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFA239] to-[#FF5656] text-black font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                    {!editing && selectedStory && (
+                        <div
+                            style={{display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 24,}}
                         >
-                            <Save className="h-5 w-5" />
-                            {savingEdit ? 'Saving...' : 'Save Changes'}
-                        </button>
-                        <button
-                            onClick={onCancel}
-                            className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
-                        >
-                            <X className="h-5 w-5" />
-                            Cancel
-                        </button>
+                            <ActionButton label='Edit' onClick = {startEdit} />
+                            <ActionButton label={selectedStory?.archived ? 'Unarchive' : 'Archive'} onClick = {handleArchive} />
+                            <ActionButton label='Delete' onClick = {handleDelete} variant="danger" />
+                        </div>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={handleReturn}
+                        style={{padding: '8px 24px', fontSize: 16, fontWeight: 600, color: textBrown, backgroundColor: '#d7c6b4', borderRadius: 10, border: '1px solid #b18a64', cursor: 'pointer'}}
+                    > 
+                        Return
+                      </button>
                     </div>
-                </div>
+                    <div>
+                        <h3
+                            style={{fontSize: 20, marginBottom: 10, textAlign: 'center'}}
+                        >Your Stories</h3>
+                        <div
+                            style={{backgroundColor: cardBg, borderRadius: 16, padding: '10px 12px', boxShadow: '0 2px 4px rgba(0,0,0,0.15)',}}
+                        >
+                            {stories.map((story, idx) => (
+                                <button
+                                    key={story._id}
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedIndex(idx);
+                                        setEditing(false);
+                                        setMessage(null);
+                                    }}
+                                    style={{
+                                        display: 'block',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        padding: '6px 8px',
+                                        marginBottom: 4,
+                                        borderRadius: 8,
+                                        border: 'none',
+                                        backgroundColor: idx === selectedIndex ? '#e8d6c2':'transparent',
+                                        cursor: 'pointer',
+                                        fontSize: 14,
+                                    }}
+                                >
+                                    {story.title || `Story ${stories.length - idx}`}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>                  
             </div>
         );
     }
 
+// Toggle
+function ToggleRow({
+    label,
+    checked,
+    onToggle,
+}: {
+    label: string;
+    checked: boolean;
+    onToggle: () => void;
+}) {
     return (
-        <div className="bg-white rounded-3xl overflow-hidden p-6 shadow-xl hover:shadow-2x1 hover:-translate-y-1 border-2 border-[#8CE4FF]/30 hover:border-[#8CE4FF]/70 transition-all duration-300 group">
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-2xl font-bold text-gray-900">
-                            {story.title || 'Untitled Story'}
-                        </h3>
-                        {story.archived && (
-                            <span className="px-3 py-1 bg-[#FEEE91] text-gray-900 text-xs font-bold rounded-full">
-                                ARCHIVED
-                            </span>
-                        )}
-                        {!story.archived && (
-                            <span className="px-3 py-1 bg-green-200 text-gray-700 text-xs font-bold rounded-full">
-                                PUBLISHED
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-                        {story.storyText}
-                    </p>
-                </div>
-            </div>
-
-            {/* Metadata */}
-            <div className="text-sm text-gray-500 mb-4">
-                <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>Created {formatDateTime(story.createdAt)}</span>
-                </div>
-                {story.updatedAt && (
-                    <div className="flex items-center gap-2">
-                        <Edit2 className="h-4 w-4"/>
-                        <span>Updated {formatDateTime(story.updatedAt)}</span>
-                    </div>
-                )}
-                {story.views !== undefined && (
-                    <div className="flex items-center gap-2">
-                        <Eye className="h-4 w-4" />
-                        <span>{story.views.toLocaleString()} views</span>
-                    </div>
-                )}
-                {story.likes !== undefined && (
-                    <div className="flex items-center gap-2">
-                        <Heart className="h-4 w-4" />
-                        <span>{story.likes.toLocaleString()} likes</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-                <button
-                    onClick={onEdit}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#8CE4FF] text-gray-900 font-semibold rounded-lg hover:bg-[#6DD5FF] transition-all"
-                >
-                    <Edit2 className="h-4 w-4" />
-                    Edit
-                </button>
-                <button
-                    onClick={onArchive}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#FEEE91] text-gray-900 font-semibold rounded-lg hover:bg-[#FEEE91]/80 transition-all"
-                >
-                    {story.archived ? (
-                        <>
-                            <ArchiveRestore className="h-4 w-4" />
-                            Unarchive
-                        </>
-                    ) : (
-                        <>
-                            <Archive className="h-4 w-4" />
-                            Archive
-                        </>
-                    )}
-                </button>
-                <button
-                    onClick={onDelete}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#FF5656] text-[#FF4646] font-semibold rounded-lg hover:bg-[#FF5656]/90 transition-all"
-                >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                </button>
-            </div>
+        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+            <span>{label}</span>
+            <ToggleSwitch checked={checked} onChange={onToggle} />
         </div>
     );
 }
@@ -523,22 +406,61 @@ function ToggleSwitch({
     checked: boolean;
     onChange: () => void;
 }) {
+    const trackColor = checked ? '#00c853' : '#cccccc';
     return (
         <button
             type="button"
             onClick={onChange}
-            aria-pressed={checked}
-            className={`relative inline-flex w-12 h-6 shrink-0 rounded-full transition-all
-                border border-green-300
-                focus: outline-none focus:ring-2 focus:ring-green-300
-                ${checked ? '!bg-green-400' : '!bg-gray-300'
-            }`}
+            style={{
+                width: 46,
+                height: 24,
+                borderRadius: 9999,
+                border: 'none',
+                padding: 2,
+                backgroundColor: trackColor,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: checked ? 'flex-end' : 'flex-start',
+                cursor: 'pointer',
+            }}
         >
-            <span
-                className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-md transition-transform
-                    ${checked ? 'translate-x-6' : 'translate-x-0'}
-                `}
+            <div
+                style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }}
             />
         </button>
+    );
+}
+
+function ActionButton({
+    label,
+    onClick,
+    variant = 'normal',
+}:{
+    label: string;
+    onClick:() => void;
+    variant?: 'normal' | 'danger';
+}) {
+    const isDanger = variant === 'danger';
+    return(
+        <button
+            type="button"
+            onClick={onClick}
+            style={{
+                padding: '8px 24px',
+                fontSize: 15,
+                fontWeight: 700,
+                color: isDanger ? '#fff':textBrown,
+                backgroundColor: isDanger ? '#b00020' : '#d7c6b4',
+                borderRadius: 10,
+                border: `1px solid ${isDanger ? '#7d0016':'#b18a64'}`,
+                cursor: 'pointer',
+            }}
+        >{label}</button>
     );
 }
