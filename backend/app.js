@@ -115,6 +115,7 @@ function createNotification(userId, message) {
   return newNotification;
 }
 
+// Edited by Christella 1/30/2026
 const ISO3_LIST = ['USA', 'CAN', 'MEX', 'BRA', 'ARG', 'GBR', 'FRA','DEU','ESP', 'ITA', 'IND', 'CHN', 'JPN', 'KOR', 'NGA', 'ZAF', 'EGY', 'ETH', 'PAK', 'BGD', 'IDN', 'VNM', 'PHL', 'THA', 'AUS', 'NZL'];
 
 async function fetchPip({ country, year, povline }){
@@ -388,7 +389,7 @@ app.get('/api/poverty/pip-map', async (req, res) => {
         }
 
         try {
-          const { pipDate, row } = await fetchPip({country, year, povline});
+          const { pipData, row } = await fetchPip({country, year, povline});
           const { metric, meta } = extractMetricAndMeta(row);
 
           const docToStore = {
