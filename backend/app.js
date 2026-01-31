@@ -85,35 +85,81 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create indexes for povertyLiveStats:', err.message || err);
   }
-}
 
-// notifications array
-const notifications = [];
-
-// Generate unique ID
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-// Create notification function
-function createNotification(userId, message) {
-  const newNotification = {
-    id: generateId(),
-    userId,
-    message,
-    createdAt: new Date(),
-    read: false
-  };
-  
-  notifications.unshift(newNotification); // Add to beginning
-  
-  // Keep only last 50 notifications to save memory
-  if (notifications.length > 50) {
-    notifications.length = 50;
+  try {
+    await db.collection('notifications').createIndex({ userId: 1, createdAt: -1 });
+    console.log('Index created on notifications collection');
+  } catch (err) {
+    console.warn('Could not create index for notifications:', err.message || err);
   }
-  
-  return newNotification;
 }
+
+async function createNotification(userId, message) {
+  try {
+    const notificationsCollection = db.collection('notifications');
+    
+    const newNotification = {
+      userId,
+      message,
+      createdAt: new Date(),
+      read: false
+    };
+    
+    await notificationsCollection.insertOne(newNotification);
+    console.log(`Notification created for ${userId}`);
+    
+    return newNotification;
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
+}
+
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.json({ notifications: [] });
+    }
+    
+    const notificationsCollection = db.collection('notifications');
+    
+    const notifications = await notificationsCollection
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+    
+    res.json({ notifications });
+    
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/notifications/read', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID required' });
+    }
+    
+    const notificationsCollection = db.collection('notifications');
+    
+    await notificationsCollection.updateMany(
+      { userId, read: false },
+      { $set: { read: true } }
+    );
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Error marking notifications as read:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 // Edited by Christella 1/30/2026
 const ISO3_LIST = ['USA', 'CAN', 'MEX', 'BRA', 'ARG', 'GBR', 'FRA','DEU','ESP', 'ITA', 'IND', 'CHN', 'JPN', 'KOR', 'NGA', 'ZAF', 'EGY', 'ETH', 'PAK', 'BGD', 'IDN', 'VNM', 'PHL', 'THA', 'AUS', 'NZL'];
@@ -1121,39 +1167,3 @@ app.delete('/api/stories/:id', async (req, res) => {
   }
 });
 
-// Get notifications
-app.get('/api/notifications', (req, res) => {
-  const { userId } = req.query;
-  
-  if (!userId) {
-    return res.json({ success: true, notifications: [] });
-  }
-  
-  // Filter for this user's notifications, newest first
-  const userNotifications = notifications
-    .filter(note => note.userId === userId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  
-  res.json({ 
-    success: true, 
-    notifications: userNotifications.slice(0, 10) // Return last 10
-  });
-});
-
-// Mark notification as read
-app.post('/api/notifications/:id/read', (req, res) => {
-  const { id } = req.params;
-  
-  const noteIndex = notifications.findIndex(n => n.id === id);
-  if (noteIndex !== -1) {
-    notifications[noteIndex].read = true;
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ success: false, message: 'Notification not found' });
-  }
-});
-
-app.listen(port, async () => {
-  await connectDB()
-  console.log(`Server listening on port ${port}`)
-})

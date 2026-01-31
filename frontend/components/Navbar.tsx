@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ChevronDown, Menu, X } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
     // Hooks initialization
@@ -199,6 +200,8 @@ export default function Navbar() {
                             />
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                         </form>
+                        
+                        {isLoggedIn && <NotificationBell />}
                         
                         {/* Profile Button with Dropdown */}
                         <div className="relative user-menu">
