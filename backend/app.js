@@ -4,6 +4,12 @@ const express = require('express')
 const { MongoClient, ObjectId } = require('mongodb')
 const bcrypt = require('bcryptjs')
 
+// Code for allowing for Image uploads : Marisol Morale 1/28/26 
+const multer = require('multer') // Import multer for handling file uploads
+const path = require('path') // Import path module for handling file paths
+const fs = require('fs').promises // Import fs module for file system operations
+// End of Marisol Morales Code 1/28/26
+
 const app = express()
 const port = 4000
 
@@ -12,6 +18,53 @@ const fetch = require('node-fetch')
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// Added by Marisol Morales 1/28/26 
+// Configure multer storage to save uploaded files
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Define the upload directory
+    const uploadDir = path.join(__dirname, 'uploads');
+    
+    // Use promises properly with callbacks
+    fs.mkdir(uploadDir, { recursive: true })
+      .then(() => {
+        cb(null, uploadDir); // Set upload directory
+      })
+      .catch((err) => {
+        cb(err); // Handle error
+      });
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename WITH the original file extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const extension = path.extname(file.originalname); // Get .jpg, .png, etc.
+    cb(null, uniqueSuffix + extension);
+  }
+});
+
+// Configure multer with storage settings and file validation
+const upload = multer({
+  storage: storage, // Use the defined storage
+  limits: { 
+    fileSize: 5 * 1024 * 1024 // 5MB file size limit
+  }, 
+  fileFilter: (req, file, cb) => {
+    // only allow specific file types
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true); // Accept file
+    }
+    cb(new Error('Only images of type JPEG, JPG, PNG, and WEBP are allowed')); // Reject file
+  }
+});
+
+// Serve uploaded files as static files so they can be accessed via URL 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// End of Marisol Morales Code 1/28/26 ===============
 
 const uri = process.env.CONNECTION_URI
 // edited by Christella, 1/26/2026
@@ -628,6 +681,195 @@ app.delete('/api/profile/delete', async (req, res) => {
     });
   }
 });
+
+// Start of Marisol Morales Code for image uploads 1/28/26 
+// Upload image route - handles profile picture and banner uploads 
+app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    // get email and type from request body
+    const { email, type } =  req.body;
+
+    // validate that email was provided
+    if (!email) {
+      // if no email, delete the uploaded file to avoid orphaned files 
+      if (req.file) {
+        await fs.unlink(req.file.path);
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',   
+      });
+    }
+
+    // Check if file was uploaded by multer 
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Create url path that will be put in MongoDB
+    const imageUrl = `/uploads/${req.file.filename}`;
+    const usersCollection = db.collection('users');
+
+    // Find the user to ensure they exist and get their old image 
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      // user not found, cleanup uploaded file
+      await fs.unlink(req.file.path);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+  }
+
+  // determine field to update based on type
+  const fieldName = type === 'profile' ? 'profileImage' : 'bannerImage';
+    
+    // Delete old image file if it exists to free up storage
+    if (user[fieldName]) {
+      const oldImagePath = path.join(__dirname, user[fieldName]);
+      try {
+        await fs.unlink(oldImagePath);
+        console.log(`Deleted old image: ${oldImagePath}`);
+      } catch (err) {
+        // Ignore error if old file doesn't exist (already deleted or never existed)
+        console.log('Old image not found or already deleted');
+      }
+    }
+
+    // Update MongoDB user document with the new image path
+    await usersCollection.updateOne(
+      { email },
+      { $set: { [fieldName]: imageUrl } }
+    );
+
+    console.log(`Image uploaded for ${email}: ${imageUrl}`);
+
+    // Send success response with the image URL
+    res.json({
+      success: true,
+      imageUrl,
+      message: 'Image uploaded successfully'
+    });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    
+    // Clean up uploaded file if there was an error
+    if (req.file) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error deleting file:', unlinkError);
+      }
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error during upload'
+    });
+  }
+});
+
+// Remove image route - deletes image file and removes reference from database
+app.post('/api/remove-image', async (req, res) => {
+  try {
+    // Get email and type from request body
+    const { email, type } = req.body;
+
+    // Validate email was provided
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const usersCollection = db.collection('users');
+    // Find the user
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Determine which field to remove (profileImage or bannerImage)
+    const fieldName = type === 'profile' ? 'profileImage' : 'bannerImage';
+    
+    // Delete the actual image file from the uploads folder
+    if (user[fieldName]) {
+      const imagePath = path.join(__dirname, user[fieldName]);
+      try {
+        await fs.unlink(imagePath);
+        console.log(`Deleted image: ${imagePath}`);
+      } catch (err) {
+        console.log('Image file not found or already deleted');
+      }
+    }
+
+    // Remove the image reference from MongoDB (using $unset to delete the field)
+    await usersCollection.updateOne(
+      { email },
+      { $unset: { [fieldName]: "" } }
+    );
+
+    console.log(`Image removed for ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Image removed successfully'
+    });
+
+  } catch (error) {
+    console.error('Remove error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while removing image'
+    });
+  }
+});
+
+// Get user profile images - retrieves the image URLs from MongoDB
+app.get('/api/user-images', async (req, res) => {
+  try {
+    // Get email from URL parameter
+    const { email } = req.query;
+    
+    const usersCollection = db.collection('users');
+    // Find user and only return the image fields (projection)
+    const user = await usersCollection.findOne(
+      { email },
+      { projection: { profileImage: 1, bannerImage: 1 } }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Return the image URLs (or null if they don't exist)
+    res.json({
+      success: true,
+      profileImage: user.profileImage || null,
+      bannerImage: user.bannerImage || null
+    });
+
+  } catch (error) {
+    console.error('Error fetching user images:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+// End of Marisol Morales Code 1/28/26 =====================
 
 // Create a story
 app.post('/api/stories', async(req, res) => {
