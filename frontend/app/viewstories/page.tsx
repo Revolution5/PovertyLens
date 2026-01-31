@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BookOpen, Eye, Heart, Calendar, Edit2, Archive, Trash2, ArchiveRestore, Save, X } from 'lucide-react';
 
 const BACKEND_URL = 'http://localhost:4000';
 
@@ -14,15 +13,37 @@ type Story = {
     createdAt?: string;
     updatedAt?: string;
     archived?: boolean;
-    views?: number;
-    likes?: number;
-    status?: 'published';
+    published?: boolean;
 };
+
+function formatDate(dateString?: string): string {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
+function formatDateTime(dateString?: string): string {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
 
 export default function ViewStoriesPage() {
     const [stories, setStories] = useState<Story[]>([]);
+    const [selectedIndex, setSelectedIndex] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState<string | null>(null);
+    const [editing, setEditing] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>('active');
 
@@ -32,14 +53,7 @@ export default function ViewStoriesPage() {
     const [editDisplayPhoto, setEditDisplayPhoto] = useState(true);
     const [savingEdit, setSavingEdit] = useState(false);
 
-    const showMessage = (msg: string, duration = 5000) => {
-    setMessage(msg);
-    if (duration > 0) {
-        setTimeout(() => {
-            setMessage(null);
-        }, duration);
-    }
-};
+    const selectedStory = stories[selectedIndex];
 
     useEffect(() => {
         const fetchStories = async () => {
@@ -55,12 +69,13 @@ export default function ViewStoriesPage() {
                 const data = await res.json();
 
                 if (!res.ok || !data.success) {
-                    showMessage(data.message || 'Error fetching stories.');
+                    setMessage(data.message || 'Error fetching stories.');
                     setLoading(false);
                     return;
                 }
 
                 setStories(data.stories || []);
+                setSelectedIndex(0);
                 setMessage(null);
             } catch (err) {
                 console.error(err);
@@ -72,21 +87,38 @@ export default function ViewStoriesPage() {
         fetchStories();
     }, []);
 
-    const startEdit = (story: Story) => {
-        setEditing(story._id);
-        setEditTitle(story.title || '');
-        setEditText(story.storyText || '');
-        setEditDisplayName(story.displayName);
-        setEditDisplayPhoto(story.displayPhoto);
+    useEffect(() => {
+        if (selectedStory && editing) {
+            setEditTitle(selectedStory.title || '');
+            setEditText(selectedStory.storyText || '');
+            setEditDisplayName(selectedStory.displayName);
+            setEditDisplayPhoto(selectedStory.displayPhoto);
+        }
+    }, [selectedStory, editing]);
+
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                setMessage(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
+
+    const startEdit = () => {
+        if (!selectedStory) return;
+        setEditing(true);
         setMessage(null);
     };
 
     const cancelEdit = () => {
-        setEditing(null);
+        setEditing(false);
         setMessage(null);
     };
 
-    const handleSaveEdit = async (storyId: string) => {
+    const handleSaveEdit = async () => {
+        if (!selectedStory) return;
+
         if (!editText.trim()) {
             setMessage('Story text cannot be empty.');
             return;
@@ -99,7 +131,7 @@ export default function ViewStoriesPage() {
 
         try {
             setSavingEdit(true);
-            const res = await fetch(`${BACKEND_URL}/api/stories/${storyId}`, {
+            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -110,60 +142,44 @@ export default function ViewStoriesPage() {
                 }),
             });
 
-            let data;
-            // const data = await res.json();
-            try {
-                data = await res.json();
-            } catch (parseErr) {
-                console.error('Failed to parse JSON from PUT /api/stories/:id', parseErr);
-                setMessage('Server returned an invalid response.');
-                setSavingEdit(false);
-                return;
-            }
+            const data = await res.json();
+
             if (!res.ok || !data.success) {
-                console.error('PUT /api/stories/:id returned error', res.status, data);
                 setMessage(data.message || 'Error saving changes.');
                 setSavingEdit(false);
                 return;
             }
 
-            if (!data.story){
-                console.warn('PUT returned success but with no story object. Data:', data);
-                setStories(prev => prev.map(s => s._id === storyId ? {
-                    ...s,
-                    title: editTitle,
-                    storyText: editText,
-                    displayName: editDisplayName,
-                    displayPhoto: editDisplayPhoto,
-                    updatedAt: new Date().toISOString(),
-                }
-            :s
-        ));
-            } else {
-                setStories(prev => prev.map(s => s._id === storyId ? {
-                ...s, ...data.story 
-            } : s
-        ));
-            }
-            showMessage('Changes saved successfully!');
-            setEditing(null);
+            const updated = [...stories];
+            updated[selectedIndex] = {
+                ...selectedStory,
+                title: editTitle,
+                storyText: editText,
+                displayName: editDisplayName,
+                displayPhoto: editDisplayPhoto,
+                updatedAt: data.story?.updatedAt || new Date().toISOString(),
+            };
+            setStories(updated);
+            setMessage('Changes saved successfully!');
+            setEditing(false);
         } catch (err) {
             console.error(err);
-            showMessage('Error connecting to server to save changes.');
+            setMessage('Error connecting to server to save changes.');
         } finally {
             setSavingEdit(false);
         }
     };
 
-    const handleArchive = async (storyId: string, currentArchived: boolean) => {
-        const newArchived = !currentArchived;
-        const confirmed = window.confirm(newArchived ?
-            'Are you sure you want to archive this story?\nYou will still be able to access it later on.' : 
-            'Are you sure you want to unarchive this story?');
-        if (!confirmed) return;
+    const handleArchive = async () => {
+        if (!selectedStory) return;
 
+        const newArchived = !selectedStory.archived;
+
+        const confirmed = window.confirm(newArchived ?
+            'Are you sure you want to archive this story?\nYou will still be able to access it later on.' : 'Are you sure you want to unarchive this story?');
+        if (!confirmed) return;
         try {
-            const res = await fetch(`${BACKEND_URL}/api/stories/${storyId}/archive`, {
+            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}/archive`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ archived: newArchived }),
@@ -171,347 +187,436 @@ export default function ViewStoriesPage() {
             const data = await res.json();
 
             if (!res.ok || !data.success) {
-                showMessage(data.message || 'Error archiving story.');
+                setMessage(data.message || 'Error archiving story.');
                 return;
             }
 
-            setStories(stories.map(s => s._id === storyId ? { ...s, archived: newArchived } : s));
-            showMessage(newArchived ? 'Story archived successfully.' : 'Story unarchived successfully.');
+            const updated = [...stories];
+            updated[selectedIndex] = { ...selectedStory, archived: newArchived };
+            setStories(updated);
+            setEditing(false);
+            setMessage(newArchived ? 'Story archived successfully.' : 'Story unarchived successfully.');
         } catch (err) {
             console.error(err);
-            showMessage('Error connecting to server to update archive status.');
+            setMessage('Error connecting to server to update archive status.');
         }
     };
 
-    const handleDelete = async (storyId: string, storyTitle: string) => {
+    const handleDelete = async (storyId?: string) => {
+        const targetStory = storyId ? stories.find(s => s._id === storyId) : selectedStory;
+        if (!targetStory) return;
+       
         const confirmed = window.confirm('Are you sure you want to delete this story?\nThis action CANNOT be undone.');
         if (!confirmed) return;
 
         try {
-            const res = await fetch(`${BACKEND_URL}/api/stories/${storyId}`, {
+            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}`, {
                 method: 'DELETE',
             });
             const data = await res.json();
 
             if (!res.ok || !data.success) {
-                showMessage(data.message || 'Error deleting story.');
+                setMessage(data.message || 'Error deleting story.');
                 return;
             }
 
-            setStories(stories.filter(s => s._id !== storyId));
-            showMessage(`Story "${storyTitle}" deleted successfully`);
+            const updated = stories.filter((s) => s._id !== targetStory._id);
+            setStories(updated);
+            setSelectedIndex(0);
+            setEditing(false);
+            setMessage('Story deleted.');
         } catch (err) {
             console.error(err);
-            showMessage('Error connecting to server to delete story.');
+            setMessage('Error connecting to server to delete story.');
         }
     };
 
-    const activeStories = stories.filter(s => !s.archived);
-    const archivedStories = stories.filter(s => s.archived);
-
-    const getFilteredStories = () => {
-        if (activeTab === 'active') return activeStories;
-        if (activeTab === 'archived') return archivedStories;
-        return stories;
+    const handleReturn = () => {
+        if (typeof window !== 'undefined') {
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = '/';
+        }
     };
 
-    const filteredStories = getFilteredStories();
+    // Filter stories based on active tab
+    const filteredStories = stories.filter(story => {
+        if (activeTab === 'active') return !story.archived;
+        if (activeTab === 'archived') return story.archived;
+        return true; 
+    });
 
     return (
-        <div className="min-h-screen bg-white">
-            <div className="max-w-5xl mx-auto p-8">
+        <div style={{
+            minHeight: '100vh',
+            background: '#ffffff',
+            padding: '2rem',
+        }}>
+            <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
                 {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-[#8CE4FF] rounded-lg">
-                            <BookOpen className="h-8 w-8 text-gray-900" />
+                <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <div style={{
+                            padding: '0.5rem',
+                            background: '#8CE4FF',
+                            borderRadius: '0.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg>
                         </div>
-                        <h1 className="text-4xl font-bold text-black">
+                        <h1 style={{
+                            fontSize: '2.25rem',
+                            fontWeight: 700,                        }}>
                             Your Stories
                         </h1>
                     </div>
-                    <p className="text-gray-700">Manage all your published and draft stories in one place</p>
+                    <p style={{ color: '#333', fontSize: '1rem' }}>
+                        Manage all your published and draft stories in one place
+                    </p>
                 </div>
 
-                {/* Toast Message */}
-                {message && (
-                    <div className={`mb-6 p-4 rounded-lg font-medium ${
-                        message.includes('Error') || message.includes('cannot') || message.includes('exceeds')
-                            ? 'bg-red-50 border border-red-200 text-red-800'
-                            : message.includes('success') || message.includes('saved') || message.includes('deleted')
-                            ? 'bg-green-50 border border-green-200 text-green-800'
-                            : 'bg-blue-50 border border-blue-200 text-blue-800'
-                    }`}>
-                        {message}
+                {loading && (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
+                        <p>Loading your stories...</p>
                     </div>
                 )}
 
-                {loading ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <p>Loading your stories...</p>
+                {!loading && stories.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
+                        <p>You have not uploaded any stories</p>
                     </div>
-                ) : stories.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <p>No stories found</p>
-                    </div>
-                ) : (
-                    <div className="w-full">
+                )}
+
+                {!loading && stories.length > 0 && (
+                    <>
                         {/* Tabs */}
-                        <div className="mb-6 inline-flex rounded-full border border-[#8CE4FF] bg-white/80 p-1">
-                            <button
-                                onClick={() => setActiveTab('active')}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeTab === 'active'
-                                        ? '!bg-[#FF5656] text-black'
-                                        : 'text-gray-600 hover:!bg-[#FF5656] hover:text-gray-900'
-                                }`}
+                        <div style={{
+                            marginBottom: '1.5rem',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            backdropFilter: 'blur(8px)',
+                            borderRadius: '0.75rem',
+                            padding: '0.25rem',
+                            display: 'inline-flex',
+                            gap: '0.25rem',
+                            border: '1px solid rgba(140, 228, 255, 0.3)',
+                        }}>
+                            <TabButton
+                                active={activeTab === 'active'}
+                                onClick={() => {
+                                    setActiveTab('active');
+                                    setEditing(false);
+                                    setSelectedIndex(0);
+                                }}
+                                color="#8CE4FF"
                             >
-                                Active Stories ({activeStories.length})
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('archived')}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeTab === 'archived'
-                                        ? '!bg-[#FEEE91] text-black'
-                                        : 'text-gray-600 hover:!bg-[#FEEE91] hover:text-gray-900'
-                                }`}
+                                Active Stories ({stories.filter(s => !s.archived).length})
+                            </TabButton>
+                            <TabButton
+                                active={activeTab === 'archived'}
+                                onClick={() => {
+                                    setActiveTab('archived');
+                                    setEditing(false);
+                                    setSelectedIndex(0);
+                                }}
+                                color="#FEEE91"
                             >
-                                Archived ({archivedStories.length})
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('all')}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeTab === 'all'
-                                        ? '!bg-[#FFA239] text-black'
-                                        : 'text-gray-600 hover:!bg-[#FFA239] hover:text-gray-900'
-                                }`}
+                                Archived ({stories.filter(s => s.archived).length})
+                            </TabButton>
+                            <TabButton
+                                active={activeTab === 'all'}
+                                onClick={() => {
+                                    setActiveTab('all');
+                                    setEditing(false);
+                                    setSelectedIndex(0);
+                                }}
+                                color="#FFA239"
                             >
                                 All Stories ({stories.length})
-                            </button>
+                            </TabButton>
                         </div>
 
-                        {/* Story Cards */}
-                        <div className="space-y-4">
+                        {/* Message Toast */}
+                        {message && (
+                            <div style={{
+                                marginBottom: '1rem',
+                                padding: '1rem 1.5rem',
+                                background: message.includes('Error') || message.includes('cannot') || message.includes('exceeds')
+                                    ? '#ffebee'
+                                    : '#e8f5e9',
+                                border: `2px solid ${message.includes('Error') || message.includes('cannot') || message.includes('exceeds')
+                                    ? '#ef5350'
+                                    : '#66bb6a'}`,
+                                borderRadius: '0.75rem',
+                                color: '#333',
+                                fontSize: '0.95rem',
+                                fontWeight: 500,
+                            }}>
+                                {message}
+                            </div>
+                        )}
+
+                        {/* Main Content Area */}
+                        <div>
                             {filteredStories.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
+                                <div style={{
+                                    background: 'white',
+                                    borderRadius: '1rem',
+                                    padding: '3rem',
+                                    textAlign: 'center',
+                                    color: '#666',
+                                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                }}>
                                     <p>No {activeTab} stories found</p>
                                 </div>
                             ) : (
-                                filteredStories.map((story) => (
-                                    <StoryCard
-                                        key={story._id}
-                                        story={story}
-                                        isEditing={editing === story._id}
-                                        editTitle={editTitle}
-                                        editText={editText}
-                                        editDisplayName={editDisplayName}
-                                        editDisplayPhoto={editDisplayPhoto}
-                                        savingEdit={savingEdit}
-                                        onEditTitleChange={setEditTitle}
-                                        onEditTextChange={setEditText}
-                                        onEditDisplayNameChange={setEditDisplayName}
-                                        onEditDisplayPhotoChange={setEditDisplayPhoto}
-                                        onEdit={() => startEdit(story)}
-                                        onSave={() => handleSaveEdit(story._id)}
-                                        onCancel={cancelEdit}
-                                        onArchive={() => handleArchive(story._id, story.archived || false)}
-                                        onDelete={() => handleDelete(story._id, story.title || 'Untitled')}
-                                    />
-                                ))
+                                <>
+                                    {editing && selectedStory ? (
+                                        <div style={{
+                                            background: 'white',
+                                            borderRadius: '1rem',
+                                            padding: '2rem',
+                                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                            marginBottom: '1.5rem',
+                                            border: '2px solid #FFA239',
+                                        }}>
+                                            <h2 style={{
+                                                fontSize: '1.5rem',
+                                                fontWeight: 700,
+                                                margin: '0 0 1.5rem 0',
+                                                textAlign: 'center',
+                                                color: '#1a1a1a',
+                                            }}>
+                                                Edit Your Story
+                                            </h2>
+                                            <div style={{ marginBottom: '1rem' }}>
+                                                <input
+                                                    type="text"
+                                                    value={editTitle}
+                                                    onChange={(e) => setEditTitle(e.target.value)}
+                                                    placeholder="Enter a title here (optional)"
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '0.875rem 1rem',
+                                                        borderRadius: '0.75rem',
+                                                        border: '2px solid #e0e0e0',
+                                                        fontSize: '1rem',
+                                                        color: '#1a1a1a',
+                                                        outline: 'none',
+                                                        marginBottom: '1rem',
+                                                        transition: 'all 0.2s ease',
+                                                    }}
+                                                    onFocus={(e) => e.target.style.borderColor = '#8CE4FF'}
+                                                    onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                                                />
+                                                <textarea
+                                                    value={editText}
+                                                    onChange={(e) => setEditText(e.target.value)}
+                                                    placeholder="Type your story here (max. 7,000 words)"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '300px',
+                                                        padding: '1rem',
+                                                        borderRadius: '0.75rem',
+                                                        border: '2px solid #e0e0e0',
+                                                        fontSize: '1rem',
+                                                        color: '#1a1a1a',
+                                                        outline: 'none',
+                                                        resize: 'vertical',
+                                                        fontFamily: 'inherit',
+                                                        lineHeight: 1.6,
+                                                        transition: 'all 0.2s ease',
+                                                    }}
+                                                    onFocus={(e) => e.target.style.borderColor = '#8CE4FF'}
+                                                    onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                                                />
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                gap: '4rem',
+                                                alignItems: 'center',
+                                                marginBottom: '1.5rem',
+                                            }}>
+                                                <ToggleRow
+                                                    label="Display name?"
+                                                    checked={editDisplayName}
+                                                    onToggle={() => setEditDisplayName((v) => !v)}
+                                                />
+                                                <ToggleRow
+                                                    label="Display photo?"
+                                                    checked={editDisplayPhoto}
+                                                    onToggle={() => setEditDisplayPhoto((v) => !v)}
+                                                />
+                                            </div>
+                                            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                                                <button
+                                                    type="button"
+                                                    disabled={savingEdit}
+                                                    onClick={handleSaveEdit}
+                                                    style={{
+                                                        padding: '0.75rem 2.5rem',
+                                                        fontSize: '1rem',
+                                                        fontWeight: 700,
+                                                        color: '#000000',
+                                                        background: '#88c98b',
+                                                        borderRadius: '0.75rem',
+                                                        border: 'none',
+                                                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                                        cursor: savingEdit ? 'not-allowed' : 'pointer',
+                                                        marginRight: '0.75rem',
+                                                        opacity: savingEdit ? 0.6 : 1,
+                                                        transition: 'all 0.2s ease',
+                                                    }}
+                                                    onMouseEnter={(e) => !savingEdit && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                                                    onMouseLeave={(e) => !savingEdit && (e.currentTarget.style.transform = 'translateY(0)')}
+                                                >
+                                                    {savingEdit ? 'Saving...' : 'Save Changes'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelEdit}
+                                                    style={{
+                                                        padding: '0.75rem 1.5rem',
+                                                        fontSize: '0.95rem',
+                                                        fontWeight: 600,
+                                                        color: '#666',
+                                                        background: '#f5f5f5',
+                                                        borderRadius: '0.75rem',
+                                                        border: '2px solid #e0e0e0',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.2s ease',
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.background = '#e0e0e0';
+                                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.background = '#f5f5f5';
+                                                        e.currentTarget.style.transform = 'translateY(0)';
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            {filteredStories.map((story) => {
+                                                const actualIndex = stories.indexOf(story);
+                                                return (
+                                                    <StoryCard
+                                                        key={story._id}
+                                                        story={story}
+                                                        onEdit={() => {
+                                                            setSelectedIndex(actualIndex);
+                                                            startEdit();
+                                                        }}
+                                                        onArchive={() => {
+                                                            setSelectedIndex(actualIndex);
+                                                            handleArchive();
+                                                        }}
+                                                        onDelete={() => {
+                                                            handleDelete(story._id);
+                                                        }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={handleReturn}
+                                        style={{
+                                            padding: '0.75rem 2rem',
+                                            fontSize: '1rem',
+                                            fontWeight: 600,
+                                            color: '#666',
+                                            background: 'white',
+                                            borderRadius: '0.75rem',
+                                            border: '2px solid #e0e0e0',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            marginTop: '1.5rem',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.borderColor = '#8CE4FF';
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.borderColor = '#e0e0e0';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                    >
+                                        ← Return
+                                    </button>
+                                </>
                             )}
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
         </div>
     );
 }
 
-function StoryCard({
-    story,
-    isEditing,
-    editTitle,
-    editText,
-    editDisplayName,
-    editDisplayPhoto,
-    savingEdit,
-    onEditTitleChange,
-    onEditTextChange,
-    onEditDisplayNameChange,
-    onEditDisplayPhotoChange,
-    onEdit,
-    onSave,
-    onCancel,
-    onArchive,
-    onDelete,
+// Tab Button Component
+function TabButton({
+    active,
+    onClick,
+    color,
+    children,
 }: {
-    story: Story;
-    isEditing: boolean;
-    editTitle: string;
-    editText: string;
-    editDisplayName: boolean;
-    editDisplayPhoto: boolean;
-    savingEdit: boolean;
-    onEditTitleChange: (val: string) => void;
-    onEditTextChange: (val: string) => void;
-    onEditDisplayNameChange: (val: boolean) => void;
-    onEditDisplayPhotoChange: (val: boolean) => void;
-    onEdit: () => void;
-    onSave: () => void;
-    onCancel: () => void;
-    onArchive: () => void;
-    onDelete: () => void;
+    active: boolean;
+    onClick: () => void;
+    color: string;
+    children: React.ReactNode;
 }) {
-    const formatDateTime = (dateString?: string) => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        });
-    };
-
-    if (isEditing) {
-        return (
-            <div className="bg-white rounded-3xl overflow-hidden p-6 shadow-xl hover:shadow-2x1 hover:-translate-y-1 border-2 border-[#8CE4FF]/30 hover:border-[#8CE4FF]/70 transition-all duration-300">
-                <h3 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
-                    Edit Your Story
-                </h3>
-                <div className="space-y-4">
-                    <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => onEditTitleChange(e.target.value)}
-                        placeholder="Story title (optional)"
-                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#FFA239] focus:bg-white transition-all text-gray-900 font-medium"
-                    />
-                    <textarea
-                        value={editText}
-                        onChange={(e) => onEditTextChange(e.target.value)}
-                        placeholder="Type your story here (max 7,000 words)"
-                        rows={12}
-                        className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#FFA239] focus:bg-white transition-all resize-vertical text-gray-900"
-                    />
-                    
-                    <div className="flex justify-center gap-12 py-2">
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <span className="text-gray-700 font-medium">Display name?</span>
-                            <ToggleSwitch checked={editDisplayName} onChange={() => onEditDisplayNameChange(!editDisplayName)} />
-                        </label>
-                        <label className="flex items-center gap-3 cursor-pointer">
-                            <span className="text-gray-700 font-medium">Display photo?</span>
-                            <ToggleSwitch checked={editDisplayPhoto} onChange={() => onEditDisplayPhotoChange(!editDisplayPhoto)} />
-                        </label>
-                    </div>
-
-                    <div className="flex justify-center gap-3 pt-4">
-                        <button
-                            onClick={onSave}
-                            disabled={savingEdit}
-                            className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FFA239] to-[#FF5656] text-black font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Save className="h-5 w-5" />
-                            {savingEdit ? 'Saving...' : 'Save Changes'}
-                        </button>
-                        <button
-                            onClick={onCancel}
-                            className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
-                        >
-                            <X className="h-5 w-5" />
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="bg-white rounded-3xl overflow-hidden p-6 shadow-xl hover:shadow-2x1 hover:-translate-y-1 border-2 border-[#8CE4FF]/30 hover:border-[#8CE4FF]/70 transition-all duration-300 group">
-            <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-2xl font-bold text-gray-900">
-                            {story.title || 'Untitled Story'}
-                        </h3>
-                        {story.archived && (
-                            <span className="px-3 py-1 bg-[#FEEE91] text-gray-900 text-xs font-bold rounded-full">
-                                ARCHIVED
-                            </span>
-                        )}
-                        {!story.archived && (
-                            <span className="px-3 py-1 bg-green-200 text-gray-700 text-xs font-bold rounded-full">
-                                PUBLISHED
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-                        {story.storyText}
-                    </p>
-                </div>
-            </div>
+        <button
+            type="button"
+            onClick={onClick}
+            style={{
+                padding: '0.625rem 1.25rem',
+                borderRadius: '0.5rem',
+                border: 'none',
+                background: active ? color : 'transparent',
+                color: active && color === '#FFA239' ? '#fff' : '#1a1a1a',
+                fontSize: '0.95rem',
+                fontWeight: active ? 600 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+                if (!active) e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+            }}
+            onMouseLeave={(e) => {
+                if (!active) e.currentTarget.style.background = 'transparent';
+            }}
+        >
+            {children}
+        </button>
+    );
+}
 
-            {/* Metadata */}
-            <div className="text-sm text-gray-500 mb-4">
-                <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>Created {formatDateTime(story.createdAt)}</span>
-                </div>
-                {story.updatedAt && (
-                    <div className="flex items-center gap-2">
-                        <Edit2 className="h-4 w-4"/>
-                        <span>Updated {formatDateTime(story.updatedAt)}</span>
-                    </div>
-                )}
-                {story.views !== undefined && (
-                    <div className="flex items-center gap-2">
-                        <Eye className="h-4 w-4" />
-                        <span>{story.views.toLocaleString()} views</span>
-                    </div>
-                )}
-                {story.likes !== undefined && (
-                    <div className="flex items-center gap-2">
-                        <Heart className="h-4 w-4" />
-                        <span>{story.likes.toLocaleString()} likes</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3">
-                <button
-                    onClick={onEdit}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#8CE4FF] text-gray-900 font-semibold rounded-lg hover:bg-[#6DD5FF] transition-all"
-                >
-                    <Edit2 className="h-4 w-4" />
-                    Edit
-                </button>
-                <button
-                    onClick={onArchive}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#FEEE91] text-gray-900 font-semibold rounded-lg hover:bg-[#FEEE91]/80 transition-all"
-                >
-                    {story.archived ? (
-                        <>
-                            <ArchiveRestore className="h-4 w-4" />
-                            Unarchive
-                        </>
-                    ) : (
-                        <>
-                            <Archive className="h-4 w-4" />
-                            Archive
-                        </>
-                    )}
-                </button>
-                <button
-                    onClick={onDelete}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#FF5656] text-[#FF4646] font-semibold rounded-lg hover:bg-[#FF5656]/90 transition-all"
-                >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                </button>
-            </div>
+// Toggle Components
+function ToggleRow({
+    label,
+    checked,
+    onToggle,
+}: {
+    label: string;
+    checked: boolean;
+    onToggle: () => void;
+}) {
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.95rem', color: '#333', fontWeight: 500 }}>{label}</span>
+            <ToggleSwitch checked={checked} onChange={onToggle} />
         </div>
     );
 }
@@ -523,22 +628,234 @@ function ToggleSwitch({
     checked: boolean;
     onChange: () => void;
 }) {
+    const trackColor = checked ? '#00c853' : '#cccccc';
     return (
         <button
             type="button"
             onClick={onChange}
-            aria-pressed={checked}
-            className={`relative inline-flex w-12 h-6 shrink-0 rounded-full transition-all
-                border border-green-300
-                focus: outline-none focus:ring-2 focus:ring-green-300
-                ${checked ? '!bg-green-400' : '!bg-gray-300'
-            }`}
+            style={{
+                width: 46,
+                height: 24,
+                borderRadius: 9999,
+                border: 'none',
+                padding: 2,
+                backgroundColor: trackColor,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: checked ? 'flex-end' : 'flex-start',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+            }}
         >
-            <span
-                className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-md transition-transform
-                    ${checked ? 'translate-x-6' : 'translate-x-0'}
-                `}
+            <div
+                style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    backgroundColor: '#ffffff',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                }}
             />
         </button>
+    );
+}
+
+// Action Button Component
+function ActionButton({
+    label,
+    onClick,
+    variant = 'normal',
+    color,
+}: {
+    label: string;
+    onClick: () => void;
+    variant?: 'normal' | 'danger';
+    color?: string;
+}) {
+    const isDanger = variant === 'danger';
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            style={{
+                padding: '0.75rem 1.75rem',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                color: isDanger ? '#fff' : '#1a1a1a',
+                background: isDanger ? '#FF5656' : (color || '#8CE4FF'),
+                borderRadius: '0.75rem',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+            }}
+        >
+            {label}
+        </button>
+    );
+}
+
+// Story Card Component
+function StoryCard({
+    story,
+    onEdit,
+    onArchive,
+    onDelete,
+}: {
+    story: Story;
+    onEdit: () => void;
+    onArchive: () => void;
+    onDelete: () => void;
+}) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const maxPreviewLength = 200;
+    const needsTruncation = story.storyText.length > maxPreviewLength;
+    const displayText = isExpanded || !needsTruncation
+        ? story.storyText
+        : story.storyText.slice(0, maxPreviewLength) + '...';
+
+    return (
+        <div style={{
+            background: 'white',
+            borderRadius: '1rem',
+            padding: '1.5rem',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            border: '2px solid transparent',
+            borderColor: story.archived ? '#FEEE91' : '#8CE4FF',
+            transition: 'all 0.2s ease',
+        }}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+            }}
+        >
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '1rem',
+            }}>
+                <h3 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    margin: 0,
+                    color: '#1a1a1a',
+                    flex: 1,
+                }}>
+                    {story.title || 'Untitled Story'}
+                </h3>
+                {story.archived && (
+                    <span style={{
+                        background: '#FEEE91',
+                        color: '#666',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        marginLeft: '1rem',
+                    }}>
+                        Archived
+                    </span>
+                )}
+            </div>
+
+            {/*Date & Time Information for story creation & updates */}
+            
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.5rem',
+                marginBottom: '1rem',
+                fontSize: '0.85rem',
+                color: '#666',
+            }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                    <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    <span>
+                        <strong>Created:</strong> {formatDate(story.createdAt)}
+                    </span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>
+                        <strong>Updated:</strong> {formatDateTime(story.updatedAt)}
+                    </span>
+                </div>
+            </div>
+
+            <p style={{
+                fontSize: '0.95rem',
+                lineHeight: 1.6,
+                color: '#333',
+                marginBottom: '1rem',
+                whiteSpace: 'pre-wrap',
+            }}>
+                {displayText}
+            </p>
+
+            {needsTruncation && (
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#FFA239',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        padding: '0.25rem 0',
+                        marginBottom: '1rem',
+                    }}
+                >
+                    {isExpanded ? 'Show less' : 'Read more'}
+                </button>
+            )}
+
+            <div style={{
+                display: 'flex',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                marginTop: '1rem',
+                paddingTop: '1rem',
+                borderTop: '1px solid #e0e0e0',
+            }}>
+                <ActionButton
+                    label="Edit"
+                    onClick={onEdit}
+                    color="#8CE4FF"
+                />
+                <ActionButton
+                    label={story.archived ? 'Unarchive' : 'Archive'}
+                    onClick={onArchive}
+                    color="#FEEE91"
+                />
+                <ActionButton
+                    label="Delete"
+                    onClick={onDelete}
+                    variant="danger"
+                />
+            </div>
+        </div>
     );
 }
