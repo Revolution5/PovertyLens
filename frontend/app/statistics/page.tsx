@@ -1,162 +1,218 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useMemo, useState } from "react";
+
+/* ================= TYPES ================= */
 
 type LiveResponse = {
-    success: boolean;
-    source?: string;
-    country?: string;
-    year?: number;
-    povline?: number;
-    fetchedAt?: string;
-    data?: any;
-    message?: string;
+  success: boolean;
+  source?: string;
+  country?: string;
+  year?: number | null;
+  povline?: number;
+  fetchedAt?: string;
+  metric?: {
+    headcount?: number | null;
+    poverty_gap?: number | null;
+    poverty_severity?: number | null;
+  } | null;
+  data?: any;
+  message?: string;
 };
 
-const BACKEND_URL = 'http://localhost:4000';
+/* ================= CONSTANTS ================= */
 
-export default function PovertyLivePage(){
-    const [country, setCountry] = useState('');
-    const [year, setYear] = useState('');
-    const [line, setLine] = useState('');
-    const [result, setResult] = useState<LiveResponse | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
-    const darkerText = { color: "#623100", fontSize: "16px", fontWeight: 600, textAlign: "left" as const};
+const geoIdToCountryCode: Record<string, string> = {
+  "50": "BGD",
+  "76": "BRA",
+  "231": "ETH",
+  "356": "IND",
+  "404": "KEN",
+  "484": "MEX",
+  "566": "NGA",
+  "840": "USA",
+};
 
-    const inputStyle = {
-        width: "100%",
-        padding: "10px",
-        fontSize: "15px",
-        border: "1px solid #333",
-        borderRadius: 6,
-        color: "#000",
-        backgroundColor: "#fff",
-    };
+const countryNames: Record<string, string> = {
+  BGD: "Bangladesh",
+  BRA: "Brazil",
+  ETH: "Ethiopia",
+  IND: "India",
+  KEN: "Kenya",
+  MEX: "Mexico",
+  NGA: "Nigeria",
+  USA: "United States",
+};
 
-    const handleFetch = async () => {
-        setLoading(true);
-        setError('');
-        setResult(null);
+/* ================= PAGE ================= */
 
-        try {
-            const url = `${BACKEND_URL}/api/poverty/live?country=${country}&year=${year}&line=${line}`;
-            const res = await fetch(url);
-            const data = await res.json();
+export default function StatisticsPage() {
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [year, setYear] = useState("");
+  const [line, setLine] = useState("");
 
-            if (!res.ok || !data.success){
-                throw new Error(data.message || 'Error fetching live poverty data');
-            }
+  const [liveResult, setLiveResult] = useState<LiveResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-            setResult(data);
-        } catch (e: any){
-            console.error(e);
-            setError(e.message || 'Failed to fetch data');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const selectedGeoId = useMemo(() => {
+    if (!selectedCountry) return null;
     return (
-        <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 16px'}}>
-            <h1 style={{ marginBottom: 16, color:"#623100", fontSize:"70px",fontWeight:"bolder", textAlign:"center"}}>
-                Statistics
-            </h1>
-            <p style={{ marginBottom: 24, color: '#623100', fontSize: "30px", textAlign:"-webkit-left"}}>
-                This calls the backend <code>/api/poverty/live</code>, which fetches from the World Bank PIP API and stores the result in MongoDB as a cache.
-            </p>
-
-            <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px', maxWidth: '400px'}}>
-                <label style={darkerText}>Country (ISO3):</label>
-                    <input 
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                        style={{ width: '100%', padding: '8px', fontSize: "15px", border: "1px solid #444", borderRadius: 6, color: "#623100",}}
-                        placeholder=""
-                    />
-                <label style={darkerText}>Year:</label>
-                    <input 
-                        value={year}
-                        onChange={(e) => setYear(e.target.value)}
-                        style={{ width: '100%', padding: '8px', fontSize: "15px", border: "1px solid #444", borderRadius: 6, color: "#000",}}
-                        placeholder=""
-                    />
-                <label style={darkerText}>Poverty Line (USD/day)</label>
-                    <input
-                        value={line}
-                        onChange={(e) => setLine(e.target.value)}
-                        style={{ width: '100%', padding: '8px', fontSize: "15px", border: "1px solid #444", borderRadius: 6, color: "#000",}}
-                        placeholder=""
-                    />
-
-                <button
-                    onClick={handleFetch}
-                    disabled={loading}
-                    style={{
-                        padding: '10px 16px',
-                        backgroundColor: "#AC7F5E",
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 6,
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        fontWeight: 600,
-                    }}
-                >
-                    {loading ? 'Loading...' : 'Fetch & Cache Live Data'}
-                </button>
-            </div>
-            {error && (
-                <div style={{ marginBottom: 16, color: 'red', fontWeight: 600}}>
-                    {error}
-                </div>
-            )}
-
-            {result && (
-                <div
-                    style={{
-                        marginTop: 16,
-                        padding: 16,
-                        borderRadius: 8,
-                        border: '1px solid #333',
-                        background: '#f2f2f2',
-                        color: "#111",
-                        fontSize: "16px"
-                    }}
-                >
-                    <h2 style={{ marginTop: 0, marginBottom: 8}}>Result</h2>
-                    <p style={{ margin: '4px 0'}}>
-                        <strong>Source:</strong> {result.source}
-                    </p>
-                    <p style={{ margin: '4px 0'}}>
-                       <strong>Country:</strong>  {result.country} | <strong>Year:</strong> {result.year} |{' '}
-                       <strong>Poverty line:</strong> ${result.povline}/day
-                    </p>
-                    {result.fetchedAt && (
-                        <p style={{ margin: '4x 0'}}>
-                            <strong>Fetched at:</strong> {new Date(result.fetchedAt).toLocaleString()}
-                        </p>
-                    )}
-
-                    <details style={{ marginTop: 12}}>
-                        <summary style={{ cursor: 'pointer' }}>Raw JSON data</summary>
-                        <pre
-                            style={{
-                                background: "#f5f5f5",
-                                padding: '12px',
-                                borderRadius: 6,
-                                border: "1px solid #ccc",
-                                overflowX: 'auto',
-                                fontSize: '12px',
-                                marginTop: 8,
-                                color: "#000",
-                            }}
-                        >
-                            {JSON.stringify(result.data, null, 2)}
-                        </pre>
-                    </details>
-                </div>
-            )}
-        </div>
+      Object.entries(geoIdToCountryCode).find(
+        ([_, code]) => code === selectedCountry
+      )?.[0] || null
     );
+  }, [selectedCountry]);
+
+  const handleCountryClick = (geoId: string) => {
+    const iso3 = geoIdToCountryCode[geoId];
+    if (!iso3) return;
+    setSelectedCountry(iso3);
+    setLiveResult(null);
+    setError("");
+  };
+
+  const handleFetch = async () => {
+    if (!selectedCountry || !year || !line) {
+      setError("Select a country, year, and poverty line.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setLiveResult(null);
+
+    try {
+      const url = `${BACKEND_URL}/api/poverty/live?country=${selectedCountry}&year=${year}&line=${line}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to fetch data");
+      }
+
+      setLiveResult(data);
+    } catch (err: any) {
+      setError(err.message || "Server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#8CE4FF]/10 via-[#FEEE91]/10 to-[#FFA239]/10">
+      <main className="max-w-[1600px] mx-auto px-6 py-10">
+
+        {/* ===== HEADER (VISIBLE) ===== */}
+        <div className="mb-12">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-3">
+            <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
+              Global Poverty Statistics
+            </span>
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Click a country to explore poverty statistics and stories
+          </p>
+        </div>
+
+        {/* ===== CONTENT GRID ===== */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+
+          {/* Countries panel */}
+          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Countries</h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {Object.entries(geoIdToCountryCode).map(([geoId, iso3]) => (
+                <button
+                  key={geoId}
+                  onClick={() => handleCountryClick(geoId)}
+                  className={`p-4 rounded-lg border text-left transition ${
+                    selectedCountry === iso3
+                      ? "border-[#FFA239] bg-[#FFA239]/10"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-sm text-gray-400">{geoId}</div>
+                  <div className="font-semibold text-gray-800">
+                    {countryNames[iso3]}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Statistics panel */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Statistics</h2>
+
+            <div className="space-y-3">
+              <input
+                disabled
+                value={selectedCountry ?? ""}
+                placeholder="Country"
+                className="w-full border rounded p-2 bg-gray-50"
+              />
+
+              <input
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="Year"
+                className="w-full border rounded p-2"
+              />
+
+              <input
+                value={line}
+                onChange={(e) => setLine(e.target.value)}
+                placeholder="Poverty line (USD/day)"
+                className="w-full border rounded p-2"
+              />
+
+              <button
+                onClick={handleFetch}
+                disabled={loading}
+                className="w-full py-2 rounded text-white font-semibold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #FFA239 0%, #FF5656 100%)",
+                }}
+              >
+                {loading ? "Loading..." : "Fetch & Cache Live Data"}
+              </button>
+
+              {error && (
+                <div className="text-red-600 text-sm">{error}</div>
+              )}
+
+              {liveResult?.metric && (
+                <div className="grid grid-cols-3 gap-3 pt-4">
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-xs text-gray-500">Headcount</div>
+                    <div className="font-semibold">
+                      {liveResult.metric.headcount}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-xs text-gray-500">Gap</div>
+                    <div className="font-semibold">
+                      {liveResult.metric.poverty_gap}
+                    </div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-xs text-gray-500">Severity</div>
+                    <div className="font-semibold">
+                      {liveResult.metric.poverty_severity}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
