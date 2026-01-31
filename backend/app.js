@@ -593,8 +593,44 @@ app.put('/api/profile/update', async (req, res) => {
     
     // Update password if provided
     if (newPassword) {
-      updateData.password = await bcrypt.hash(newPassword, 10);
-    }
+      // Marisol Morales 1/29/26 - Adding password history restriction 
+
+      // Get password histroy (deafault to empty array)
+      const passwordHistory = user.passwordHistory || [];
+
+      // check if new password matches current password 
+      const matchesCurrent = await bcrypt.compare(newPassword, user.password);
+      if (matchesCurrent) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be different from current password'        
+        });
+      }
+      // check if new password matches any in password history
+      for (let i = 0; i < Math.min(passwordHistory.length, 3); i++) {
+        const matchesOld = await bcrypt.compare(newPassword, passwordHistory[i]);
+        if (matchesOld) {
+          return res.status(400).json({
+            success: false,
+            message: 'New password must be different from the last 3 passwords'
+          });
+        }
+      }
+      // Hash new password 
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+      // add current password to history 
+      const updatedPasswordHistory = [user.password, ...passwordHistory].slice(0, 3); // keep last 3 passwords
+
+      //Keep only the last 3 passwords in history
+      const trimmedHistory = updatedPasswordHistory.slice(0, 3);
+
+      // update both password and password history
+      updateData.password = hashedNewPassword;
+      updateData.passwordHistory = trimmedHistory;
+
+      //updateData.password = await bcrypt.hash(newPassword, 10);
+    } // End of newPassword block - Marisol Morales 1/29/26
 
     // Update username if provided (check if exists)
     if (newUsername && newUsername !== user.username) {
