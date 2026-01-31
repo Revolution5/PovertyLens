@@ -9,6 +9,7 @@ backend/dist/
 backend/coverage/
 backend/logs/
 backend/*.log
+backend/uploads/
 
 # --- Frontend ---
 frontend/node_modules/

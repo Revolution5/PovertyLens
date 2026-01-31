@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound } from 'lucide-react';
+import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import 
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -13,7 +14,11 @@ export default function ProfilePage() {
     newUsername: '',
     password: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    // Marisol code for adding new fields 1/28/26 =====================
+    profileImage: null as string | null,
+    bannerImage: null as string | null
+    // End of Marisol Morales Code 1/28/26 =====================
   });
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,15 +31,61 @@ export default function ProfilePage() {
     const storedUsername = localStorage.getItem('username');
     if (storedEmail) {
       setUser(prev => ({ ...prev, email: storedEmail, username: storedUsername || '' }));
+
+      // Marisol code for fetching profile images 1/28/26 =====================
+      fetchUserImages(storedEmail);
+      // End of Marisol Morales Code 1/28/26 =====================
     } else {
       router.push('/');
     }
   }, [router]);
 
+  // Marisol function for fetching images from Server
+  const fetchUserImages = async (email: string) => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/user-images?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setUser(prev => ({
+          ...prev,
+          // Only set if image exists, otherwise keep as null for default gradient
+          profileImage: data.profileImage ? `http://localhost:4000${data.profileImage}` : null,
+          bannerImage: data.bannerImage ? `http://localhost:4000${data.bannerImage}` : null
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching user images:', error);
+    }
+  };
+  // End of Marisol Morales Code 1/28/26 =====================
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setUser(prev => ({ ...prev, [name]: value }));
   };
+
+  // Add function to handle image updates- Marisol Code
+  const handleProfileImageUpdate = (imageUrl: string | null) => {
+    // If imageUrl is null, it means the image was removed - keep it null for default
+    setUser(prev => ({ 
+      ...prev, 
+      profileImage: imageUrl ? `http://localhost:4000${imageUrl}` : null 
+    }));
+    setMessage(imageUrl ? 'Profile photo updated successfully!' : 'Profile photo removed - default restored');
+    setTimeout(() => setMessage(''), 3000);
+  };
+  // Add handler for banner image update - Marisol Code
+  const handleBannerImageUpdate = (imageUrl: string | null) => {
+    // If imageUrl is null, it means the image was removed - keep it null for default
+    setUser(prev => ({ 
+      ...prev, 
+      bannerImage: imageUrl ? `http://localhost:4000${imageUrl}` : null 
+    }));
+    setMessage(imageUrl ? 'Cover image updated successfully!' : 'Cover image removed - default restored');
+    setTimeout(() => setMessage(''), 3000);
+  };
+  // End of Marisol Morales Code 1/28/26 =====================
 
   const handleUpdateUsername = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,51 +292,39 @@ export default function ProfilePage() {
               </div>
 
               <div className="h-px bg-gray-200 mb-6"></div>
-
+              {/* Marisol code for adding ImageUpload components  */}
               {/* Profile Picture & Banner */}
               <div className="space-y-6">
                 {/* Profile Picture */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    {/* Avatar Placeholder */}
-                    <div className="w-20 h-20 rounded-full border-2 border-gray-100 bg-gradient-to-br from-[#FFA239] to-[#FF5656] flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">
-                        {getInitials(user.username)}
-                      </span>
-                    </div>
+                    <ImageUpload
+                      currentImage={user.profileImage}
+                      onImageUpdate={handleProfileImageUpdate}
+                      type="profile"
+                      userEmail={user.email}
+                      username={user.username}
+                    />
                     <div>
                       <h3 className="font-medium mb-1">Profile Photo</h3>
-                      <p className="text-sm text-gray-500">PNG, JPG up to 10MB</p>
+                      <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
                     </div>
                   </div>
-                  <button
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-                  >
-                    <Camera className="w-4 h-4" />
-                    Change Photo
-                  </button>
                 </div>
 
                 <div className="h-px bg-gray-200"></div>
 
                 {/* Banner Image */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-medium mb-1">Cover Image</h3>
-                    <p className="text-sm text-gray-500 mb-4">Recommended: 1584x396px</p>
-                    <div className="relative w-full h-32 rounded-lg overflow-hidden border-2 border-gray-100">
-                      {/* Banner Placeholder */}
-                      <div className="w-full h-full bg-gradient-to-r from-[#8CE4FF] via-[#FEEE91] to-[#FFA239] flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-white/40" />
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 ml-4 mt-8"
-                  >
-                    <Camera className="w-4 h-4" />
-                    Change Cover
-                  </button>
+                <div className="space-y-2">
+                  <h3 className="font-medium">Cover Image</h3>
+                  <p className="text-sm text-gray-500 mb-4">Recommended: 1584x396px</p>
+                  <ImageUpload
+                    currentImage={user.bannerImage}
+                    onImageUpdate={handleBannerImageUpdate}
+                    type="banner"
+                    userEmail={user.email}
+                    username={user.username}
+                  />
                 </div>
               </div>
             </div>
