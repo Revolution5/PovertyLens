@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { ArrowLeft } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -59,191 +61,147 @@ export default function SignInPage() {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      background: 'white',
-      padding: '40px 20px 20px 20px',
-      paddingTop: '80px'
-    }}>
-      <div style={{ 
-        maxWidth: '400px', 
-        width: '100%',
-        padding: '40px',
-        border: '1px solid #D9D1B7',
-        borderRadius: '20px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundColor: '#D9D1B7'
-      }}>
-        <h1 style={{ 
-          textAlign: 'center', 
-          marginBottom: '30px', 
-          color: '#623100',
-          fontSize: '28px',
-          fontWeight: 'bold'
-        }}>
-          {isLogin ? 'Welcome Back!' : 'Create Account'}
+    <div className="min-h-screen pb-12" style={{ background: 'var(--background)' }}>
+      {/* Header matching home page */}
+      <div className="pt-16 pb-8 text-center">
+        <h1 className="text-4xl md:text-6xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
+          {isLogin ? 'Welcome Back!' : 'Join PovertyLens'}
         </h1>
-        
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {!isLogin && (
+        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
+          {isLogin 
+            ? 'Sign in to continue exploring poverty data and sharing stories' 
+            : 'Create your account to start making a difference today'
+          }
+        </p>
+      </div>
+      
+      {/* Creating the columns - same as home page layout */}
+      <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
+        {/* Left column - Form */}
+        <div className="flex-[11] card card-cyan p-8 md:p-10">
+          <div className="mb-8">
+            <h2 className="font-bold text-3xl md:text-4xl mb-2" style={{ color: 'var(--foreground)' }}>
+              {isLogin ? 'Login to Your Account' : 'Create New Account'}
+            </h2>
+            <p className="text-lg text-gray-600">
+              {isLogin 
+                ? 'Enter your credentials to access your dashboard' 
+                : 'Fill in the details below to get started'
+              }
+            </p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <div>
+                <label htmlFor="username" className="block mb-2 font-medium text-gray-800">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  placeholder="Choose a username"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent bg-white transition-all"
+                />
+              </div>
+            )}
+            
             <div>
-              <label htmlFor="username" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: "#623100" }}>
-                Username
+              <label htmlFor="email" className="block mb-2 font-medium text-gray-800">
+                Email Address
               </label>
               <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Choose a username"
-                style={{ 
-                  width: '100%', 
-                  padding: '14px',
-                  border: '1px solid #8B4513',
-                  borderRadius: '10px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box',
-                  color: '#623100',
-                  backgroundColor: '#F5F0E6',
-                  outline: 'none'
-                }}
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent bg-white transition-all"
               />
             </div>
+            
+            <div>
+              <label htmlFor="password" className="block mb-2 font-medium text-gray-800">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent bg-white transition-all"
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full py-3.5 px-6 rounded-xl font-semibold text-white transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              style={{ 
+                background: 'linear-gradient(to right, #FFA239, #FF5656)',
+              }}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Processing...
+                </span>
+              ) : (
+                isLogin ? 'Login to Account' : 'Create Account'
+              )}
+            </button>
+          </form>
+          
+          {message && (
+            <div className={`mt-6 p-4 rounded-xl text-center font-medium ${message.includes('Success') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              {message}
+            </div>
           )}
-          <div>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: "#623100" }}>
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Enter your email"
-              style={{ 
-                width: '100%', 
-                padding: '14px',
-                border: '1px solid #8B4513',
-                borderRadius: '10px',
-                fontSize: '16px',
-                boxSizing: 'border-box',
-                color: '#623100',
-                backgroundColor: '#F5F0E6',
-                outline: 'none'
+          
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <p className="text-center text-gray-600 mb-4">
+              {isLogin ? "Don't have an account?" : "Already have an account?"}
+            </p>
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setMessage('');
+                setEmail('');
+                setPassword('');
+                setUsername('');
               }}
-            />
+              className="w-full py-3 px-6 rounded-xl font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              {isLogin ? 'Create a new account instead' : 'Login to existing account'}
+            </button>
           </div>
           
-          <div>
-            <label htmlFor="password" style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: "#623100" }}>
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter your password"
-              style={{ 
-                width: '100%', 
-                padding: '14px',
-                border: '1px solid #8B4513',
-                borderRadius: '10px',
-                fontSize: '16px',
-                boxSizing: 'border-box',
-                color: '#623100',
-                backgroundColor: '#F5F0E6',
-                outline: 'none'
-              }}
-            />
+          <div className="mt-8">
+            <button
+              onClick={() => router.push('/')}
+              className="w-full py-3 px-6 rounded-xl font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home Page
+            </button>
           </div>
-          
-          <button 
-            type="submit" 
-            disabled={isLoading}
-            style={{ 
-              padding: '14px', 
-              backgroundColor: isLoading ? '#8B4513' : '#623100', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '10px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '16px',
-              fontWeight: '600',
-              transition: 'background-color 0.2s',
-              marginTop: '10px'
-            }}
-          >
-            {isLoading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
-          </button>
-        </form>
-        
-        {message && (
-          <div style={{ 
-            marginTop: '20px', 
-            padding: '14px', 
-            backgroundColor: '#C8AB8F',
-            borderRadius: '10px',
-            border: '1px solid #8B4513',
-            color: '#623100',
-            textAlign: 'center',
-            fontWeight: '500'
-          }}>
-            {message}
-          </div>
-        )}
-        
-        <div style={{ marginTop: '25px', textAlign: 'center', paddingTop: '20px', borderTop: '1px solid #8B4513' }}>
-          <p style={{ color: '#623100', marginBottom: '10px', fontWeight: '500' }}>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
-          </p>
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setMessage('');
-              setEmail('');
-              setPassword('');
-              setUsername('');
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#623100',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: '600',
-              padding: '5px'
-            }}
-          >
-            {isLogin ? 'Create a new account' : 'Login to existing account'}
-          </button>
         </div>
-        
-        <div style={{ marginTop: '30px', textAlign: 'center' }}>
-          <button
-            onClick={() => router.push('/')}
-            style={{
-              padding: '12px 24px',
-              backgroundColor: '#C8AB8F',
-              border: '1px solid #8B4513',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              color: '#623100',
-              fontWeight: '500',
-              transition: 'background-color 0.2s',
-              width: '100%'
-            }}
-          >
-            ← Back to Home Page
-          </button>
+
+        {/* Right column - Just Logo (matching home page) */}
+        <div className="flex-[9] flex justify-center items-center">
+          <Image
+            src="/logov3.png" 
+            alt="PovertyLens Logo" 
+            width={450} 
+            height={450}
+            className="object-contain drop-shadow-2xl"
+          />
         </div>
       </div>
     </div>
