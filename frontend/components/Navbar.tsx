@@ -94,8 +94,8 @@ export default function Navbar() {
                         <Image
                             src="/logov3.png" 
                             alt="PovertyLens Logo" 
-                            width={45} 
-                            height={45}
+                            width={150} 
+                            height={150}
                             className="object-contain"/>
                     </Link>
 
@@ -207,10 +207,10 @@ export default function Navbar() {
                                 className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFA239] to-[#FF5656] flex items-center justify-center hover:shadow-lg transition-shadow"
                             >
                                 <Image
-                                    src="/user2.png"
+                                    src="/profileicon.png"
                                     alt="user icon"
-                                    width={20}
-                                    height={20}
+                                    width={30}
+                                    height={30}
                                     className="object-contain"
                                 />
                             </button>
