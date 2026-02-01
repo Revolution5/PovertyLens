@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import StatisticsMapClient from '../../components/StatisticsMapClient'
 
 /* ================= TYPES ================= */
 
@@ -124,6 +125,11 @@ export default function StatisticsPage() {
           {/* Countries panel */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Countries</h2>
+
+            <div className="mb-4">
+              {/* Map */}
+              <StatisticsMapClient selectedGeoId={selectedGeoId} onCountryClick={handleCountryClick} />
+            </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {Object.entries(geoIdToCountryCode).map(([geoId, iso3]) => (
