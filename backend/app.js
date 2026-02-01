@@ -4,6 +4,7 @@ const express = require('express')
 const { MongoClient, ObjectId } = require('mongodb')
 const bcrypt = require('bcryptjs')
 
+
 // Code for allowing for Image uploads : Marisol Morale 1/28/26 
 const multer = require('multer') // Import multer for handling file uploads
 const path = require('path') // Import path module for handling file paths
@@ -113,6 +114,8 @@ async function createNotification(userId, message) {
     console.error('Error creating notification:', error);
   }
 }
+
+
 
 app.get('/api/notifications', async (req, res) => {
   try {
@@ -302,7 +305,6 @@ app.post('/api/login', async (req, res) => {
     }
     
     console.log(`User logged in: ${email}`);
-    
     res.json({ 
       success: true,
       message: 'Login successful',
@@ -323,6 +325,87 @@ app.post('/api/login', async (req, res) => {
 });
 
 // /api/poverty - done by Christella
+
+// -----------------------
+// FreeRice endpoints (donate + leaderboard) Reymes 1/31/26
+// -----------------------
+
+// Log manual donation
+app.post('/api/freerice/donate', async (req, res) => {
+  try {
+    if (!db) {
+      console.warn('DB not initialized when /api/freerice/donate called');
+      return res.status(500).json({ success: false, message: 'Database not initialized' });
+    }
+
+    let { answers, grains, email } = req.body;
+    answers = answers !== undefined ? Number(answers) : undefined;
+    grains = grains !== undefined ? Number(grains) : undefined;
+
+    if ((answers === undefined || Number.isNaN(answers)) && (grains === undefined || Number.isNaN(grains))) {
+      return res.status(400).json({ success: false, message: 'Provide answers or grains' });
+    }
+
+    if (answers !== undefined) grains = Math.floor(answers) * 10;
+    if (!Number.isFinite(grains) || grains <= 0) return res.status(400).json({ success: false, message: 'Invalid grains value' });
+    if (grains > 500000) return res.status(400).json({ success: false, message: 'Donation exceeds allowed maximum' });
+
+    // require an email and verify user exists (uses existing users collection; does not change login/signup behavior)
+    if (!email) return res.status(401).json({ success: false, message: 'Email required to log donation (sign in first)' });
+    const user = await db.collection('users').findOne({ email });
+    if (!user) return res.status(401).json({ success: false, message: 'User not found - please sign in' });
+
+    // duplicate protection: same user, same grains within 20 seconds
+    const recent = await db.collection('freericeDonations').findOne({ email, grains, createdAt: { $gte: new Date(Date.now() - 20 * 1000) } });
+    if (recent) return res.status(429).json({ success: false, message: 'Duplicate donation detected. Please wait before submitting again.' });
+
+    const donation = {
+      email: email || null,
+      username: user.username || null,
+      grains: Number(grains),
+      createdAt: new Date(),
+    };
+
+    await db.collection('freericeDonations').insertOne(donation);
+
+    res.status(201).json({ success: true, message: 'Donation logged', donation });
+  } catch (err) {
+    console.error('Error in /api/freerice/donate:', err && err.stack ? err.stack : err);
+    // Return error message for debugging (will remove after we confirm cause)
+    res.status(500).json({ success: false, message: 'Server error while logging donation', error: String(err && err.message ? err.message : err) });
+  }
+});
+
+// Leaderboard and recent activity
+// Accepts optional ?email=<user email> to indicate the requester (frontend should pass localStorage userEmail)
+app.get('/api/freerice/leaderboard', async (req, res) => {
+  try {
+    const requesterEmail = String(req.query.email || '') || null;
+    let session = { authenticated: false };
+
+    if (requesterEmail) {
+      const user = await db.collection('users').findOne({ email: requesterEmail });
+      if (user) session = { authenticated: true, email: user.email, username: user.username, id: user._id };
+    }
+
+    const topAgg = await db.collection('freericeDonations').aggregate([
+      { $group: { _id: { email: '$email', username: '$username' }, totalGrains: { $sum: '$grains' } } },
+      { $sort: { totalGrains: -1 } },
+      { $limit: 10 }
+    ]).toArray();
+
+    const top = topAgg.map(t => ({ email: t._id.email, username: t._id.username, totalGrains: t.totalGrains }));
+
+    const recent = await db.collection('freericeDonations').find({}).sort({ createdAt: -1 }).limit(10).toArray();
+
+    res.json({ success: true, top, recent, session });
+  } catch (err) {
+    console.error('Error in /api/freerice/leaderboard:', err);
+    res.status(500).json({ success: false, message: 'Server error while building leaderboard' });
+  }
+});
+//end of FreeRice endpoints Reymes 1/26/26
+
 // Returns poverty statistics from "povertyStats" collection.
 app.get('/api/poverty/summary', async(req,res) => {
   try {
@@ -952,6 +1035,26 @@ app.get('/api/user-images', async (req, res) => {
     });
   }
 });
+
+// Start server and connect to MongoDB
+(async () => {
+  try {
+    await connectDB();
+    console.log('Database initialized');
+  } catch (err) {
+    console.error('Warning: could not connect to DB - running with limited functionality:', err && err.stack ? err.stack : err);
+    // Don't exit the process; keep the server running so frontend can reach it and return JSON errors for DB-required endpoints
+  }
+
+  // Debug ping endpoint to verify server reachability and DB status
+  app.get('/api/debug/ping', (req, res) => {
+    res.json({ ok: true, dbInitialized: !!db });
+  });
+
+  app.listen(port, () => {
+    console.log(`Backend listening on port ${port}`);
+  });
+})();
 // End of Marisol Morales Code 1/28/26 =====================
 
 // Create a story

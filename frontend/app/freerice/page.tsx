@@ -1,57 +1,59 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import FreeRiceLeaderboardClient from '../../components/FreeRiceLeaderboardClient'
+import FreeRiceRecent from '../../components/FreeRiceRecent'
 
 export default function FreeRicePage() {
   return (
-    <div className="min-h-screen bg-[#F7F4EE] px-4 md:px-8 lg:px-16 py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Top header: centered page title */}
-        <header className="flex items-center justify-center mb-8">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#623100] text-center">
-            Play FreeRice!
-          </h1>
-        </header>
+    <div className="min-h-screen bg-white">
+      {/* Hero */}
+      <section className="py-12 bg-gradient-to-br from-[#8CE4FF]/10 via-white to-[#FEEE91]/10">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h1 className="text-5xl font-black mb-4 bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">FreeRice — Play for Rice</h1>
+          <p className="text-lg font-semibold max-w-2xl mx-auto mb-4 text-gray-700">Answer quick trivia. Earn grains. Help provide rice worldwide.</p>
+        </div> 
+      </section>
 
-        {/* Main content: three equal columns (logo left, info center, leaderboard right) */}
-        <main className="flex flex-col lg:flex-row lg:justify-between items-start gap-2 lg:gap-30">
-          {/* Left: large logo + play button */}
-          <div className="mx-auto lg:mx-0 lg:w-[409px] h-[547px] flex flex-col items-center gap-4 justify-start pt-12 lg:pt-16">
-            <Image src="/WFP-trans.png" alt="WFP" width={460} height={460} className="object-contain rounded-md shadow-sm -mt-16 lg:-mt-20 mx-auto w-96 h-96 md:w-[380px] md:h-[380px] lg:w-[460px] lg:h-[460px]" />
-            <a href="https://freerice.com/" target="_blank" rel="noopener noreferrer" className="mt-4 px-8 md:px-10 py-3 md:py-3 bg-[#AC7F5E] text-[#623100] rounded-lg hover:bg-[#C9956E] transition-colors font-semibold text-xl md:text-2xl lg:text-3xl">Play now</a>
+      <main className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left: Info */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#8CE4FF]/10 flex flex-col items-center gap-4">
+            <Image src="/WFP-trans.png" alt="WFP" width={260} height={260} className="object-contain rounded-md" />
+            <a href="https://freerice.com/" target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-br from-[#FFA239] to-[#FF5656] text-white rounded-lg font-semibold shadow-md hover:opacity-95">Play now</a>
           </div>
 
-          {/* Center: description box */}
-          <section className="mx-auto lg:mx-0 lg:w-[409px] h-[547px] flex">
-            <div className="bg-[#D9D1B7] border border-[#AC7F5E] rounded-lg p-8 w-full h-full flex flex-col overflow-y-auto hide-scrollbar">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#623100] text-center mb-4">FreeRice: What is it?</h2>
-              <p className="text-lg md:text-l leading-relaxed text-justify text-[#623100] mb-4 flex-grow">
-                FreeRice is owned by the U.N. World Food Programme (WFP). For every correct answer in the trivia games, a private sponsor will pay cash equivalent to 10 grains of rice to the WFP. This model supports the WFP’s global emergency relief and hunger programs.
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#FEEE91]/30">
+            <h3 className="text-lg font-bold bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">How it helps</h3>
+            <p className="mt-3 text-sm text-gray-700">Short summary:</p>
+            <ul className="mt-3 space-y-2 text-sm text-gray-600 list-disc pl-5">
+              <li><strong className="bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">Education:</strong> Learn as you play</li>
+              <li><strong className="bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">Donation:</strong> Sponsors convert correct answers to rice</li>
+              <li><strong className="bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">Transparency:</strong> We log and display donations</li>
+            </ul>
+          </div>
 
-Answer questions, learn some new facts, compete with your friends, and have fun!
-              </p>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#8CE4FF]/10">
+            <h3 className="text-lg font-bold bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">Community Impact</h3>
+            <p className="mt-3 text-sm text-gray-700">See the leaderboard and recent donations to understand our collective contribution. Small actions add up.</p>
+          </div>
 
-              <div className="mt-auto">
-                <p className="text-sm text-[#623100]/90">Click the Play button on the left to open FreeRice in a new tab and start answering questions.</p>
-              </div>
-            </div>
-          </section>
+          <div>
+            <FreeRiceRecent />
+          </div>
+        </div>
 
-          {/* Right: large leaderboard box */}
-          <aside className="mx-auto lg:mx-0 lg:w-[409px] h-[547px] flex">
-            <div className="bg-[#D9D1B7] border border-[#AC7F5E] rounded-lg p-8 w-full h-full overflow-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#623100] text-center mb-4">FreeRice Leaderboard</h2>
-              <p className="text-base md:text-lg text-[#623100]/90">Top players and recent activity will appear here.</p>
-              <ul className="mt-6 space-y-3 text-[#623100] text-base md:text-lg">
-                <li className="font-semibold">1. PlayerOne — 12,340</li>
-                <li className="font-semibold">2. PlayerTwo — 11,900</li>
-                <li className="font-semibold">3. PlayerThree — 10,500</li>
-                <li className="font-semibold">4. PlayerFour — 9,800</li>
-                <li className="font-semibold">5. PlayerFive — 8,700</li>
-              </ul>
-            </div>
-          </aside>
-        </main>
-      </div>
+        {/* Center + Right: Leaderboard + Donation Form */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#8CE4FF]/10">
+            <FreeRiceLeaderboardClient showRecent={false} />
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#FEEE91]/30">
+            <h3 className="text-lg font-bold">Want more ways to help?</h3>
+            <p className="mt-3 text-sm text-gray-700">Visit our <Link href="/donationspages" className="underline">Donations & Volunteer</Link> page to explore verified organizations and volunteer opportunities.</p>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
