@@ -28,7 +28,6 @@ export default function NotificationBell() {
     try {
       const response = await fetch(`http://localhost:4000/api/notifications?userId=${userEmail}`);
       const data = await response.json();
-      
       setNotifications(data.notifications || []);
       
       const unread = data.notifications.filter((n: Notification) => !n.read).length;
@@ -113,19 +112,20 @@ export default function NotificationBell() {
               </div>
             ) : (
               <div>
-                {notifications.map((notification) => (
-                  <div
-                    key={notification._id}
-                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${
-                      !notification.read ? 'bg-blue-50' : ''
-                    }`}
-                  >
-                    <p className="text-gray-800">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatTime(notification.createdAt)}
-                    </p>
-                  </div>
-                ))}
+
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification._id}
+                      className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${
+                        !notification.read ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <p className="text-gray-800">{notification.message}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatTime(notification.createdAt)}
+                      </p>
+                    </div>
+                  ))}
               </div>
             )}
           </div>

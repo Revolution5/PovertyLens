@@ -93,6 +93,13 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create index for notifications:', err.message || err);
   }
+  try {
+    await db.collection('dailyFacts').createIndex({ createdAt: 1 });
+    await db.collection('notifications').createIndex({ userId: 1, dailyFactDate: 1 });
+    console.log('Indexes created on dailyFacts (createdAt) and notifications.dailyFactDate');
+  } catch (err) {
+    console.warn('Could not create indexes for dailyFacts/notifications:', err.message || err);
+  }
 }
 
 async function createNotification(userId, message) {
@@ -115,6 +122,33 @@ async function createNotification(userId, message) {
   }
 }
 
+// Helper: get today's date string (UTC YYYY-MM-DD)
+function todayDateStringUTC() {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(now.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Get today's fact (deterministic random selection per-day)
+async function getTodaysFact() {
+  const dfCol = db.collection('dailyFacts');
+  const count = await dfCol.countDocuments();
+  if (!count) return null;
+
+  // Deterministic selection per-day using date string as seed
+  const seed = todayDateStringUTC();
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  const idx = Math.abs(hash) % count;
+
+  const fact = await dfCol.find().limit(1).skip(idx).next();
+  return fact || null;
+}
+
 
 
 app.get('/api/notifications', async (req, res) => {
@@ -132,8 +166,17 @@ app.get('/api/notifications', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20)
       .toArray();
-    
-    res.json({ notifications });
+
+    const out = notifications.map(n => ({
+      id: n._id ? String(n._id) : null,
+      _id: n._id ? String(n._id) : null,
+      userId: n.userId,
+      message: n.message,
+      read: !!n.read,
+      createdAt: n.createdAt,
+    }));
+
+    res.json({ success: true, notifications: out });
     
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -161,6 +204,98 @@ app.post('/api/notifications/read', async (req, res) => {
   } catch (error) {
     console.error('Error marking notifications as read:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Mark a single notification as read by id
+app.post('/api/notifications/:id/read', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: 'id required' });
+
+    const notificationsCollection = db.collection('notifications');
+    await notificationsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { read: true } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error marking notification as read:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// --- Daily Facts endpoints ---
+// Create a daily fact (admin UI or script can call this)
+app.post('/api/daily-facts', async (req, res) => {
+  try {
+    const { title, text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ success: false, message: 'text is required' });
+
+    const dfCol = db.collection('dailyFacts');
+    const doc = {
+      title: title || null,
+      text: text.trim(),
+      createdAt: new Date(),
+    };
+
+    const result = await dfCol.insertOne(doc);
+    res.status(201).json({ success: true, factId: result.insertedId, fact: doc });
+  } catch (err) {
+    console.error('Error creating daily fact:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// List daily facts
+app.get('/api/daily-facts', async (req, res) => {
+  try {
+    const dfCol = db.collection('dailyFacts');
+    const facts = await dfCol.find({}).sort({ createdAt: -1 }).limit(200).toArray();
+    res.json({ success: true, facts });
+  } catch (err) {
+    console.error('Error fetching daily facts:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get today's fact (deterministic per-day)
+app.get('/api/daily-fact', async (req, res) => {
+  try {
+    const fact = await getTodaysFact();
+    if (!fact) return res.status(404).json({ success: false, message: 'No daily facts available' });
+    res.json({ success: true, fact });
+  } catch (err) {
+    console.error('Error fetching today\'s fact:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Send today's daily fact as notifications to all users (idempotent per-day)
+app.post('/api/daily-facts/notify', async (req, res) => {
+  try {
+    const fact = await getTodaysFact();
+    if (!fact) return res.status(404).json({ success: false, message: 'No daily fact to send' });
+
+    const users = await db.collection('users').find({}, { projection: { email: 1 } }).toArray();
+    const notificationsCollection = db.collection('notifications');
+    const today = todayDateStringUTC();
+
+    const message = fact.text ? (fact.title ? `${fact.title}: ${fact.text}` : fact.text) : (fact.title || 'Daily fact');
+
+    const ops = users.map(u => ({
+      updateOne: {
+        filter: { userId: u.email, dailyFactDate: today },
+        update: { $setOnInsert: { userId: u.email, message, createdAt: new Date(), read: false, dailyFactDate: today } },
+        upsert: true,
+      }
+    }));
+
+    if (ops.length) {
+      await notificationsCollection.bulkWrite(ops, { ordered: false });
+    }
+
+    res.json({ success: true, message: 'Daily fact notifications processed', recipients: users.length });
+  } catch (err) {
+    console.error('Error sending daily fact notifications:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
