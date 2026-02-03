@@ -58,7 +58,9 @@ export default function Home() {
     // state to track if user is logged in
     const [isLoggedIn, setIsLoggedIn] = useState(false); 
     // state to check the logged in user username
-    const [username, setUsername] = useState("User"); 
+    const [username, setUsername] = useState("User");
+    const [dailyFact, setDailyFact] = useState<null | { _id?: string; title?: string; text?: string }>(null);
+    const [loadingFact, setLoadingFact] = useState(true);
 
     // Check if user is logged in when page loads
     useEffect(() => {
@@ -70,6 +72,21 @@ export default function Home() {
             if (storedUsername) {
                 setUsername(storedUsername);
             }
+        } else {
+            // if not logged in, fetch daily fact
+            (async () => {
+                try {
+                    const res = await fetch('http://localhost:4000/api/daily-fact');
+                    const data = await res.json();
+                    if (data?.success && data.fact) {
+                        setDailyFact(data.fact);
+                    }
+                } catch (e) {
+                    console.error('Error fetching daily fact:', e);
+                } finally {
+                    setLoadingFact(false);
+                }
+            })();
         }
     }, []);
 
@@ -219,40 +236,59 @@ export default function Home() {
 
     // display this for if the user is not logged in
     return (
-        <div className="min-h-screen pb-12" style={{ background: 'var(--background)' }}>
-            <h1 className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" style={{ color: 'var(--foreground)' }}>
-                Welcome To PovertyLens!
-            </h1>
-            
-            {/* Creating the columns*/}
-            <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
-                {/* Left column - Introductory text */}
-                <div className="flex-[11] card card-cyan p-8 md:p-10">
-                    <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
-                        Our Mission:
-                    </h2>
-                    <p className="text-lg md:text-xl mb-5 leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
-                        Poverty affects millions worldwide, yet it remains 
-                        one of the most misunderstood and underrepresented global issues.
-                        PovertyLens hopes to bridges this gap by transforming complex data and real-world stories into meaningful,
-                        easy-to-understand insights.
-                    </p>
-                    <p className="text-lg md:text-xl leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
-                        We hope to empower everyone, whether that's supporting global initiatives, 
-                        donating, or spreading awareness within their own communities.
-                    </p>
-                </div>
+        <div className="min-h-screen pb-12 flex flex-col" style={{ background: 'var(--background)' }}>
+            <div className="flex-1">
+                <h1 className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" style={{ color: 'var(--foreground)' }}>
+                    Welcome To PovertyLens!
+                </h1>
+                
+                {/* Creating the columns*/}
+                <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
+                    {/* Left column - Introductory text */}
+                    <div className="flex-[11] card card-cyan p-8 md:p-10">
+                        <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
+                            Our Mission:
+                        </h2>
+                        <p className="text-lg md:text-xl mb-5 leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
+                            Poverty affects millions worldwide, yet it remains 
+                            one of the most misunderstood and underrepresented global issues.
+                            PovertyLens hopes to bridges this gap by transforming complex data and real-world stories into meaningful,
+                            easy-to-understand insights.
+                        </p>
+                        <p className="text-lg md:text-xl leading-relaxed" style={{ color: 'var(--color-gray-dark)' }}>
+                            We hope to empower everyone, whether that's supporting global initiatives, 
+                            donating, or spreading awareness within their own communities.
+                        </p>
+                    </div>
 
-                {/* Right column - Logo */}
-                <div className="flex-[9] flex justify-center items-center">
-                    <Image
-                        src="/logo vertical.png" 
-                        alt="PovertyLens Logo" 
-                        width={450} 
-                        height={450}
-                        className="object-contain drop-shadow-2xl"/>
+                    {/* Right column - Logo */}
+                    <div className="flex-[9] flex justify-center items-center">
+                        <Image
+                            src="/logo vertical.png" 
+                            alt="PovertyLens Logo" 
+                            width={450} 
+                            height={450}
+                            className="object-contain drop-shadow-2xl"/>
+                    </div>
                 </div>
             </div>
+
+            {/* Notifications section at bottom - only visible when not logged in */}
+            {!loadingFact && dailyFact && (
+                <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
+                    <div className="">
+                        <h3 className="font-semibold text-2xl md:text-3xl text-gray-800 mb-3">
+                            {dailyFact.title || 'Daily Fact'}
+                        </h3>
+                        <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+                            {dailyFact.text}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-4">
+                            Learn more by signing in to PovertyLens
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
