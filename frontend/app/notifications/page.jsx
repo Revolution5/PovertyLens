@@ -10,34 +10,14 @@ export default function NotificationsPage() {
     const email = localStorage.getItem('userEmail');
     if (!email) return;
     
-    (async () => {
-      try {
-        const [nRes, fRes] = await Promise.all([
-          fetch(`http://localhost:4000/api/notifications?userId=${email}`),
-          fetch('http://localhost:4000/api/daily-fact')
-        ]);
-        const nData = await nRes.json();
-        const fData = await fRes.json();
-
-        let list = nData.notifications || [];
-        if (fData?.success && fData.fact) {
-          const fact = fData.fact;
-          const factItem = {
-            id: fact._id || 'dailyfact',
-            message: (fact.title ? fact.title + ': ' : '') + (fact.text || ''),
-            createdAt: new Date().toISOString(),
-            read: false,
-          };
-          list = [factItem, ...list];
+    fetch(`http://localhost:4000/api/notifications?userId=${email}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setNotifications(data.notifications);
         }
-
-        if (nData.success) setNotifications(list);
-      } catch (err) {
-        console.error('Error fetching notifications or daily fact:', err);
-      } finally {
         setLoading(false);
-      }
-    })();
+      });
   }, []);
 
   const markAsRead = async (id) => {

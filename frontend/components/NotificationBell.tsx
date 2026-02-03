@@ -12,7 +12,6 @@ interface Notification {
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [dailyFact, setDailyFact] = useState<null | { _id?: string; title?: string; text?: string }>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,23 +29,9 @@ export default function NotificationBell() {
       const response = await fetch(`http://localhost:4000/api/notifications?userId=${userEmail}`);
       const data = await response.json();
       setNotifications(data.notifications || []);
-
+      
       const unread = data.notifications.filter((n: Notification) => !n.read).length;
       setUnreadCount(unread);
-
-      // fetch daily fact and insert at top
-      try {
-        const fRes = await fetch('http://localhost:4000/api/daily-fact');
-        const fData = await fRes.json();
-        if (fData?.success && fData.fact) {
-          setDailyFact(fData.fact);
-        } else {
-          setDailyFact(null);
-        }
-      } catch (e) {
-        console.error('Error fetching daily fact:', e);
-        setDailyFact(null);
-      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -127,14 +112,7 @@ export default function NotificationBell() {
               </div>
             ) : (
               <div>
-                  {/* show daily fact at top if present */}
-                  {dailyFact && (
-                    <div key={dailyFact._id || 'dailyfact'} className={`p-4 border-b border-gray-100 hover:bg-gray-50 bg-yellow-50`}>
-                      <p className="text-gray-800 font-semibold">{dailyFact.title || 'Daily Fact'}</p>
-                      <p className="text-gray-800 mt-1">{dailyFact.text}</p>
-                      <p className="text-xs text-gray-500 mt-1">Today</p>
-                    </div>
-                  )}
+
                   {notifications.map((notification) => (
                     <div
                       key={notification._id}
