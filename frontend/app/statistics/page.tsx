@@ -148,8 +148,8 @@ function StoryCard({
           )}
 
           {/* story title and author section */}
-          <div className="min-w-0">
-            <div className="font-semibold text-gray-900 break-words">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="font-semibold text-gray-900 break-all">
               {story.title?.trim() ? story.title : "Untitled Story"}
             </div>
             
@@ -391,30 +391,35 @@ export default function StatisticsPage() {
     }
   };
 
-  const deriveCountriesFromMapRows = () => {
+  const derivedCountriesFromMapRows = useMemo(() => {
     const setIso = new Set<string>();
     mapRows.forEach((r) => {
       if (r?.country) setIso.add(r.country.toUpperCase());
     });
-    const derived = Array.from(setIso)
+
+    return Array.from(setIso)
       .sort()
       .map((iso3) => ({ iso3, name: countryNames[iso3] ?? iso3 }));
-    setCountriesList(derived);
-  };
+  }, [mapRows]);
+
+  const countriesToShow = useMemo(() => {
+    // If we have a proper countries list with names, use it
+    if (countriesList && countriesList.length > 0) {
+      const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
+      // If all names are just ISO codes, fall back to derived list
+      if (allNamesAreIso) {
+        return derivedCountriesFromMapRows;
+      }
+      return countriesList;
+    }
+    // No countries list, use derived
+    return derivedCountriesFromMapRows;
+  }, [countriesList, derivedCountriesFromMapRows]);
 
   useEffect(() => {
     fetchMapData();
     fetchCountriesFromBackend();
   }, []);
-
-  useEffect(() => {
-    if (!countriesList || countriesList.length === 0) {
-      deriveCountriesFromMapRows();
-    } else {
-      const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
-      if (allNamesAreIso) deriveCountriesFromMapRows();
-    }
-  }, [mapRows]);
 
   async function fetchCountryStat(iso3: string): Promise<CachedStat | null> {
     try {
@@ -561,7 +566,7 @@ export default function StatisticsPage() {
                   className="w-full border rounded p-2 mb-4"
                 >
                   <option value="">— Select a country —</option>
-                  {countriesList.map((c) => (
+                  {countriesToShow.map((c) => (
                     <option key={c.iso3} value={c.iso3}>
                       {c.name ?? c.iso3} ({c.iso3})
                     </option>
