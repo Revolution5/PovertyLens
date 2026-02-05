@@ -15,7 +15,6 @@ const app = express()
 const port = 4000
 
 const fetch = require('node-fetch')
-const countriesLib = require("i18n-iso-countries") // Added by Christella on 02/03/2026 for countries list
 
 app.use(cors())
 app.use(express.json())
@@ -300,24 +299,9 @@ app.post('/api/daily-facts/notify', async (req, res) => {
   }
 });
 
-// Edited by Christella 1/30/2026, UPDATED 02/03/2026 (expanded list)
-const ISO3_LIST = [
-  "ABW","AFG","AGO","AIA","ALA","ALB","AND","ARE","ARG","ARM","ASM","ATA","ATF","ATG","AUS","AUT","AZE",
-  "BDI","BEL","BEN","BES","BFA","BGD","BGR","BHR","BHS","BIH","BLM","BLR","BLZ","BMU","BOL","BRA","BRB",
-  "BRN","BTN","BVT","BWA","CAF","CAN","CCK","CHE","CHL","CHN","CIV","CMR","COD","COG","COK","COL","COM",
-  "CPV","CRI","CUB","CUW","CXR","CYM","CYP","CZE","DEU","DJI","DMA","DNK","DOM","DZA","ECU","EGY","ERI",
-  "ESH","ESP","EST","ETH","FIN","FJI","FLK","FRA","FRO","FSM","GAB","GBR","GEO","GGY","GHA","GIB","GIN",
-  "GLP","GMB","GNB","GNQ","GRC","GRD","GRL","GTM","GUF","GUM","GUY","HKG","HMD","HND","HRV","HTI","HUN",
-  "IDN","IMN","IND","IOT","IRL","IRN","IRQ","ISL","ISR","ITA","JAM","JEY","JOR","JPN","KAZ","KEN","KGZ",
-  "KHM","KIR","KNA","KOR","KWT","LAO","LBN","LBR","LBY","LCA","LIE","LKA","LSO","LTU","LUX","LVA","MAC",
-  "MAF","MAR","MCO","MDA","MDG","MDV","MEX","MHL","MKD","MLI","MLT","MMR","MNE","MNG","MNP","MOZ","MRT",
-  "MSR","MTQ","MUS","MWI","MYS","MYT","NAM","NCL","NER","NFK","NGA","NIC","NIU","NLD","NOR","NPL","NRU",
-  "NZL","OMN","PAK","PAN","PCN","PER","PHL","PLW","PNG","POL","PRI","PRK","PRT","PRY","PSE","PYF","QAT",
-  "REU","ROU","RUS","RWA","SAU","SDN","SEN","SGP","SGS","SHN","SJM","SLB","SLE","SLV","SMR","SOM","SPM",
-  "SRB","SSD","STP","SUR","SVK","SVN","SWE","SWZ","SXM","SYC","SYR","TCA","TCD","TGO","THA","TJK","TKL",
-  "TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT",
-  "VEN","VGB","VIR","VNM","VUT","WLF","WSM","YEM","ZAF","ZMB","ZWE"
-];
+// Edited by Christella 1/30/2026
+const ISO3_LIST = ['USA', 'CAN', 'MEX', 'BRA', 'ARG', 'GBR', 'FRA','DEU','ESP', 'ITA', 'IND', 'CHN', 'JPN', 'KOR', 'NGA', 'ZAF', 'EGY', 'ETH', 'PAK', 'BGD', 'IDN', 'VNM', 'PHL', 'THA', 'AUS', 'NZL'];
+
 async function fetchPip({ country, year, povline }){
   let pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&povline=${povline}&fill_gaps=true&welfare_type=all`;
   if (year) pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${povline}&fill_gaps=true&welfare_type=all`;
@@ -347,11 +331,6 @@ function extractMetricAndMeta(row){
   }
   return {metric, meta};
 }
-
-// Defaults used by poverty endpoints
-const DEFAULT_POVLINE = 2.15;
-const DEFAULT_YEAR = 2022;
-const DEFAULT_MAX_AGE_DAYS = 30;
 
 app.get('/', async (req, res) => {
   try {
@@ -480,6 +459,51 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Get user by email (for profile display in statistics page) - daniel q. 2/4
+app.get('/api/user-by-email', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+    
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne(
+      { email },
+      { projection: { password: 0, passwordHistory: 0 } } // Exclude sensitive data
+    );
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      user: {
+        email: user.email,
+        username: user.username,
+        profileImage: user.profileImage || null,
+        bannerImage: user.bannerImage || null,
+        createdAt: user.createdAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
 // /api/poverty - done by Christella
 
 // -----------------------
@@ -582,11 +606,11 @@ app.get('/api/poverty/summary', async(req,res) => {
 
     // Find most recent cached doc for country + poverty line
     const cached = await col
-      .find({ country, povline })
-      .sort({ year: -1, fetchedAt: -1 })
+      .find({country, povline})
+      .sort({year: -1, fetchedAt: -1})
       .limit(1)
       .next();
-
+    
     if (cached && cached.fetchedAt && new Date(cached.fetchedAt) >= cutoff) {
       return res.json({
         success: true,
@@ -616,11 +640,7 @@ app.get('/api/poverty/summary', async(req,res) => {
       meta,
     };
 
-    await col.updateOne(
-      { country, povline, year: yearToFetch },
-      { $set: docToStore },
-      { upsert: true }
-    );
+    await col.updateOne({ country, povline, year: yearToFetch }, {$set: docToStore}, {upsert: true});
 
     return res.json({
       success: true,
@@ -641,62 +661,44 @@ app.get('/api/poverty/summary', async(req,res) => {
 
 app.get('/api/poverty/pip-map', async (req, res) => {
   try {
-    const DEFAULT_POVLINE_LOCAL = 2.15;
-    const DEFAULT_YEAR_LOCAL = new Date().getUTCFullYear() - 1;
-    const DEFAULT_MAX_AGE_DAYS_LOCAL = 30;
-
-    const povline = Number(req.query.povline ?? DEFAULT_POVLINE_LOCAL);
-    const year = Number(req.query.year ?? DEFAULT_YEAR_LOCAL);
-    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS_LOCAL);
+    const povline = Number(req.query.povline ?? DEFAULT_POVLINE);
+    const year = Number(req.query.year ?? DEFAULT_YEAR);
+    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS);
 
     if (!Number.isFinite(povline) || povline <= 0 || povline > 100) {
-      return res.status(400).json({ success: false, message: 'Invalid povline' });
+      return res.status(400).json({success: false, message: 'Invalid povline'});
     }
-    if (!Number.isFinite(year) || year < 1960 || year > 2100) {
-      return res.status(400).json({ success: false, message: 'Invalid year' });
-    }
-
-    if (!db) {
-      return res.status(500).json({ success: false, message: 'Database not initialized' });
+    if (!Number.isFinite(year) || year < 1960 || year > 2100){
+      return res.status(400).json({success: false, message: 'Invalid year'});
     }
 
-    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60* 1000);
     const col = db.collection('povertyLiveStats');
 
     const CONCURRENCY = 8;
     const rows = [];
     let idx = 0;
 
-    async function worker() {
-      while (idx < ISO3_LIST.length) {
+    async function worker(){
+      while (idx < ISO3_LIST.length){
         const country = ISO3_LIST[idx++];
         const cacheKey = { country, povline, year };
 
+        const cached = await col.findOne({...cacheKey, fetchedAt: {$gte: cutoff }});
+        if (cached) {
+          rows.push({
+            country,
+            year,
+            povline,
+            headcount: cached.metric?.headcount ?? (Array.isArray(cached.data) ? cached.data[0]?.headcount : null),
+            source: 'cache',
+            fetchedAt: cached.fetchedAt,
+          });
+          continue;
+        }
+
         try {
-          // <-- IMPORTANT: cache lookup (col.findOne) is INSIDE the try/catch
-          const cached = await col.findOne({ ...cacheKey, fetchedAt: { $gte: cutoff } });
-
-          if (cached) {
-            rows.push({
-              country,
-              year,
-              povline,
-              headcount:
-                cached.metric?.headcount ??
-                (Array.isArray(cached.data) ? cached.data[0]?.headcount : null),
-              poverty_gap:
-                cached.metric?.poverty_gap ??
-                (Array.isArray(cached.data) ? cached.data[0]?.poverty_gap : null),
-              poverty_severity:
-                cached.metric?.poverty_severity ??
-                (Array.isArray(cached.data) ? cached.data[0]?.poverty_severity : null),
-              source: 'cache',
-              fetchedAt: cached.fetchedAt,
-            });
-            continue;
-          }
-
-          const { pipData, row } = await fetchPip({ country, year, povline });
+          const { pipData, row } = await fetchPip({country, year, povline});
           const { metric, meta } = extractMetricAndMeta(row);
 
           const docToStore = {
@@ -707,27 +709,22 @@ app.get('/api/poverty/pip-map', async (req, res) => {
             meta,
           };
 
-          await col.updateOne(cacheKey, { $set: docToStore }, { upsert: true });
+          await col.updateOne(cache, { $set: docToStore }, {upsert: true});
 
           rows.push({
             country,
             year,
             povline,
             headcount: metric.headcount,
-            poverty_gap: metric.poverty_gap,
-            poverty_severity: metric.poverty_severity,
             source: 'pip',
             fetchedAt: docToStore.fetchedAt,
           });
         } catch (e) {
-          // only this country recorded as error; loop continues for others
           rows.push({
             country,
             year,
             povline,
             headcount: null,
-            poverty_gap: null,
-            poverty_severity: null,
             source: 'error',
             error: String(e?.message || e),
           });
@@ -735,9 +732,7 @@ app.get('/api/poverty/pip-map', async (req, res) => {
       }
     }
 
-    await Promise.all(
-      Array.from({ length: Math.min(CONCURRENCY, ISO3_LIST.length) }, () => worker())
-    );
+    await Promise.all(Array.from({length: CONCURRENCY }, () => ServiceWorkerRegistration()));
 
     res.json({
       success: true,
@@ -749,53 +744,61 @@ app.get('/api/poverty/pip-map', async (req, res) => {
     });
   } catch (err) {
     console.error('Error in /api/poverty/pip-map:', err);
-    res.status(500).json({ success: false, message: 'Server error building map dataset' });
+    res.status(500).json({success: false, message: 'Server error building map dataset'});
   }
 });
 
+app.get('/api/poverty', async(req, res) => {
+  try{
+    const stats = await db.collection('povertyStats').find({}).toArray()
+    res.json({
+      success: true,
+      stats,
+    })
+  } catch (err) {
+    console.error('Error fetching poverty stats:', err)
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching poverty stats',
+    })
+  }
+}) 
 
 // poverty live stats - done by Christella
 app.get('/api/poverty/live', async (req, res) => {
   try {
     const country = String(req.query.country || '').toUpperCase().trim();
     const yearRaw = String(req.query.year || '').trim();
-    const lineRaw =
-      (req.query.line !== undefined && req.query.line !== null)
-        ? String(req.query.line).trim()
-        : '';
+    const lineRaw = (req.query.line !== undefined &&  req.query.line !== null) ? String(req.query.line).trim() : '';
 
-    if (!/^[A-Z]{3}$/.test(country)) {
+    if (!/^[A-Z]{3}$/.test(country)){
       return res.status(400).json({
         success: false,
-        message: 'Please enter a 3-letter ISO country code (e.g. USA)',
+        message: 'Please enter a 3-letter ISO country code (e.g. USA)'
       });
     }
 
     let year = null;
-    if (yearRaw) {
+    if (yearRaw){
       year = Number.parseInt(yearRaw, 10);
       const currentYear = new Date().getUTCFullYear();
-      if (!Number.isFinite(year) || year < 1960 || year > currentYear + 1) {
-        return res.status(400).json({ success: false, message: 'Invalid year' });
+      if (!Number.isFinite(year) || year < 1960 || year > currentYear + 1){
+        return res.status(400).json({ success: false, message: 'Invalid year'});
       }
     }
 
-    const povline = lineRaw ? Number.parseFloat(lineRaw) : DEFAULT_POVLINE;
-    if (!Number.isFinite(povline) || povline <= 0 || povline > 100) {
+    const povline = lineRaw ? Number.parseFloat(lineRaw) : 2.15;
+    if (!Number.isFinite(povline) || povline <= 0 || povline > 100){
       return res.status(400).json({
         success: false,
-        message: 'Invalid poverty line',
+        message: 'Invalid poverty line'
       });
     }
-
-    const cacheCollection = db.collection('povertyLiveStats');
+    
+    const cacheCollection = db.collection('povertyLiveStats')
     const cacheKey = year ? { country, year, povline } : { country, povline };
 
-    const cached = await cacheCollection
-      .find(cacheKey)
-      .sort({ fetchedAt: -1 })
-      .limit(1)
-      .next();
+    const cached = await cacheCollection.findOne(cacheKey)
 
     if (cached) {
       return res.json({
@@ -808,97 +811,46 @@ app.get('/api/poverty/live', async (req, res) => {
         metric: cached.metric ?? null,
         meta: cached.meta ?? null,
         data: cached.data,
-      });
+      })
     }
 
-    const yearToFetch = year ?? DEFAULT_YEAR;
 
-    const { pipData, row } = await fetchPip({ country, year: yearToFetch, povline });
-    const { metric, meta } = extractMetricAndMeta(row);
+    const pipRes = await fetch(pipUrl)
+    if(!pipRes.ok){
+      console.error('PIP API error status: ', pipRes.status)
+      return res.status(502).json({
+        success: false,
+        message: 'Error fetching data from World Bank PIP API'
+      })
+    }
+
+    const pipData = await pipRes.json()
 
     const docToStore = {
-      country,
-      year: yearToFetch,
-      povline,
+      ...cacheKey,
       fetchedAt: new Date(),
       data: pipData,
-      metric,
-      meta,
-    };
+    }
 
-    await cacheCollection.updateOne(
-      { country, year: yearToFetch, povline },
-      { $set: docToStore },
-      { upsert: true }
-    );
+    await cacheCollection.updateOne(cacheKey, { $set: docToStore }, { upsert: true })
 
     res.json({
       success: true,
       source: 'World Bank PIP (fresh)',
       country,
-      year: yearToFetch,
-      povline,
+      year,
+      povline: line,
       fetchedAt: docToStore.fetchedAt,
-      metric,
-      meta,
       data: pipData,
-    });
-  } catch (err) {
-    console.error('Error in /api/poverty/live:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error fetching live poverty data',
-    });
-  }
-});
-
-//Added by Christella on 02/03/2026 for countries list
-app.get("/api/poverty/countries", (req, res) => {
-  try {
-    // Prefer the server's ISO3_LIST if available (many of your earlier files had it)
-    // NOTE: if ISO3_LIST is declared with `const`/`let` at top-level of app.js it will be visible here.
-    const isoList =
-      typeof ISO3_LIST !== "undefined" && Array.isArray(ISO3_LIST) && ISO3_LIST.length > 0
-        ? ISO3_LIST
-        : [
-            // fallback minimal list — replace if you want a different default
-            "USA",
-            "IND",
-            "BRA",
-            "CHN",
-            "DEU",
-            "FRA",
-            "GBR",
-            "MEX",
-            "NGA",
-            "KEN"
-          ];
-
-    // Normalize: filter out invalid entries and uppercase
-    const uniqIso = Array.from(
-      new Set(
-        isoList
-          .filter(Boolean)
-          .map((c) => (typeof c === "string" ? c.trim().toUpperCase() : c))
-          .filter((c) => typeof c === "string" && c.length === 3)
-      )
-    );
-
-    const out = uniqIso.map((iso3) => {
-      // Try to get a proper English name; fallback to iso3 itself when unknown
-      const name = countriesLib.getName(iso3, "en") || iso3;
-      return { iso3, name };
-    });
-
-    // Sort alphabetically by human name for a nicer dropdown
-    out.sort((a, b) => a.name.localeCompare(b.name));
-
-    res.json(out);
-  } catch (err) {
-    console.error("Error in /api/poverty/countries:", err);
-    res.status(500).json({ error: "Failed to build countries list" });
-  }
-});
+    })
+    } catch (err) {
+      console.error('Error in /api/poverty/live:', err)
+      res.status(500).json({
+        success: false,
+        message: 'Server error fetching live poverty data',
+      })
+    }
+  })
 
 // Profile Update Route
 app.put('/api/profile/update', async (req, res) => {

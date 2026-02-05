@@ -1,10 +1,7 @@
-/* Beginning of Christella's Code - 1/30/2026 (Map-only left, dropdown+stats right) */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import StatisticsMapClient from "../../components/StatisticsMapClient";
-
-/* Types relative to Statistics */
 
 type Story = {
   _id: string;
@@ -16,6 +13,13 @@ type Story = {
   displayPhoto?: boolean;
   userEmail?: string | null;
   archived?: boolean;
+};
+
+type UserProfile = {
+  email: string;
+  username: string;
+  profileImage?: string | null;
+  bannerImage?: string | null;
 };
 
 type LiveResponse = {
@@ -48,7 +52,7 @@ type CachedStat = {
 };
 
 type MapRow = {
-  country: string; // ISO3
+  country: string;
   headcount: number | null;
   poverty_gap?: number | null;
   poverty_severity?: number | null;
@@ -62,7 +66,7 @@ type MapRow = {
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
-/* Geographical IDs to Country Code (kept for map-clicks) */
+/* Geographical IDs to Country Code */
 const geoIdToCountryCode: Record<string, string> = {
   "50": "BGD",
   "76": "BRA",
@@ -74,7 +78,7 @@ const geoIdToCountryCode: Record<string, string> = {
   "840": "USA",
 };
 
-/* Partial fallback names (used only when backend doesn't provide names) */
+/* Country names */
 const countryNames: Record<string, string> = {
   BGD: "Bangladesh",
   BRA: "Brazil",
@@ -86,21 +90,84 @@ const countryNames: Record<string, string> = {
   USA: "United States",
 };
 
-/* Story card component (unchanged) */
-function StoryCard({ story }: { story: Story }) {
+function StoryCard({ 
+  story, 
+  userProfile 
+}: { 
+  story: Story; 
+  userProfile?: UserProfile | null;
+}) {
   const [expanded, setExpanded] = useState(false);
   const maxChars = 220;
 
   const text = story.storyText || "";
   const needsTruncate = text.length > maxChars;
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
+  const showName = story.displayName && userProfile?.username;
+  const showPhoto = story.displayPhoto && userProfile?.profileImage;
 
   return (
     <div className="rounded-xl border bg-white shadow-sm p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 font-semibold text-gray-900 break-words">
-          {story.title?.trim() ? story.title : "Untitled Story"}
+      {/* redesigned to show user info */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          {/* conditional display */}
+          {showPhoto ? (
+            // SHOW ACTUAL PROFILE PHOTO WHEN displayPhoto = true
+            <div className="flex-shrink-0">
+              <img
+                src={userProfile!.profileImage!.startsWith('http') 
+                  ? userProfile!.profileImage!
+                  : `${BACKEND_URL}${userProfile!.profileImage}`}
+                alt={userProfile!.username}
+                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              {/* FALLBACK AVATAR - Shown if image fails to load */}
+              <div className="hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">
+                  {userProfile!.username.substring(0, 2).toUpperCase()}
+                </span>
+              </div>
+            </div>
+          ) : (
+            // PLACEHOLDER AVATAR - Shown when displayPhoto = false
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </span>
+            </div>
+          )}
+
+          {/* story title and author section */}
+          <div className="min-w-0">
+            <div className="font-semibold text-gray-900 break-words">
+              {story.title?.trim() ? story.title : "Untitled Story"}
+            </div>
+            
+            {/* SHOW AUTHOR NAME WHEN displayName = true */}
+            {showName ? (
+              <div className="text-sm text-gray-600 mt-1">
+                By {userProfile!.username}
+              </div>
+            ) : (
+              // SHOW "ANONYMOUS" WHEN displayName = false
+              <div className="text-sm text-gray-400 mt-1">
+                Anonymous
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Date */}
         {story.createdAt && (
           <div className="text-xs text-gray-400 whitespace-nowrap">
             {new Date(story.createdAt).toLocaleDateString()}
@@ -108,6 +175,7 @@ function StoryCard({ story }: { story: Story }) {
         )}
       </div>
 
+      {/* Story Content (Unchanged) */}
       <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
         {expanded ? text : preview}
       </div>
@@ -121,37 +189,46 @@ function StoryCard({ story }: { story: Story }) {
           {expanded ? "Show less" : "Read more"}
         </button>
       )}
+
+      <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Name: {story.displayName ? "Shown" : "Hidden"}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            <span>Photo: {story.displayPhoto ? "Shown" : "Hidden"}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* Page Code - UI */
-
 export default function StatisticsPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-
   const [liveResult, setLiveResult] = useState<LiveResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [stories, setStories] = useState<Story[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
   const [storiesError, setStoriesError] = useState("");
-
-  const [statsByCountry, setStatsByCountry] = useState<
-    Record<string, CachedStat>
-  >({});
-
+  const [statsByCountry, setStatsByCountry] = useState<Record<string, CachedStat>>({});
   const [mapRows, setMapRows] = useState<MapRow[]>([]);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-
-  // canonical countries list from backend (iso3 + name)
-  const [countriesList, setCountriesList] = useState<
-    { iso3: string; name?: string }[]
-  >([]);
+  const [countriesList, setCountriesList] = useState<{ iso3: string; name?: string }[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [countriesError, setCountriesError] = useState<string | null>(null);
+  
+  /* user profile cache - daniel q. 2/4 */
+  const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
 
   const selectedGeoId = useMemo(() => {
     if (!selectedCountry) return null;
@@ -162,7 +239,68 @@ export default function StatisticsPage() {
     );
   }, [selectedCountry]);
 
-  const fetchStories = async (iso3: string) => {
+  /* fetch user profile - daniel q. 2/4 */
+  const fetchUserProfile = useCallback(async (email: string): Promise<UserProfile | null> => {
+    if (!email) return null;
+    
+    if (userProfilesCache[email]) {
+      return userProfilesCache[email];
+    }
+
+    try {
+      const profileRes = await fetch(
+        `${BACKEND_URL}/api/user-images?email=${encodeURIComponent(email)}`
+      );
+      const profileData = await profileRes.json();
+
+      let profileImage = null;
+      let bannerImage = null;
+      
+      if (profileData.success) {
+        profileImage = profileData.profileImage;
+        bannerImage = profileData.bannerImage;
+      }
+
+      const userRes = await fetch(`${BACKEND_URL}/api/user-by-email?email=${encodeURIComponent(email)}`);
+      let username = email.split('@')[0];
+      
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if (userData.success && userData.user) {
+          username = userData.user.username || username;
+        }
+      }
+
+      const profile: UserProfile = {
+        email,
+        username,
+        profileImage,
+        bannerImage
+      };
+
+      setUserProfilesCache(prev => ({ ...prev, [email]: profile }));
+      return profile;
+
+    } catch (error) {
+      console.error(`Error fetching profile for ${email}:`, error);
+      return null;
+    }
+  }, [userProfilesCache]);
+
+  /* fetch profiles for stories - daniel q. 2/4 */
+  const fetchProfilesForStories = useCallback(async (storiesList: Story[]) => {
+    const emails = storiesList
+      .map(story => story.userEmail)
+      .filter((email): email is string => !!email && !userProfilesCache[email]);
+
+    if (emails.length === 0) return;
+
+    // FETCH ALL PROFILES IN PARALLEL
+    const profilePromises = emails.map(email => fetchUserProfile(email));
+    await Promise.all(profilePromises);
+  }, [fetchUserProfile, userProfilesCache]);
+
+  const fetchStories = useCallback(async (iso3: string) => {
     setStoriesLoading(true);
     setStoriesError("");
 
@@ -176,16 +314,19 @@ export default function StatisticsPage() {
         throw new Error(data.message || "Failed to load stories");
       }
 
-      setStories(Array.isArray(data.stories) ? data.stories : []);
+      const storiesList = Array.isArray(data.stories) ? data.stories : [];
+      setStories(storiesList);
+
+      await fetchProfilesForStories(storiesList);
+
     } catch (e: any) {
       setStories([]);
       setStoriesError(e?.message || "Server error");
     } finally {
       setStoriesLoading(false);
     }
-  };
+  }, [fetchProfilesForStories]);
 
-  // Loads dataset used to decide which countries to show markers for
   const fetchMapData = async () => {
     setMapLoading(true);
     setMapError(null);
@@ -212,7 +353,6 @@ export default function StatisticsPage() {
     }
   };
 
-  // canonical countries endpoint fetch
   const fetchCountriesFromBackend = async () => {
     setCountriesLoading(true);
     setCountriesError(null);
@@ -251,7 +391,6 @@ export default function StatisticsPage() {
     }
   };
 
-  // Fallback deriving list from mapRows if backend endpoint is not present / failed
   const deriveCountriesFromMapRows = () => {
     const setIso = new Set<string>();
     mapRows.forEach((r) => {
@@ -264,14 +403,10 @@ export default function StatisticsPage() {
   };
 
   useEffect(() => {
-    // background prefetch
     fetchMapData();
-    // try canonical countries from backend; fallback uses mapRows later
     fetchCountriesFromBackend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When mapRows finishes loading, if we don't have a canonical list, derive it
   useEffect(() => {
     if (!countriesList || countriesList.length === 0) {
       deriveCountriesFromMapRows();
@@ -279,7 +414,6 @@ export default function StatisticsPage() {
       const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
       if (allNamesAreIso) deriveCountriesFromMapRows();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapRows]);
 
   async function fetchCountryStat(iso3: string): Promise<CachedStat | null> {
@@ -376,7 +510,7 @@ export default function StatisticsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#8CE4FF]/10 via-[#FEEE91]/10 to-[#FFA239]/10">
       <main className="max-w-[1600px] mx-auto px-6 py-10">
-        {/* Header code */}
+        {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold mb-3">
             <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
@@ -393,7 +527,6 @@ export default function StatisticsPage() {
           {/* Map panel (left) */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Map</h2>
-
             <div className="mb-4">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
@@ -404,7 +537,6 @@ export default function StatisticsPage() {
               <div className="mt-2 text-sm text-gray-500">
                 The map shows a baselayer only. Pick a country from the panel to the right.
               </div>
-
               {mapLoading && (
                 <div className="mt-2 text-sm text-gray-500">
                   Loading map data in background...
@@ -412,15 +544,11 @@ export default function StatisticsPage() {
               )}
               {mapError && <div className="mt-2 text-sm text-red-600">{mapError}</div>}
             </div>
-
-            {/* NOTE: quick-pick buttons removed to keep map visually minimal */}
           </div>
 
           {/* Statistics panel (right) */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Statistics</h2>
-
-            {/* Dropdown populated from backend (or derived from mapRows) */}
             <div className="mb-3">
               {countriesLoading ? (
                 <div className="text-sm text-gray-500">Loading countries…</div>
@@ -486,7 +614,7 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        {/* Stories section under BOTH map and statistics */}
+        {/* now shows profile picture and names - daniel q. 2/4 */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-xl font-semibold mb-3">
             Stories {selectedCountry ? `from ${countryNames[selectedCountry] ?? selectedCountry}` : ""}
@@ -514,8 +642,13 @@ export default function StatisticsPage() {
             )}
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stories.map((s) => (
-              <StoryCard key={s._id} story={s} />
+            {stories.map((story) => (
+              <StoryCard
+                key={story._id}
+                story={story}
+                /* passes user profile data to storycard - daniel q. 2/4 */
+                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+              />
             ))}
           </div>
         </div>
@@ -523,4 +656,3 @@ export default function StatisticsPage() {
     </div>
   );
 }
-/* End of Christella's Code - 1/30/2026 */
