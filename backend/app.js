@@ -102,6 +102,14 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create indexes for dailyFacts/notifications:', err.message || err);
   }
+  // added by Christella - 02/04/2026
+  try {
+    await db.collection('donations').createIndex({email: 1, createdAt: -1});
+    console.log('Index created on donations collection');
+  } catch (err) {
+    console.warn('Could not create index for donation:', err.message || err);
+  }
+  // end of addition by Christella - 02/04/2026
 }
 
 async function createNotification(userId, message) {
@@ -1304,6 +1312,7 @@ app.get('/api/user-images', async (req, res) => {
 })();
 // End of Marisol Morales Code 1/28/26 =====================
 
+// Added by Christella - 12/10/2025
 // Create a story
 app.post('/api/stories', async(req, res) => {
   try {
@@ -1516,3 +1525,81 @@ app.delete('/api/stories/:id', async (req, res) => {
     });
   }
 });
+// End of addition by Christella - 12/10/25
+
+// Added by Christella - 02/04/2026
+// Log a donation (no payments yet - just saves to MongoDB)
+app.post('/api/donations', async (req, res) => {
+  try {
+    if (!db) {
+      console.warn('DB not initialized when /api/donations called');
+      return res.status(500).json({ success: false, message: 'Database not initialized' });
+    }
+
+    let { amount, isMonthly, name, email, message } = req.body;
+
+    // basic validation
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid donation amount' });
+    }
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ success: false, message: 'Name is required' });
+    }
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const donationDoc = {
+      amount: parsedAmount,
+      isMonthly: !!isMonthly,
+      name: String(name).trim(),
+      email: String(email).trim().toLowerCase(),
+      message: message ? String(message).trim().slice(0, 1000) : '',
+      createdAt: new Date(),
+      status: 'logged',
+    };
+
+    const result = await db.collection('donations').insertOne(donationDoc);
+
+    // createNotification(donationDoc.email, `Thanks for donating $${donationDoc.amount}!`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Donation logged',
+      donationId: String(result.insertedId),
+    });
+  } catch (err) {
+    console.error('Error in /api/donations:', err && err.stack ? err.stack : err);
+    res.status(500).json({ success: false, message: 'Server error while logging donation' });
+  }
+});
+
+// View recent donations (useful for testing/admin)
+app.get('/api/donations', async (req, res) => {
+  try {
+    if (!db) {
+      console.warn('DB not initialized when GET /api/donations called');
+      return res.status(500).json({ success: false, message: 'Database not initialized' });
+    }
+
+    const donations = await db
+      .collection('donations')
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .toArray();
+
+    const out = donations.map(d => ({
+      ...d,
+      _id: d._id ? String(d._id) : null,
+      id: d._id ? String(d._id) : null,
+    }));
+
+    res.json({ success: true, donations: out });
+  } catch (err) {
+    console.error('Error fetching donations:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+// End of addition by Christella - 02/04/2026
