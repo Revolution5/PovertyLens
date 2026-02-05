@@ -530,9 +530,9 @@ export default function StatisticsPage() {
         {/* Grid for content display */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
           {/* Map panel (left) */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6 relative z-0">
             <h2 className="text-xl font-semibold mb-4">Map</h2>
-            <div className="mb-4">
+            <div className="mb-4 relative z-0">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
                 onCountryClick={handleCountryClick}
