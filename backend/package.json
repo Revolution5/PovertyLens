@@ -15,10 +15,13 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-mongo-sanitize": "^2.2.0",
+    "i18n-iso-countries": "^7.14.0",
     "jsonwebtoken": "^9.0.3",
+    "leaflet": "^1.9.4",
     "mongodb": "^7.0.0",
     "multer": "^2.0.2",
     "node-fetch": "^2.7.0",
+    "react-leaflet": "^5.0.0",
     "tesseract.js": "^7.0.0"
   }
 }

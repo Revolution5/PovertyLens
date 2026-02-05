@@ -1,8 +1,11 @@
+// Done by Christella 01/29/2026
 'use client';
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileText } from 'lucide-react';
 const BACKEND_URL = 'http://localhost:4000';
+
+type CountryOption = { iso3: string; name: string };
 
 const COUNTRY_OPTIONS = [
   { code: '', name: 'Select a country (optional)' },
@@ -24,13 +27,13 @@ const colorSchemes = [
 ];
 
 const sharedInputStyle = {
-    width: '100%',
-    fontSize: '16px',
-    borderRadius: '8px',
-    border: '1px solid #d1d5db',
-    outline: 'none',
-    backgroundColor:'#ffffff',
-    boxSizing: 'border-box' as const,
+  width: '100%',
+  fontSize: '16px',
+  borderRadius: '8px',
+  border: '1px solid #d1d5db',
+  outline: 'none',
+  backgroundColor: '#ffffff',
+  boxSizing: 'border-box' as const,
 };
 
 export default function UploadStoryPage() {
@@ -43,28 +46,70 @@ export default function UploadStoryPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [colorScheme, setColorScheme] = useState(0);
 
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [countriesLoading, setCountriesLoading] = useState(false);
+
   const bgColor = colorSchemes[colorScheme].bg;
   const accentColor = colorSchemes[colorScheme].accent;
 
   const wordCount = story.trim() ? story.trim().split(/\s+/).length : 0;
 
+  // Edit by Christella - 02/03/2026
+  useEffect(() => {
+    const loadCountries = async () => {
+      setCountriesLoading(true);
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/poverty/countries`);
+        const data = await res.json();
+
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error("Failed to load countries list");
+        }
+
+        const normalized: CountryOption[] = data
+          .map((d: any) => ({
+            iso3: String(d.iso3 || d.iso || d.code || "").trim().toUpperCase(),
+            name: String(d.name || d.title || d.label || d.iso3 || "").trim(),
+          }))
+          .filter((d: CountryOption) => d.iso3.length === 3 && d.name.length > 0)
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        setCountries(normalized);
+      } catch (err) {
+        console.error(err);
+        setCountries([]);
+      } finally {
+        setCountriesLoading(false);
+      }
+    };
+
+    loadCountries();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
-    if (!title.trim()){
-        setMessage('Please enter a story title.');
-        return;
+    if (!title.trim()) {
+      setMessage('Please enter a story title.');
+      return;
+    }
+
+    if (!country.trim()) {
+      setMessage('Please select a country.');
+      return;
     }
 
     if (!story.trim()) {
       setMessage('Please write a story before uploading.');
       return;
     }
+
     if (wordCount > 7000) {
       setMessage('Unable to upload: your story is over 7,000 words.');
       return;
     }
+
     try {
       setIsSubmitting(true);
       const userEmail =
@@ -84,6 +129,7 @@ export default function UploadStoryPage() {
           country,
         }),
       });
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {
@@ -148,11 +194,7 @@ export default function UploadStoryPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FileText
-                size={32}
-                strokeWidth={2}
-                color={accentColor}
-              />
+              <FileText size={32} strokeWidth={2} color={accentColor} />
               <h1
                 style={{
                   fontSize: '30px',
@@ -206,7 +248,7 @@ export default function UploadStoryPage() {
                   color: '#0f172a',
                 }}
               >
-                Story Title
+                Story Title <span style={{color: '#B00020'}}>*</span>
               </label>
               <input
                 id="title"
@@ -236,12 +278,14 @@ export default function UploadStoryPage() {
                   color: '#0f172a',
                 }}
               >
-                Country
+                Country <span style={{ color: '#b00020' }}>*</span>
               </label>
+
               <select
                 id="country"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
+                required
                 style={{
                   ...sharedInputStyle,
                   height: '48px',
@@ -251,9 +295,13 @@ export default function UploadStoryPage() {
                 onFocus={(e) => (e.target.style.borderColor = accentColor)}
                 onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
               >
-                {COUNTRY_OPTIONS.map((c) => (
-                  <option key={c.code || 'none'} value={c.code}>
-                    {c.code ? `${c.name} (${c.code})` : c.name}
+                <option value="" disabled>
+                  {countriesLoading ? "Loading countries..." : "Select a country"}
+                </option>
+
+                {countries.map((c) => (
+                  <option key={c.iso3} value={c.iso3}>
+                    {c.name} ({c.iso3})
                   </option>
                 ))}
               </select>
@@ -271,7 +319,7 @@ export default function UploadStoryPage() {
                   color: '#0f172a',
                 }}
               >
-                Your Story
+                Your Story <span style={{color: '#B00020'}}>*</span>
               </label>
               <textarea
                 id="story"
