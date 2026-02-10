@@ -5,6 +5,10 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import { FileText, BookOpen, Gamepad2, Heart } from 'lucide-react';
 
+// ============== Marisol Modified code 2/5/2026 Begin ==============
+import { Star } from 'lucide-react';
+// ============== Marisol Modified code 2/5/2026 End ==============
+
 // ActionCard Component (integrated)
 interface ActionCardProps {
   title: string;
@@ -62,6 +66,11 @@ export default function Home() {
     const [dailyFact, setDailyFact] = useState<null | { _id?: string; title?: string; text?: string }>(null);
     const [loadingFact, setLoadingFact] = useState(true);
 
+    // ============== Marisol Modified code 2/5/2026 Begin ==============
+    // Updated to store objects with name and url
+    const [favoritedResources, setFavoritedResources] = useState<Array<{name: string, url: string}>>([]);
+    // ============== Marisol Modified code 2/5/2026 End ==============
+
     // Check if user is logged in when page loads
     useEffect(() => {
         const userEmail = localStorage.getItem('userEmail');
@@ -72,6 +81,30 @@ export default function Home() {
             if (storedUsername) {
                 setUsername(storedUsername);
             }
+            // ============== Marisol Modified code 2/5/2026 Begin ==============
+            // Make favorites user-specific by using email in the key
+            const favoritesKey = `favoriteResources_${userEmail}`;
+            const storedFavorites = localStorage.getItem(favoritesKey);
+            if (storedFavorites) {
+                try {
+                    const parsed = JSON.parse(storedFavorites);
+                    
+                    // Check if it's the old format (array of strings)
+                    if (parsed.length > 0 && typeof parsed[0] === 'string') {
+                        console.log('Migrating old favorites format to new format');
+                        // Clear old favorites - user will need to re-favorite
+                        localStorage.removeItem(favoritesKey);
+                        setFavoritedResources([]);
+                    } else {
+                        // New format - use as is
+                        setFavoritedResources(parsed);
+                    }
+                } catch (e) {
+                    console.error('Error loading favorites:', e);
+                    setFavoritedResources([]);
+                }
+            }
+            // ============== Marisol Modified code 2/5/2026 End ==============
         } else {
             // if not logged in, fetch daily fact
             (async () => {
@@ -217,17 +250,40 @@ export default function Home() {
                             </div>
                         </div>
 
+                        {/* ============== Marisol Modified code 2/5/2026 Begin ==============*/}
                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-gray-600 text-sm mb-1">Total Impact</p>
-                                    <p className="text-3xl font-semibold">342</p>
+                                    <p className="text-gray-600 text-sm mb-1">Favorited Resources</p>
+                                    <p className="text-3xl font-semibold">{favoritedResources.length}</p>
                                 </div>
-                                <div className="w-12 h-12 rounded-full bg-[#FF5656]/20 flex items-center justify-center">
-                                    <Heart className="w-6 h-6 text-[#FF5656]" />
+                                <div className="w-12 h-12 rounded-full bg-[#FFD700]/20 flex items-center justify-center">
+                                    <Star className="w-6 h-6 text-[#FFD700]" />
                                 </div>
                             </div>
+                            {/* Show list of favorited resources if any exist */}
+                            {favoritedResources.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <p className="text-xs text-gray-500 mb-2 font-medium">Your Favorites:</p>
+                                    <ul className="space-y-1">
+                                        {favoritedResources.map((resource, idx) => (
+                                            <li key={idx} className="text-xs text-gray-700 flex items-start group">
+                                                <Star className="w-3 h-3 text-[#FFD700] mr-1.5 mt-0.5 flex-shrink-0" fill="#FFD700" />
+                                                <Link 
+                                                    href={resource.url || '#'}
+                                                    target={resource.url ? "_blank" : undefined}
+                                                    rel={resource.url ? "noopener noreferrer" : undefined}
+                                                    className="line-clamp-2 hover:text-[#FFA239] hover:underline transition-colors cursor-pointer"
+                                                >
+                                                    {resource.name}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
+                        {/* ============== Marisol Modified code 2/5/2026 End ==============*/}
                     </div>
                 </main>
             </div>
