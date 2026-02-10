@@ -1,16 +1,17 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { Plus, Minus } from 'lucide-react';
 
-export default function FAQ(){
+export default function FAQ() {
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     const faqs = [
         {
             question: "How has poverty affected the world today?",
-            answer: "Global poverty continues to be a significant issue that results in severe consequences. It directly impacts health, and nutrition, as many communities lack access to basic necessities such as clean water, sanitation, and sufficient nutritious food, leading to poor health and lower life expenctantcy. Economically, poverty is linked to food insecurity, stifles community investment, and an increase in global crises vulnerability to pandemics, climate disasters, and conflicts. Despite progress in some areas, hundreds of millions of people still live on just a few dollars a day."
-        }, 
-
+            answer: "Global poverty continues to be a significant issue that results in severe consequences. It directly impacts health and nutrition, as many communities lack access to basic necessities such as clean water, sanitation, and sufficient nutritious food, leading to poor health and lower life expectancy. Economically, poverty is linked to food insecurity, stifles community investment, and increases global crises vulnerability to pandemics, climate disasters, and conflicts. Despite progress in some areas, hundreds of millions of people still live on just a few dollars a day."
+        },
         {
             question: "Which countries are suffering the most from poverty?",
             answer: (
@@ -20,7 +21,6 @@ export default function FAQ(){
                 </div>
             )
         },
-
         {
             question: "How can I donate or help?",
             answer: (
@@ -35,7 +35,7 @@ export default function FAQ(){
             question: "Where do my donations go if I donate through PovertyLens?",
             answer: (
                 <div>
-                    <p className="mb-2">If you donate directly through the PovertyLens website, your contribution goes into our general fund and is straegically allocated to support a variety of core programs. These programs focus on the following high-impact areas:</p>
+                    <p className="mb-2">If you donate directly through the PovertyLens website, your contribution goes into our general fund and is strategically allocated to support a variety of core programs. These programs focus on the following high-impact areas:</p>
                     <p className="mb-1">1. Affordable Housing & Shelter</p>
                     <p className="mb-1">2. Food Security & Nutrition</p>
                     <p className="mb-1">3. Integrated Health Services</p>
@@ -47,57 +47,91 @@ export default function FAQ(){
     ];
 
     return (
-        <div className="min-h-screen">
-            <h1 className="pt-10 pb-1 text-center text-[70px] text-[#623100] font-black">
-                Frequently Asked Questions
-            </h1>
+        <div className="min-h-screen bg-white">
+            {/* Main Content */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="py-16 lg:py-20">
+                    {/* Header Section */}
+                    <div className="mb-12">
+                        <h1 className="text-4xl sm:text-5xl font-bold mb-3">
+                            <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
+                                Frequently Asked Questions
+                            </span>
+                        </h1>
+                        <p className="text-gray-600 text-lg">
+                            Got questions? We've got answers.
+                        </p>
+                    </div>
 
-            {/* Two Column Layout */}
-            <div className="max-w-7xl mx-auto px-4 py-8 flex gap-12 items-start">
-                
-                {/* Left Column - World Image */}
-                <div className="flex-[2]">
-                    <Image
-                        src="/faqicon.png"
-                        alt="World in hands illustration"
-                        width={400}
-                        height={400}
-                        className="object-contain"
-                    />
-                </div>
+                    {/* Two Column Section - Text Left, Logo Right */}
+                    {/* Added by Marisol 2/4/2026 for updated UI and providing contact form */}
+                    <div className="grid lg:grid-cols-2 gap-12 mb-16 items-center">
+                        {/* Left - Description Text */}
+                        <div>
+                            <p className="text-gray-600 text-lg leading-relaxed mb-4">
+                                Find answers to common questions about poverty, our mission, and how you can make a difference.
+                            </p>
+                            <p className="text-gray-600 text-lg leading-relaxed">
+                                If your question hasn't been answered here, drop us a line or use our{' '}
+                                <Link 
+                                    href="/ContactUs"
+                                    className="underline font-semibold cursor-pointer transition-all hover:underline-offset-4"
+                                    style={{ color: '#FFA239' }}
+                                >
+                                    contact form
+                                </Link>
+                                . We're here to help!
+                            </p>
+                        </div>
 
-                {/* Right Column - FAQ Accordion */}
-                <div className="flex-[3] space-y-3">
-                    {faqs.map((faq, index) => (
-                        <div 
-                            key={index}
-                            className="bg-[#C8AB8F] rounded-lg overflow-hidden"
-                        >
-                            {/* Question Button */}
-                            <button
-                                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                                className="w-full px-8 py-6 text-left flex justify-between items-center hover:bg-[#D8B99B] transition-colors"
+                        {/* Right - Logo/Image */}
+                        <div className="flex items-center justify-center">
+                            <Image
+                                src="/faqicon.png"
+                                alt="World in hands illustration"
+                                width={400}
+                                height={400}
+                                className="object-contain"
+                            />
+                        </div>
+                    </div>
+
+                    {/* FAQ Accordion - Full Width */}
+                    <div className="max-w-4xl mx-auto">
+                        {faqs.map((faq, index) => (
+                            <div
+                                key={index}
+                                className="border-b border-gray-200 py-6"
                             >
-                                <span className="text-[20px] font-bold text-[#623100]">
-                                    {faq.question}
-                                </span>
-                                <span className="text-[24px] text-[#623100]">
-                                    {openIndex === index ? '−' : '+'}
-                                </span>
-                            </button>
-
-                            {/* Answer (only shows when open) */}
-                            {openIndex === index && (
-                                <div className="px-8 py-6 bg-white border-t border-[#D0C8BD]">
-                                    <div className="text-[18px] text-[#623100] leading-relaxed">
+                                <button
+                                    onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                                    className="w-full text-left flex items-start justify-between gap-4 group"
+                                >
+                                    <span className="font-medium text-gray-900 text-lg flex-1">
+                                        {faq.question}
+                                    </span>
+                                    <div className="flex-shrink-0 mt-1">
+                                        {openIndex === index ? (
+                                            <Minus size={20} className="text-orange-500" />
+                                        ) : (
+                                            <Plus size={20} className="text-gray-400 group-hover:text-orange-500 transition-colors" />
+                                        )}
+                                    </div>
+                                </button>
+                                <div
+                                    className={`overflow-hidden transition-all duration-300 ${
+                                        openIndex === index ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'
+                                    }`}
+                                >
+                                    <div className="text-gray-600 leading-relaxed pl-0">
                                         {faq.answer}
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
-    )
+    );
 }

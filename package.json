@@ -8,5 +8,9 @@
     "multer": "^2.0.2",
     "react-leaflet": "^5.0.0",
     "tesseract.js": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.21",
+    "@types/react-leaflet": "^2.8.3"
   }
 }
