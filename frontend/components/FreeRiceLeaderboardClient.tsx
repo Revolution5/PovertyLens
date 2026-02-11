@@ -17,7 +17,7 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
   const [grains, setGrains] = useState<number | ''>('')
   const [sessionEmail, setSessionEmail] = useState<string | null>(null)
 
-  // ============== Dark Mode Detection ============== //
+  // ============== Marisol Code for Dark Mode Detection 2/9/2026 ============== //
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
 
     return () => observer.disconnect();
   }, []);
-  // ============== End Dark Mode Detection ============== //
+  // ============== End of Marisol Code for End Dark Mode Detection 2/9/2026 ============== //
 
   async function fetchLeaderboard(email?: string) {
     setLoading(true)

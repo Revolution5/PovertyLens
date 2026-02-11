@@ -1,4 +1,4 @@
-// Marisol Morales code 2/9/2026 for dark mode use case
+// Marisol Morales code 1/9/2026 for dark mode use case
 
 'use client';
 

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-// ============== Marisol Morales Code 2/9/2026 - React import for dark mode detection ============== //
+// ============== Marisol Morales Code 1/9/2026 - React import for dark mode detection ============== //
 import React from 'react';
 // ============== End React import ============== //
 import Image from 'next/image';
@@ -8,9 +8,9 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import { FileText, BookOpen, Gamepad2, Heart } from 'lucide-react';
 
-// ============== Marisol Modified code 2/5/2026 Begin ==============
+// ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
-// ============== Marisol Modified code 2/5/2026 End ==============
+// ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
 
 // ActionCard Component (integrated)
 interface ActionCardProps {
@@ -28,7 +28,7 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
     : bgColor === "#FFE8D6" ? "#FFA239"
     : "#FF5656";
 
-  // ============== Marisol Morales Code 2/9/2026 - Dark Mode Card Backgrounds ============== //
+  // ============== Marisol Morales Code 1/9/2026 - Dark Mode Card Backgrounds ============== //
   // Dark mode versions of the card backgrounds - much darker for better contrast
   const darkBgColor = bgColor === "#E5F8FF" ? "#0a2a35"  // Cyan card - dark teal
     : bgColor === "#FFFCEB" ? "#2d2a1a"  // Yellow card - dark gold
@@ -56,7 +56,7 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
     <Link
       href={href}
       className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left w-full block"
-      // ============== Marisol Morales Code 2/9/2026 - Dark Mode Support ============== //
+      // ============== Marisol Morales Code 1/9/2026 - Dark Mode Support ============== //
       style={{ 
         backgroundColor: isDark ? darkBgColor : bgColor,
         borderWidth: '1px',
@@ -80,7 +80,7 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
       </div>
 
       {/* Content */}
-      {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text ============== */}
+      {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text ============== */}
       <h3 
         className="text-xl font-bold mb-2 transition-colors"
         style={{ color: isDark ? 'var(--foreground)' : 'var(--color-gray-dark)' }}
@@ -114,10 +114,10 @@ export default function Home() {
     const [dailyFact, setDailyFact] = useState<null | { _id?: string; title?: string; text?: string }>(null);
     const [loadingFact, setLoadingFact] = useState(true);
 
-    // ============== Marisol Modified code 2/5/2026 Begin ==============
+    // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
     // Updated to store objects with name and url
     const [favoritedResources, setFavoritedResources] = useState<Array<{name: string, url: string}>>([]);
-    // ============== Marisol Modified code 2/5/2026 End ==============
+    // ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
 
     // Check if user is logged in when page loads
     useEffect(() => {
@@ -129,7 +129,7 @@ export default function Home() {
             if (storedUsername) {
                 setUsername(storedUsername);
             }
-            // ============== Marisol Modified code 2/5/2026 Begin ==============
+            // ============== Marisol Modified code for fav resources2/5/2026 Begin ==============
             // Make favorites user-specific by using email in the key
             const favoritesKey = `favoriteResources_${userEmail}`;
             const storedFavorites = localStorage.getItem(favoritesKey);
@@ -152,7 +152,7 @@ export default function Home() {
                     setFavoritedResources([]);
                 }
             }
-            // ============== Marisol Modified code 2/5/2026 End ==============
+            // ============== Marisol Modified code for fav resources 2/5/2026 End ==============
         } else {
             // if not logged in, fetch daily fact
             (async () => {
@@ -252,7 +252,7 @@ export default function Home() {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Welcome Section */}
                     <div className="mb-12 dashboard-header">
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors ============== */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text Colors ============== */}
                         <h1 
                             className="text-4xl sm:text-5xl font-bold mb-3"
                             style={{ color: 'var(--foreground)' }}
@@ -284,7 +284,7 @@ export default function Home() {
 
                     {/* Quick Stats Section */}
                     <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Card Styling ============== */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Card Styling ============== */}
                         <div 
                             className="rounded-xl p-6 shadow-sm transition-colors"
                             style={{
@@ -342,8 +342,8 @@ export default function Home() {
                         </div>
                         {/* ============== End Dark Mode Card Styling ============== */}
 
-                        {/* ============== Marisol Modified code 2/5/2026 Begin ==============*/}
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Card Styling ============== */}
+                        {/* ============== Marisol Modified code for fav Resource 2/5/2026 Begin ==============*/}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Card Styling ============== */}
                         <div 
                             className="rounded-xl p-6 shadow-sm transition-colors"
                             style={{
@@ -405,7 +405,7 @@ export default function Home() {
                             )}
                         </div>
                         {/* ============== End Dark Mode Card Styling ============== */}
-                        {/* ============== Marisol Modified code 2/5/2026 End ==============*/}
+                        {/* ============== Marisol Modified for fav resources code 2/5/2026 End ==============*/}
                     </div>
                 </main>
             </div>
@@ -423,7 +423,7 @@ export default function Home() {
                 {/* Creating the columns*/}
                 <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
                     {/* Left column - Introductory text */}
-                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Styling Start ============== */}
+                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Styling Start ============== */}
                     <div 
                         className="flex-[11] card card-cyan p-8 md:p-10 transition-colors"
                         style={{
@@ -431,8 +431,8 @@ export default function Home() {
                             border: '2px solid var(--color-cyan)'
                         }}
                     >
-                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Styling End ============== */}
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors ============== */}
+                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Styling End ============== */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text Colors ============== */}
                         <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
                             Our Mission:
                         </h2>

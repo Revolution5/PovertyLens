@@ -57,7 +57,7 @@ export default function ViewStoriesPage() {
     const [editDisplayName, setEditDisplayName] = useState(true);
     const [editDisplayPhoto, setEditDisplayPhoto] = useState(true);
     const [savingEdit, setSavingEdit] = useState(false);
-
+{/* ============== Marisol Morales Code 2/8/2026 - Dark Mode Start ============== */}
     const [isDark, setIsDark] = useState(false);
 
     useEffect(() => {
@@ -74,7 +74,7 @@ export default function ViewStoriesPage() {
 
         return () => observer.disconnect();
     }, []);
-
+{/* ============== Marisol Morales Code 2/8/2026 - Dark Mode End ============== */}
     const selectedStory = stories[selectedIndex];
 
     // Ensures that frontend can communicate with the backend
@@ -278,7 +278,7 @@ export default function ViewStoriesPage() {
     return (
         <div style={{
             minHeight: '100vh',
-            background: isDark ? 'var(--background)' : '#ffffff',
+            background: isDark ? 'var(--background)' : '#ffffff', // Changed by Marisol - 2/8/2026 for Dark Mode
             padding: '2rem',
         }}>
             <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
@@ -301,12 +301,12 @@ export default function ViewStoriesPage() {
                         <h1 style={{
                             fontSize: '2.25rem',
                             fontWeight: 700,
-                            color: isDark ? 'var(--foreground)' : '#1a1a1a',
+                            color: isDark ? 'var(--foreground)' : '#1a1a1a', // Changed by Marisol for Dark Mode - 2/8/2026
                         }}>
                             Your Stories
                         </h1>
                     </div>
-                    <p style={{ color: isDark ? 'var(--color-gray)' : '#333', fontSize: '1rem' }}>
+                    <p style={{ color: isDark ? 'var(--color-gray)' : '#333', fontSize: '1rem' }}> {/* Changed by Marisol for Dark Mode - 2/8/2026*/}
                         Manage all your published and draft stories in one place
                     </p>
                 </div>
@@ -328,13 +328,13 @@ export default function ViewStoriesPage() {
                         {/* Tabs */}
                         <div style={{
                             marginBottom: '1.5rem',
-                            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)', // Changed by Marisol for Dark Mode - 2/8/2026
                             backdropFilter: 'blur(8px)',
                             borderRadius: '0.75rem',
                             padding: '0.25rem',
                             display: 'inline-flex',
                             gap: '0.25rem',
-                            border: `1px solid ${isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.3)'}`,
+                            border: `1px solid ${isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.3)'}`, // Changed by Marisol for Dark Mode - 2/8/2026
                         }}>
                             <TabButton
                                 active={activeTab === 'active'}
@@ -344,7 +344,7 @@ export default function ViewStoriesPage() {
                                     setSelectedIndex(0);
                                 }}
                                 color="#8CE4FF"
-                                isDark={isDark}
+                                isDark={isDark} // Changed by Marisol for Dark Mode - 2/8/2026
                             >
                                 Active Stories ({stories.filter(s => !s.archived).length})
                             </TabButton>
@@ -356,7 +356,7 @@ export default function ViewStoriesPage() {
                                     setSelectedIndex(0);
                                 }}
                                 color="#FEEE91"
-                                isDark={isDark}
+                                isDark={isDark} // Changed by Marisol for Dark Mode - 2/8/2026
                             >
                                 Archived ({stories.filter(s => s.archived).length})
                             </TabButton>
@@ -368,7 +368,7 @@ export default function ViewStoriesPage() {
                                     setSelectedIndex(0);
                                 }}
                                 color="#FFA239"
-                                isDark={isDark}
+                                isDark={isDark} // Changed by Marisol for Dark Mode - 2/8/2026
                             >
                                 All Stories ({stories.length})
                             </TabButton>
@@ -380,13 +380,13 @@ export default function ViewStoriesPage() {
                                 marginBottom: '1rem',
                                 padding: '1rem 1.5rem',
                                 background: message.includes('Error') || message.includes('cannot') || message.includes('exceeds')
-                                    ? (isDark ? 'rgba(239, 68, 68, 0.2)' : '#ffebee')
-                                    : (isDark ? 'rgba(34, 197, 94, 0.2)' : '#e8f5e9'),
+                                    ? (isDark ? 'rgba(239, 68, 68, 0.2)' : '#ffebee') // Changed by Marisol for Dark Mode - 2/8/2026
+                                    : (isDark ? 'rgba(34, 197, 94, 0.2)' : '#e8f5e9'), // Changed by Marisol for Dark Mode - 2/8/2026
                                 border: `2px solid ${message.includes('Error') || message.includes('cannot') || message.includes('exceeds')
-                                    ? (isDark ? 'rgba(239, 68, 68, 0.4)' : '#ef5350')
-                                    : (isDark ? 'rgba(34, 197, 94, 0.4)' : '#66bb6a')}`,
+                                    ? (isDark ? 'rgba(239, 68, 68, 0.4)' : '#ef5350') // Changed by Marisol for Dark Mode - 2/8/2026
+                                    : (isDark ? 'rgba(34, 197, 94, 0.4)' : '#66bb6a')}`, // Changed by Marisol for Dark Mode - 2/8/2026
                                 borderRadius: '0.75rem',
-                                color: isDark ? 'var(--foreground)' : '#333',
+                                color: isDark ? 'var(--foreground)' : '#333', // Changed by Marisol for Dark Mode - 2/8/2026
                                 fontSize: '0.95rem',
                                 fontWeight: 500,
                             }}>
@@ -398,12 +398,12 @@ export default function ViewStoriesPage() {
                         <div>
                             {filteredStories.length === 0 ? (
                                 <div style={{
-                                    background: isDark ? 'var(--background)' : 'white',
+                                    background: isDark ? 'var(--background)' : 'white', // Changed by Marisol for Dark Mode - 2/8/2026
                                     borderRadius: '1rem',
                                     padding: '3rem',
                                     textAlign: 'center',
-                                    color: isDark ? 'var(--color-gray)' : '#666',
-                                    boxShadow: isDark ? '0 4px 6px rgba(0, 0, 0, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                    color: isDark ? 'var(--color-gray)' : '#666',// Changed by Marisol for Dark Mode - 2/8/2026
+                                    boxShadow: isDark ? '0 4px 6px rgba(0, 0, 0, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)', // Changed by Marisol for Dark Mode - 2/8/2026
                                 }}>
                                     <p>No {activeTab} stories found</p>
                                 </div>
@@ -411,10 +411,10 @@ export default function ViewStoriesPage() {
                                 <>
                                     {editing && selectedStory ? (
                                         <div style={{
-                                            background: isDark ? 'var(--background)' : 'white',
+                                            background: isDark ? 'var(--background)' : 'white', 
                                             borderRadius: '1rem',
                                             padding: '2rem',
-                                            boxShadow: isDark ? '0 4px 6px rgba(0, 0, 0, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                            boxShadow: isDark ? '0 4px 6px rgba(0, 0, 0, 0.3)' : '0 4px 6px rgba(0, 0, 0, 0.1)', // Changed by Marisol for Dark Mode - 2/8/2026
                                             marginBottom: '1.5rem',
                                             border: '2px solid #FFA239',
                                         }}>
@@ -423,7 +423,7 @@ export default function ViewStoriesPage() {
                                                 fontWeight: 700,
                                                 margin: '0 0 1.5rem 0',
                                                 textAlign: 'center',
-                                                color: isDark ? 'var(--foreground)' : '#1a1a1a',
+                                                color: isDark ? 'var(--foreground)' : '#1a1a1a', // Changed by Marisol for Dark Mode - 2/8/2026
                                             }}>
                                                 Edit Your Story
                                             </h2>
@@ -437,10 +437,10 @@ export default function ViewStoriesPage() {
                                                         width: '100%',
                                                         padding: '0.875rem 1rem',
                                                         borderRadius: '0.75rem',
-                                                        border: `2px solid ${isDark ? 'var(--color-gray-light)' : '#e0e0e0'}`,
+                                                        border: `2px solid ${isDark ? 'var(--color-gray-light)' : '#e0e0e0'}`, // Changed by Marisol for Dark Mode - 2/8/2026
                                                         fontSize: '1rem',
-                                                        color: isDark ? 'var(--foreground)' : '#1a1a1a',
-                                                        backgroundColor: isDark ? 'var(--background)' : '#ffffff',
+                                                        color: isDark ? 'var(--foreground)' : '#1a1a1a', // Changed by Marisol for Dark Mode - 2/8/2026
+                                                        backgroundColor: isDark ? 'var(--background)' : '#ffffff', // Changed by Marisol for Dark Mode - 2/8/2026
                                                         outline: 'none',
                                                         marginBottom: '1rem',
                                                         transition: 'all 0.2s ease',
@@ -457,10 +457,10 @@ export default function ViewStoriesPage() {
                                                         height: '300px',
                                                         padding: '1rem',
                                                         borderRadius: '0.75rem',
-                                                        border: `2px solid ${isDark ? 'var(--color-gray-light)' : '#e0e0e0'}`,
+                                                        border: `2px solid ${isDark ? 'var(--color-gray-light)' : '#e0e0e0'}`, // Changed by Marisol for Dark Mode - 2/8/2026
                                                         fontSize: '1rem',
-                                                        color: isDark ? 'var(--foreground)' : '#1a1a1a',
-                                                        backgroundColor: isDark ? 'var(--background)' : '#ffffff',
+                                                        color: isDark ? 'var(--foreground)' : '#1a1a1a', // Changed by Marisol for Dark Mode - 2/8/2026
+                                                        backgroundColor: isDark ? 'var(--background)' : '#ffffff', // Changed by Marisol for Dark Mode - 2/8/2026
                                                         outline: 'none',
                                                         resize: 'vertical',
                                                         fontFamily: 'inherit',
@@ -468,7 +468,7 @@ export default function ViewStoriesPage() {
                                                         transition: 'all 0.2s ease',
                                                     }}
                                                     onFocus={(e) => e.target.style.borderColor = '#8CE4FF'}
-                                                    onBlur={(e) => e.target.style.borderColor = isDark ? 'var(--color-gray-light)' : '#e0e0e0'}
+                                                    onBlur={(e) => e.target.style.borderColor = isDark ? 'var(--color-gray-light)' : '#e0e0e0'} // Changed by Marisol for Dark Mode - 2/8/2026
                                                 />
                                             </div>
                                             <div style={{
@@ -482,13 +482,13 @@ export default function ViewStoriesPage() {
                                                     label="Display name?"
                                                     checked={editDisplayName}
                                                     onToggle={() => setEditDisplayName((v) => !v)}
-                                                    isDark={isDark}
+                                                    isDark={isDark} // Changed by Marisol for Dark Mode - 2/8/2026
                                                 />
                                                 <ToggleRow
                                                     label="Display photo?"
                                                     checked={editDisplayPhoto}
                                                     onToggle={() => setEditDisplayPhoto((v) => !v)}
-                                                    isDark={isDark}
+                                                    isDark={isDark} // Changed by Marisol for Dark Mode - 2/8/2026
                                                 />
                                             </div>
                                             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
@@ -561,7 +561,7 @@ export default function ViewStoriesPage() {
                                                         onDelete={() => {
                                                             handleDelete(story._id);
                                                         }}
-                                                        isDark={isDark}
+                                                        isDark={isDark} // Changed by Marisol for Dark Mode - 2/8/2026
                                                     />
                                                 );
                                             })}

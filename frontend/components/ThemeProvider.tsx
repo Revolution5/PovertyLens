@@ -1,4 +1,4 @@
-// Marisol Morales Code 2/9/2026 for dark mode use case
+// Marisol Morales Code 1/9/2026 for dark mode use case
 // UPDATED VERSION - Fixes issue where navbar stays dark
 
 'use client';
