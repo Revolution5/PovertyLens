@@ -1,4 +1,5 @@
 // Marisol Morales Code 2/9/2026 for dark mode use case
+// UPDATED VERSION - Fixes issue where navbar stays dark
 
 'use client';
 
@@ -15,39 +16,46 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
 
   // Load theme from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
+      document.documentElement.classList.add(savedTheme);
     } else {
       // Optional: detect system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      const initialTheme = prefersDark ? 'dark' : 'light';
+      setTheme(initialTheme);
+      document.documentElement.classList.add(initialTheme);
     }
-    setMounted(true);
   }, []);
 
-  // Apply theme to document
+  // Apply theme to document when it changes
   useEffect(() => {
-    if (mounted) {
-      const root = document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(theme);
-      localStorage.setItem('theme', theme);
-    }
-  }, [theme, mounted]);
+    const root = document.documentElement;
+    
+    // Remove both classes first
+    root.classList.remove('light', 'dark');
+    
+    // Add the current theme class
+    root.classList.add(theme);
+    
+    // Save to localStorage
+    localStorage.setItem('theme', theme);
+    
+    // Debug log to verify theme is changing
+    console.log('Theme changed to:', theme);
+  }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme(prev => {
+      const newTheme = prev === 'light' ? 'dark' : 'light';
+      console.log('Toggling theme from', prev, 'to', newTheme);
+      return newTheme;
+    });
   };
-
-  // Prevent flash of unstyled content
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

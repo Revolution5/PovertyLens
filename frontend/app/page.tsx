@@ -1,5 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+// ============== Marisol Morales Code 2/9/2026 - React import for dark mode detection ============== //
+import React from 'react';
+// ============== End React import ============== //
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
@@ -25,11 +28,48 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
     : bgColor === "#FFE8D6" ? "#FFA239"
     : "#FF5656";
 
+  // ============== Marisol Morales Code 2/9/2026 - Dark Mode Card Backgrounds ============== //
+  // Dark mode versions of the card backgrounds - much darker for better contrast
+  const darkBgColor = bgColor === "#E5F8FF" ? "#0a2a35"  // Cyan card - dark teal
+    : bgColor === "#FFFCEB" ? "#2d2a1a"  // Yellow card - dark gold
+    : bgColor === "#FFE8D6" ? "#2d1f14"  // Orange card - dark orange
+    : "#2d1414";  // Red card - dark red
+  
+  const [isDark, setIsDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkTheme();
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
+  // ============== End Dark Mode Card Backgrounds ============== //
+
   return (
     <Link
       href={href}
-      className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-gray-300 hover:-translate-y-1 text-left w-full block"
-      style={{ backgroundColor: bgColor }}
+      className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left w-full block"
+      // ============== Marisol Morales Code 2/9/2026 - Dark Mode Support ============== //
+      style={{ 
+        backgroundColor: isDark ? darkBgColor : bgColor,
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: isDark ? accentColor + '40' : 'var(--color-gray-light)' // Add accent color border in dark mode
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = accentColor;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = isDark ? accentColor + '40' : 'var(--color-gray-light)';
+      }}
+      // ============== End Dark Mode Support ============== //
     >
       {/* Icon */}
       <div 
@@ -40,12 +80,20 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
       </div>
 
       {/* Content */}
-      <h3 className="text-xl font-bold mb-2 text-gray-800 group-hover:text-gray-900 transition-colors">
+      {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text ============== */}
+      <h3 
+        className="text-xl font-bold mb-2 transition-colors"
+        style={{ color: isDark ? 'var(--foreground)' : 'var(--color-gray-dark)' }}
+      >
         {title}
       </h3>
-      <p className="text-gray-600 text-sm leading-relaxed">
+      <p 
+        className="text-sm leading-relaxed"
+        style={{ color: isDark ? 'var(--color-gray)' : 'var(--color-gray)' }}
+      >
         {description}
       </p>
+      {/* ============== End Dark Mode Text ============== */}
 
       {/* Arrow indicator */}
       <div className="mt-4 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>
@@ -168,18 +216,18 @@ export default function Home() {
     // Action cards configuration
     const actionCards = [
         {
-            title: "Upload a Story",
-            description: "Share your experience or insights about poverty and help build awareness in the community",
+            title: "View Stories",
+            description: "Read real stories from people affected by poverty and share your experiences",
             icon: FileText,
             bgColor: "#E5F8FF",
-            href: "/uploadstory" // Edited by Christella - 12/09/2025
+            href: "/viewstories"
         },
         {
-            title: "View Stories",
-            description: "Browse your contributions and explore stories shared by others in the community",
+            title: "Education Center",
+            description: "Access curated resources and learn about poverty and its global impact",
             icon: BookOpen,
             bgColor: "#FFFCEB",
-            href: "/viewstories" // Edited by Christella - 12/10/2025
+            href: "/eduresource"
         },
         {
             title: "Play FreeRice",
@@ -204,10 +252,20 @@ export default function Home() {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Welcome Section */}
                     <div className="mb-12 dashboard-header">
-                        <h1 className="text-4xl sm:text-5xl font-bold mb-3">
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors ============== */}
+                        <h1 
+                            className="text-4xl sm:text-5xl font-bold mb-3"
+                            style={{ color: 'var(--foreground)' }}
+                        >
                             Welcome back, <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">{username}</span>
                         </h1>
-                        <p className="text-gray-600 text-lg">Here's your dashboard</p>
+                        <p 
+                            className="text-lg"
+                            style={{ color: 'var(--color-gray)' }}
+                        >
+                            Here's your dashboard
+                        </p>
+                        {/* ============== End Dark Mode Text Colors ============== */}
                     </div>
 
                     {/* Action Cards Grid */}
@@ -226,11 +284,28 @@ export default function Home() {
 
                     {/* Quick Stats Section */}
                     <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Card Styling ============== */}
+                        <div 
+                            className="rounded-xl p-6 shadow-sm transition-colors"
+                            style={{
+                                backgroundColor: 'var(--background)',
+                                border: '1px solid var(--color-gray-light)'
+                            }}
+                        >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-gray-600 text-sm mb-1">Stories Shared</p>
-                                    <p className="text-3xl font-semibold">24</p>
+                                    <p 
+                                        className="text-sm mb-1"
+                                        style={{ color: 'var(--color-gray)' }}
+                                    >
+                                        Stories Shared
+                                    </p>
+                                    <p 
+                                        className="text-3xl font-semibold"
+                                        style={{ color: 'var(--foreground)' }}
+                                    >
+                                        24
+                                    </p>
                                 </div>
                                 <div className="w-12 h-12 rounded-full bg-[#8CE4FF]/20 flex items-center justify-center">
                                     <FileText className="w-6 h-6 text-[#8CE4FF]" />
@@ -238,24 +313,58 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div 
+                            className="rounded-xl p-6 shadow-sm transition-colors"
+                            style={{
+                                backgroundColor: 'var(--background)',
+                                border: '1px solid var(--color-gray-light)'
+                            }}
+                        >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-gray-600 text-sm mb-1">Rice Donated</p>
-                                    <p className="text-3xl font-semibold">1,250</p>
+                                    <p 
+                                        className="text-sm mb-1"
+                                        style={{ color: 'var(--color-gray)' }}
+                                    >
+                                        Rice Donated
+                                    </p>
+                                    <p 
+                                        className="text-3xl font-semibold"
+                                        style={{ color: 'var(--foreground)' }}
+                                    >
+                                        1,250
+                                    </p>
                                 </div>
                                 <div className="w-12 h-12 rounded-full bg-[#FFA239]/20 flex items-center justify-center">
                                     <Gamepad2 className="w-6 h-6 text-[#FFA239]" />
                                 </div>
                             </div>
                         </div>
+                        {/* ============== End Dark Mode Card Styling ============== */}
 
                         {/* ============== Marisol Modified code 2/5/2026 Begin ==============*/}
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Card Styling ============== */}
+                        <div 
+                            className="rounded-xl p-6 shadow-sm transition-colors"
+                            style={{
+                                backgroundColor: 'var(--background)',
+                                border: '1px solid var(--color-gray-light)'
+                            }}
+                        >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-gray-600 text-sm mb-1">Favorited Resources</p>
-                                    <p className="text-3xl font-semibold">{favoritedResources.length}</p>
+                                    <p 
+                                        className="text-sm mb-1"
+                                        style={{ color: 'var(--color-gray)' }}
+                                    >
+                                        Favorited Resources
+                                    </p>
+                                    <p 
+                                        className="text-3xl font-semibold"
+                                        style={{ color: 'var(--foreground)' }}
+                                    >
+                                        {favoritedResources.length}
+                                    </p>
                                 </div>
                                 <div className="w-12 h-12 rounded-full bg-[#FFD700]/20 flex items-center justify-center">
                                     <Star className="w-6 h-6 text-[#FFD700]" />
@@ -263,11 +372,23 @@ export default function Home() {
                             </div>
                             {/* Show list of favorited resources if any exist */}
                             {favoritedResources.length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-gray-100">
-                                    <p className="text-xs text-gray-500 mb-2 font-medium">Your Favorites:</p>
+                                <div 
+                                    className="mt-4 pt-4"
+                                    style={{ borderTop: '1px solid var(--color-gray-light)' }}
+                                >
+                                    <p 
+                                        className="text-xs mb-2 font-medium"
+                                        style={{ color: 'var(--color-gray)' }}
+                                    >
+                                        Your Favorites:
+                                    </p>
                                     <ul className="space-y-1">
                                         {favoritedResources.map((resource, idx) => (
-                                            <li key={idx} className="text-xs text-gray-700 flex items-start group">
+                                            <li 
+                                                key={idx} 
+                                                className="text-xs flex items-start group"
+                                                style={{ color: 'var(--foreground)' }}
+                                            >
                                                 <Star className="w-3 h-3 text-[#FFD700] mr-1.5 mt-0.5 flex-shrink-0" fill="#FFD700" />
                                                 <Link 
                                                     href={resource.url || '#'}
@@ -283,6 +404,7 @@ export default function Home() {
                                 </div>
                             )}
                         </div>
+                        {/* ============== End Dark Mode Card Styling ============== */}
                         {/* ============== Marisol Modified code 2/5/2026 End ==============*/}
                     </div>
                 </main>
@@ -301,7 +423,16 @@ export default function Home() {
                 {/* Creating the columns*/}
                 <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
                     {/* Left column - Introductory text */}
-                    <div className="flex-[11] card card-cyan p-8 md:p-10">
+                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Styling Start ============== */}
+                    <div 
+                        className="flex-[11] card card-cyan p-8 md:p-10 transition-colors"
+                        style={{
+                            backgroundColor: 'var(--background)',
+                            border: '2px solid var(--color-cyan)'
+                        }}
+                    >
+                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Styling End ============== */}
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors ============== */}
                         <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
                             Our Mission:
                         </h2>
@@ -315,6 +446,7 @@ export default function Home() {
                             We hope to empower everyone, whether that's supporting global initiatives, 
                             donating, or spreading awareness within their own communities.
                         </p>
+                        {/* ============== End Dark Mode Text Colors ============== */}
                     </div>
 
                     {/* Right column - Logo */}
@@ -333,13 +465,28 @@ export default function Home() {
             {!loadingFact && dailyFact && (
                 <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
                     <div className="">
-                        <h3 className="font-semibold text-2xl md:text-3xl text-gray-800 mb-3">
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors Start ============== */}
+                        <h3 
+                            className="font-semibold text-2xl md:text-3xl mb-3"
+                            style={{ color: 'var(--foreground)' }}
+                        >
+                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text End ============== */}
                             {dailyFact.title || 'Daily Fact'}
                         </h3>
-                        <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors Start ============== */}
+                        <p 
+                            className="text-lg md:text-xl leading-relaxed"
+                            style={{ color: 'var(--color-gray-dark)' }}
+                        >
+                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors End ============== */}
                             {dailyFact.text}
                         </p>
-                        <p className="text-sm text-gray-500 mt-4">
+                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors Start ============== */}
+                        <p 
+                            className="text-sm mt-4"
+                            style={{ color: 'var(--color-gray)' }}
+                        >
+                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors End ============== */}
                             Learn more by signing in to PovertyLens
                         </p>
                     </div>
