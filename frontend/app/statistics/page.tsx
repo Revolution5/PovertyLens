@@ -104,7 +104,24 @@ function StoryCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const maxChars = 220;
+  // Start of Marisol Code for dark mode support - 2/8/2026
+  const [isDark, setIsDark] = useState(false);
 
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+// End of Marisol Code for dark mode support - 2/8/2026
   const text = story.storyText || "";
   const needsTruncate = text.length > maxChars;
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
@@ -112,7 +129,13 @@ function StoryCard({
   const showPhoto = story.displayPhoto && userProfile?.profileImage;
 
   return (
-    <div className="rounded-xl border bg-white shadow-sm p-4">
+    <div 
+      className="rounded-xl border shadow-sm p-4"
+      style={{
+        backgroundColor: 'var(--background)',
+        borderColor: 'var(--color-gray-light)'
+      }}
+    >
       {/* redesigned to show user info */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -154,18 +177,18 @@ function StoryCard({
 
           {/* story title and author section */}
           <div className="min-w-0 flex-1 overflow-hidden">
-            <div className="font-semibold text-gray-900 break-all">
+            <div className="font-semibold break-all" style={{ color: 'var(--foreground)' }}>
               {story.title?.trim() ? story.title : "Untitled Story"}
             </div>
             
             {/* SHOW AUTHOR NAME WHEN displayName = true */}
             {showName ? (
-              <div className="text-sm text-gray-600 mt-1">
+              <div className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
                 By {userProfile!.username}
               </div>
             ) : (
               // SHOW "ANONYMOUS" WHEN displayName = false
-              <div className="text-sm text-gray-400 mt-1">
+              <div className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
                 Anonymous
               </div>
             )}
@@ -174,14 +197,14 @@ function StoryCard({
 
         {/* Date */}
         {story.createdAt && (
-          <div className="text-xs text-gray-400 whitespace-nowrap">
+          <div className="text-xs whitespace-nowrap" style={{ color: 'var(--color-gray)' }}>
             {new Date(story.createdAt).toLocaleDateString()}
           </div>
         )}
       </div>
 
       {/* Story Content (Unchanged) */}
-      <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
+      <div className="mt-2 text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--foreground)' }}>
         {expanded ? text : preview}
       </div>
 
@@ -195,7 +218,13 @@ function StoryCard({
         </button>
       )}
 
-      <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+      <div 
+        className="mt-3 pt-3 border-t text-xs"
+        style={{
+          borderColor: 'var(--color-gray-light)',
+          color: 'var(--color-gray)'
+        }}
+      >
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -236,6 +265,24 @@ export default function StatisticsPage() {
   
   /* user profile cache - daniel q. 2/4 */
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
+
+  const [isDark, setIsDark] = useState(false);
+// Marisol code to detect dark mode changes - 2/8/2026
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+// End of Marisol code to detect dark mode changes - 2/8/2026
 
   // Added by Christella - 1/30/2026
   const selectedGeoId = useMemo(() => {
@@ -522,7 +569,14 @@ export default function StatisticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#8CE4FF]/10 via-[#FEEE91]/10 to-[#FFA239]/10">
+    <div 
+      className="min-h-screen"
+      style={{
+        background: isDark 
+          ? 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.05), rgba(254, 238, 145, 0.05), rgba(255, 162, 57, 0.05))'
+          : 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.1), rgba(254, 238, 145, 0.1), rgba(255, 162, 57, 0.1))'
+      }}
+    >
       <main className="max-w-[1600px] mx-auto px-6 py-10">
         {/* Header */}
         <div className="mb-12">
@@ -531,7 +585,7 @@ export default function StatisticsPage() {
               Global Poverty Statistics
             </span>
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
             Select a country from the dropdown to explore poverty statistics and stories
           </p>
         </div>
@@ -539,8 +593,11 @@ export default function StatisticsPage() {
         {/* Grid for content display */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
           {/* Map panel (left) - edited so that map doesn't overlap the navigation bar*/}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6 relative z-0">
-            <h2 className="text-xl font-semibold mb-4">Map</h2>
+          <div 
+            className="lg:col-span-2 rounded-lg shadow-md p-6 relative z-0"
+            style={{ backgroundColor: 'var(--background)' }}
+          >
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Map</h2>
             <div className="mb-4 relative z-0">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
@@ -548,11 +605,11 @@ export default function StatisticsPage() {
                 mapRows={mapRows}
                 showMarkers={false}
               />
-              <div className="mt-2 text-sm text-gray-500">
+              <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                 The map shows a baselayer only. Pick a country from the panel to the right.
               </div>
               {mapLoading && (
-                <div className="mt-2 text-sm text-gray-500">
+                <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                   Loading map data in background...
                 </div>
               )}
@@ -561,11 +618,14 @@ export default function StatisticsPage() {
           </div>
 
           {/* Statistics panel (right) */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Statistics</h2>
+          <div 
+            className="rounded-lg shadow-md p-6"
+            style={{ backgroundColor: 'var(--background)' }}
+          >
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Statistics</h2>
             <div className="mb-3">
               {countriesLoading ? (
-                <div className="text-sm text-gray-500">Loading countries…</div>
+                <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading countries…</div>
               ) : countriesError ? (
                 <div className="text-sm text-red-600">Could not load countries: {countriesError}</div>
               ) : (
@@ -573,6 +633,11 @@ export default function StatisticsPage() {
                   value={selectedCountry ?? ""}
                   onChange={(e) => handleSelectCountry(e.target.value || null)}
                   className="w-full border rounded p-2 mb-4"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 >
                   <option value="">— Select a country —</option>
                   {countriesToShow.map((c) => (
@@ -585,14 +650,14 @@ export default function StatisticsPage() {
             </div>
 
             {loading && (
-              <div className="text-sm text-gray-500">Loading statistics...</div>
+              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading statistics...</div>
             )}
 
             {error && <div className="text-red-600 text-sm">{error}</div>}
 
             {liveResult?.metric && (
               <>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
                   {liveResult.source ? `Source: ${liveResult.source}` : ""}
                   {liveResult.fetchedAt
                     ? ` • Updated: ${new Date(liveResult.fetchedAt).toLocaleString()}`
@@ -600,21 +665,30 @@ export default function StatisticsPage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">Headcount</div>
-                    <div className="font-semibold">
+                  <div 
+                    className="p-3 rounded"
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Headcount</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
                       {liveResult.metric.headcount ?? "N/A"}
                     </div>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">Gap</div>
-                    <div className="font-semibold">
+                  <div 
+                    className="p-3 rounded"
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Gap</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
                       {liveResult.metric.poverty_gap ?? "N/A"}
                     </div>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">Severity</div>
-                    <div className="font-semibold">
+                  <div 
+                    className="p-3 rounded"
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Severity</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
                       {liveResult.metric.poverty_severity ?? "N/A"}
                     </div>
                   </div>
@@ -623,25 +697,28 @@ export default function StatisticsPage() {
             )}
 
             {!loading && selectedCountry && !liveResult?.metric && !error && (
-              <div className="text-sm text-gray-500">Select a country to load statistics.</div>
+              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Select a country to load statistics.</div>
             )}
           </div>
         </div>
 
         {/* now shows profile picture and names - daniel q. 2/4 */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-3">
+        <div 
+          className="rounded-lg shadow-md p-6"
+          style={{ backgroundColor: 'var(--background)' }}
+        >
+          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
             Stories {selectedCountry ? `from ${countryNames[selectedCountry] ?? selectedCountry}` : ""}
           </h3>
 
           {!selectedCountry && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
               Select a country from the dropdown to view stories from that country.
             </p>
           )}
 
           {selectedCountry && storiesLoading && (
-            <p className="text-sm text-gray-500">Loading stories...</p>
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading stories...</p>
           )}
 
           {selectedCountry && storiesError && (
@@ -652,7 +729,7 @@ export default function StatisticsPage() {
             !storiesLoading &&
             !storiesError &&
             stories.length === 0 && (
-              <p className="text-sm text-gray-500">No stories for this country yet.</p>
+              <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
             )}
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

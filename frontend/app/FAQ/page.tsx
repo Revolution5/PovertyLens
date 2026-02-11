@@ -47,7 +47,9 @@ export default function FAQ() {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
+        // ============== Marisol Morales Code 1/9/2026 - Dark Mode Background ============== //
+        <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+        {/* ============== End Dark Mode Background ============== */}
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="py-16 lg:py-20">
@@ -58,20 +60,23 @@ export default function FAQ() {
                                 Frequently Asked Questions
                             </span>
                         </h1>
-                        <p className="text-gray-600 text-lg">
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text ============== */}
+                        <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
                             Got questions? We've got answers.
                         </p>
+                        {/* ============== End Dark Mode Text ============== */}
                     </div>
 
                     {/* Two Column Section - Text Left, Logo Right */}
                     {/* Added by Marisol 2/4/2026 for updated UI and providing contact form */}
                     <div className="grid lg:grid-cols-2 gap-12 mb-16 items-center">
                         {/* Left - Description Text */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text Colors ============== */}
                         <div>
-                            <p className="text-gray-600 text-lg leading-relaxed mb-4">
+                            <p className="text-lg leading-relaxed mb-4" style={{ color: 'var(--color-gray)' }}>
                                 Find answers to common questions about poverty, our mission, and how you can make a difference.
                             </p>
-                            <p className="text-gray-600 text-lg leading-relaxed">
+                            <p className="text-lg leading-relaxed" style={{ color: 'var(--color-gray)' }}>
                                 If your question hasn't been answered here, drop us a line or use our{' '}
                                 <Link 
                                     href="/ContactUs"
@@ -83,6 +88,7 @@ export default function FAQ() {
                                 . We're here to help!
                             </p>
                         </div>
+                        {/* ============== End Dark Mode Text Colors ============== */}
 
                         {/* Right - Logo/Image */}
                         <div className="flex items-center justify-center">
@@ -101,15 +107,23 @@ export default function FAQ() {
                         {faqs.map((faq, index) => (
                             <div
                                 key={index}
-                                className="border-b border-gray-200 py-6"
+                                // ============== Marisol Morales Code 1/9/2026 - Dark Mode Border ============== //
+                                className="py-6"
+                                style={{ borderBottom: '1px solid var(--color-gray-light)' }}
+                                // ============== End Dark Mode Border ============== //
                             >
                                 <button
                                     onClick={() => setOpenIndex(openIndex === index ? null : index)}
                                     className="w-full text-left flex items-start justify-between gap-4 group"
                                 >
-                                    <span className="font-medium text-gray-900 text-lg flex-1">
+                                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Question Text ============== */}
+                                    <span 
+                                        className="font-medium text-lg flex-1"
+                                        style={{ color: 'var(--foreground)' }}
+                                    >
                                         {faq.question}
                                     </span>
+                                    {/* ============== End Dark Mode Question Text ============== */}
                                     <div className="flex-shrink-0 mt-1">
                                         {openIndex === index ? (
                                             <Minus size={20} className="text-orange-500" />
@@ -123,9 +137,14 @@ export default function FAQ() {
                                         openIndex === index ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'
                                     }`}
                                 >
-                                    <div className="text-gray-600 leading-relaxed pl-0">
+                                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Answer Text ============== */}
+                                    <div 
+                                        className="leading-relaxed pl-0"
+                                        style={{ color: 'var(--color-gray-dark)' }}
+                                    >
                                         {faq.answer}
                                     </div>
+                                    {/* ============== End Dark Mode Answer Text ============== */}
                                 </div>
                             </div>
                         ))}

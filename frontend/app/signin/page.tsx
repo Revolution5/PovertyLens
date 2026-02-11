@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft } from 'lucide-react';
@@ -13,7 +13,24 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+// Added by Marisol 1/12/2026 for Dark Mode Support
+  const [isDark, setIsDark] = useState(false);
 
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+// End of Code by Marisol 1/12/2026 for Dark Mode Support
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -67,7 +84,7 @@ export default function SignInPage() {
         <h1 className="text-4xl md:text-6xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>
           {isLogin ? 'Welcome Back!' : 'Join PovertyLens'}
         </h1>
-        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
+        <p className="text-lg md:text-xl max-w-2xl mx-auto px-4" style={{ color: 'var(--color-gray)' }}>
           {isLogin 
             ? 'Sign in to continue exploring poverty data and sharing stories' 
             : 'Create your account to start making a difference today'
@@ -83,7 +100,7 @@ export default function SignInPage() {
             <h2 className="font-bold text-3xl md:text-4xl mb-2" style={{ color: 'var(--foreground)' }}>
               {isLogin ? 'Login to Your Account' : 'Create New Account'}
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
               {isLogin 
                 ? 'Enter your credentials to access your dashboard' 
                 : 'Fill in the details below to get started'
@@ -94,7 +111,7 @@ export default function SignInPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <div>
-                <label htmlFor="username" className="block mb-2 font-medium text-gray-800">
+                <label htmlFor="username" className="block mb-2 font-medium" style={{ color: 'var(--foreground)' }}>
                   Username
                 </label>
                 <input
@@ -104,13 +121,18 @@ export default function SignInPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   placeholder="Choose a username"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent bg-white transition-all"
+                  className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent transition-all"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 />
               </div>
             )}
             
             <div>
-              <label htmlFor="email" className="block mb-2 font-medium text-gray-800">
+              <label htmlFor="email" className="block mb-2 font-medium" style={{ color: 'var(--foreground)' }}>
                 Email Address
               </label>
               <input
@@ -120,12 +142,17 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent bg-white transition-all"
+                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent transition-all"
+                style={{
+                  backgroundColor: 'var(--background)',
+                  borderColor: 'var(--color-gray-light)',
+                  color: 'var(--foreground)'
+                }}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block mb-2 font-medium text-gray-800">
+              <label htmlFor="password" className="block mb-2 font-medium" style={{ color: 'var(--foreground)' }}>
                 Password
               </label>
               <input
@@ -135,7 +162,12 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent bg-white transition-all"
+                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent transition-all"
+                style={{
+                  backgroundColor: 'var(--background)',
+                  borderColor: 'var(--color-gray-light)',
+                  color: 'var(--foreground)'
+                }}
               />
             </div>
             
@@ -159,13 +191,29 @@ export default function SignInPage() {
           </form>
           
           {message && (
-            <div className={`mt-6 p-4 rounded-xl text-center font-medium ${message.includes('Success') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            <div 
+              className={`mt-6 p-4 rounded-xl text-center font-medium border`}
+              style={{
+                backgroundColor: message.includes('Success') 
+                  ? (isDark ? 'rgba(34, 197, 94, 0.2)' : 'rgb(240, 253, 244)') // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  : (isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgb(254, 242, 242)'), // Changed by Marisol 1/12/2026 for Dark Mode Support
+                color: message.includes('Success')
+                  ? (isDark ? '#86efac' : 'rgb(21, 128, 61)') // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  : (isDark ? '#fca5a5' : 'rgb(185, 28, 28)'), // Changed by Marisol 1/12/2026 for Dark Mode Support
+                borderColor: message.includes('Success')
+                  ? (isDark ? 'rgba(34, 197, 94, 0.4)' : 'rgb(187, 247, 208)') // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  : (isDark ? 'rgba(239, 68, 68, 0.4)' : 'rgb(254, 202, 202)') // Changed by Marisol 1/12/2026 for Dark Mode Support
+              }}
+            >
               {message}
             </div>
           )}
           
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <p className="text-center text-gray-600 mb-4">
+          <div 
+            className="mt-8 pt-8 border-t"
+            style={{ borderColor: 'var(--color-gray-light)' }}
+          >
+            <p className="text-center mb-4" style={{ color: 'var(--color-gray)' }}>
               {isLogin ? "Don't have an account?" : "Already have an account?"}
             </p>
             <button
@@ -176,7 +224,18 @@ export default function SignInPage() {
                 setPassword('');
                 setUsername('');
               }}
-              className="w-full py-3 px-6 rounded-xl font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="w-full py-3 px-6 rounded-xl font-medium border transition-colors"
+              style={{
+                color: 'var(--foreground)',
+                borderColor: 'var(--color-gray-light)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+              }}
             >
               {isLogin ? 'Create a new account instead' : 'Login to existing account'}
             </button>
@@ -185,7 +244,18 @@ export default function SignInPage() {
           <div className="mt-8">
             <button
               onClick={() => router.push('/')}
-              className="w-full py-3 px-6 rounded-xl font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 px-6 rounded-xl font-medium border transition-colors flex items-center justify-center gap-2"
+              style={{
+                color: 'var(--foreground)',
+                borderColor: 'var(--color-gray-light)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)' // Changed by Marisol 1/12/2026 for Dark Mode Support
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+              }}
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Home Page
