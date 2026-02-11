@@ -23,6 +23,24 @@ export default function ImageUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   // Update preview when currentImage prop changes (e.g., after login)
   useEffect(() => {
     setPreview(currentImage);
@@ -136,7 +154,8 @@ export default function ImageUpload({
             isProfile 
               ? 'rounded-full' 
               : 'rounded-lg'
-          } w-full h-full border-2 border-gray-100`}
+          } w-full h-full border-2`}
+          style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgb(243, 244, 246)' }}
         >
           {hasCustomImage ? (
             <img

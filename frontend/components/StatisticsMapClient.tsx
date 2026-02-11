@@ -24,6 +24,22 @@ type Props = {
 
 export default function StatisticsMapClient({ selectedGeoId, onCountryClick, mapRows, showMarkers = true, }: Props) {
   const [Component, setComponent] = useState<any>(null)
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let mounted = true
@@ -44,7 +60,13 @@ export default function StatisticsMapClient({ selectedGeoId, onCountryClick, map
       {Component ? (
         <Component selectedGeoId={selectedGeoId} onCountryClick={onCountryClick} mapRows={mapRows} showMarkers={showMarkers}/>
       ) : (
-        <div className="w-full h-[360px] rounded-lg bg-gray-50 flex items-center justify-center">
+        <div 
+          className="w-full h-[360px] rounded-lg flex items-center justify-center"
+          style={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)',
+            color: 'var(--color-gray)'
+          }}
+        >
           Loading map...
         </div>
       )}

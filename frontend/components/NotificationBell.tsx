@@ -15,6 +15,23 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
@@ -75,10 +92,19 @@ export default function NotificationBell() {
       {/* Bell Icon */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+        className="relative p-2 rounded-full transition-colors"
+        style={{
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+        }}
         aria-label="Notifications"
       >
-        <Bell className="w-6 h-6 text-gray-700" />
+        <Bell className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
         {unreadCount > 0 && (
           <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -88,15 +114,31 @@ export default function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div 
+          className="absolute right-0 mt-2 w-80 rounded-lg shadow-lg border z-50"
+          style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}
+        >
           {/* Header */}
-          <div className="p-4 border-b border-gray-200">
+          <div 
+            className="p-4 border-b"
+            style={{ borderColor: 'var(--color-gray-light)' }}
+          >
             <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-gray-800">Notifications</h3>
+              <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>Notifications</h3>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-sm font-medium"
+                  style={{ color: '#8CE4FF' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#6DD5FF';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '#8CE4FF';
+                  }}
                 >
                   Mark all read
                 </button>
@@ -107,7 +149,7 @@ export default function NotificationBell() {
           {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
+              <div className="p-6 text-center" style={{ color: 'var(--color-gray)' }}>
                 <p>No notifications yet</p>
               </div>
             ) : (
@@ -116,12 +158,24 @@ export default function NotificationBell() {
                   {notifications.map((notification) => (
                     <div
                       key={notification._id}
-                      className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${
-                        !notification.read ? 'bg-blue-50' : ''
-                      }`}
+                      className="p-4 border-b transition-colors"
+                      style={{
+                        borderColor: 'var(--color-gray-light)',
+                        backgroundColor: !notification.read 
+                          ? (isDark ? 'rgba(140, 228, 255, 0.1)' : 'rgba(140, 228, 255, 0.15)')
+                          : 'transparent'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = !notification.read 
+                          ? (isDark ? 'rgba(140, 228, 255, 0.1)' : 'rgba(140, 228, 255, 0.15)')
+                          : 'transparent';
+                      }}
                     >
-                      <p className="text-gray-800">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p style={{ color: 'var(--foreground)' }}>{notification.message}</p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--color-gray)' }}>
                         {formatTime(notification.createdAt)}
                       </p>
                     </div>

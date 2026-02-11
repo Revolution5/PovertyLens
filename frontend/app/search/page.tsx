@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 
 interface SearchResult {
     title: string;
@@ -25,6 +25,23 @@ export default function SearchPage() {
     const searchParams = useSearchParams();
     const query = searchParams.get('q') || '';
 
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        setIsDark(document.documentElement.classList.contains('dark'));
+
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.classList.contains('dark'));
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
     const results = useMemo(() => {
         if (query.trim()) {
             const lowerQuery = query.toLowerCase();
@@ -41,11 +58,11 @@ export default function SearchPage() {
     return (
         <div className="min-h-screen px-10 py-10">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-[50px] font-bold text-[#623100] mb-4">
+                <h1 className="text-[50px] font-bold mb-4" style={{ color: isDark ? '#FFB660' : '#623100' }}>
                     Search Results
                 </h1>
                 
-                <p className="text-[20px] text-[#623100] mb-8">
+                <p className="text-[20px] mb-8" style={{ color: isDark ? '#FFB660' : '#623100' }}>
                     Results for: <span className="font-bold">&quot;{query}&quot;</span>
                 </p>
 
@@ -53,11 +70,23 @@ export default function SearchPage() {
                     <div className="space-y-4">
                         {results.map((result) => (
                             <Link key={result.path} href={result.path}>
-                                <div className="p-6 bg-[#D9D1B7] rounded-lg hover:bg-[#C8AB8F] transition-colors cursor-pointer border-l-4 border-[#AC7F5E]">
-                                    <h2 className="text-[28px] font-bold text-[#623100] mb-2">
+                                <div 
+                                    className="p-6 rounded-lg transition-colors cursor-pointer border-l-4"
+                                    style={{
+                                        backgroundColor: isDark ? 'rgba(217, 209, 183, 0.1)' : '#D9D1B7',
+                                        borderColor: isDark ? '#AC7F5E' : '#AC7F5E'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(200, 171, 143, 0.2)' : '#C8AB8F';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(217, 209, 183, 0.1)' : '#D9D1B7';
+                                    }}
+                                >
+                                    <h2 className="text-[28px] font-bold mb-2" style={{ color: isDark ? '#FFB660' : '#623100' }}>
                                         {result.title}
                                     </h2>
-                                    <p className="text-[18px] text-[#623100]">
+                                    <p className="text-[18px]" style={{ color: isDark ? '#E0D5C7' : '#623100' }}>
                                         {result.description}
                                     </p>
                                 </div>
@@ -66,16 +95,28 @@ export default function SearchPage() {
                     </div>
                 ) : (
                     <div className="text-center py-16">
-                        <p className="text-[24px] text-[#623100] mb-6">
+                        <p className="text-[24px] mb-6" style={{ color: isDark ? '#FFB660' : '#623100' }}>
                             No results found for &quot;{query}&quot;
                         </p>
-                        <p className="text-[18px] text-[#623100] mb-8">
+                        <p className="text-[18px] mb-8" style={{ color: isDark ? '#E0D5C7' : '#623100' }}>
                             Try searching for:
                         </p>
                         <div className="flex flex-wrap gap-4 justify-center">
                             {NAVIGATION_PAGES.map((page: SearchResult) => (
                                 <Link key={page.path} href={page.path}>
-                                    <button className="px-4 py-2 bg-[#AC7F5E] text-[#623100] rounded-lg hover:bg-[#C9956E] transition-colors font-semibold">
+                                    <button 
+                                        className="px-4 py-2 rounded-lg transition-colors font-semibold"
+                                        style={{
+                                            backgroundColor: isDark ? 'rgba(172, 127, 94, 0.3)' : '#AC7F5E',
+                                            color: isDark ? '#FFB660' : '#623100'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = isDark ? 'rgba(201, 149, 110, 0.4)' : '#C9956E';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = isDark ? 'rgba(172, 127, 94, 0.3)' : '#AC7F5E';
+                                        }}
+                                    >
                                         {page.title}
                                     </button>
                                 </Link>
@@ -84,9 +125,24 @@ export default function SearchPage() {
                     </div>
                 )}
 
-                <div className="mt-12 pt-8 border-t border-[#AC7F5E]">
+                <div 
+                    className="mt-12 pt-8 border-t"
+                    style={{ borderColor: isDark ? 'rgba(172, 127, 94, 0.3)' : '#AC7F5E' }}
+                >
                     <Link href="/">
-                        <button className="px-6 py-3 bg-[#AC7F5E] text-[#623100] rounded-lg hover:bg-[#C9956E] transition-colors font-semibold text-[18px]">
+                        <button 
+                            className="px-6 py-3 rounded-lg transition-colors font-semibold text-[18px]"
+                            style={{
+                                backgroundColor: isDark ? 'rgba(172, 127, 94, 0.3)' : '#AC7F5E',
+                                color: isDark ? '#FFB660' : '#623100'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = isDark ? 'rgba(201, 149, 110, 0.4)' : '#C9956E';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = isDark ? 'rgba(172, 127, 94, 0.3)' : '#AC7F5E';
+                            }}
+                        >
                             ← Back to Home
                         </button>
                     </Link>

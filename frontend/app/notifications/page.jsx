@@ -5,6 +5,22 @@ import { useState, useEffect } from 'react';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const email = localStorage.getItem('userEmail');
@@ -37,26 +53,32 @@ export default function NotificationsPage() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8" style={{ color: 'var(--foreground)' }}>Loading...</div>;
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold text-[#623100] mb-6">Notifications</h1>
+      <h1 className="text-3xl font-bold mb-6" style={{ color: isDark ? '#FFB660' : '#623100' }}>Notifications</h1>
       
       {notifications.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-600">No notifications yet.</p>
+          <p style={{ color: 'var(--color-gray)' }}>No notifications yet.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {notifications.map((note) => (
             <div 
               key={note.id} 
-              className={`p-4 rounded-lg border ${note.read ? 'border-gray-200 bg-gray-50' : 'border-[#C8AB8F] bg-[#F9F5ED]'} hover:shadow transition-shadow cursor-pointer`}
+              className="p-4 rounded-lg border hover:shadow transition-shadow cursor-pointer"
+              style={{
+                borderColor: note.read ? 'var(--color-gray-light)' : '#C8AB8F',
+                backgroundColor: note.read 
+                  ? (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgb(249, 250, 251)')
+                  : (isDark ? 'rgba(254, 238, 145, 0.1)' : '#F9F5ED')
+              }}
               onClick={() => !note.read && markAsRead(note.id)}
             >
-              <p className="text-gray-800">{note.message}</p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p style={{ color: 'var(--foreground)' }}>{note.message}</p>
+              <p className="text-sm mt-2" style={{ color: 'var(--color-gray)' }}>
                 {new Date(note.createdAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
@@ -65,7 +87,13 @@ export default function NotificationsPage() {
                   minute: '2-digit'
                 })}
                 {!note.read && (
-                  <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                  <span 
+                    className="ml-3 px-2 py-1 text-xs rounded"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgb(219, 234, 254)',
+                      color: isDark ? '#93c5fd' : 'rgb(30, 64, 175)'
+                    }}
+                  >
                     New
                   </span>
                 )}
