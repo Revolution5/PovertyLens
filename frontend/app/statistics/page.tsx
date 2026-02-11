@@ -1,6 +1,7 @@
+// Edited by Christella - 1/30/2026
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
 import StatisticsMapClient from "../../components/StatisticsMapClient";
 
 type Story = {
@@ -22,6 +23,7 @@ type UserProfile = {
   bannerImage?: string | null;
 };
 
+// Added by Christella - 1/30/2026
 type LiveResponse = {
   success: boolean;
   source?: string;
@@ -37,6 +39,7 @@ type LiveResponse = {
   data?: any;
   message?: string;
 };
+// End of addition by Christella - 1/30/2026
 
 type CachedStat = {
   country: string;
@@ -63,6 +66,7 @@ type MapRow = {
   error?: string;
 };
 
+// Added by Christella - 1/30/2026
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
@@ -77,6 +81,7 @@ const geoIdToCountryCode: Record<string, string> = {
   "566": "NGA",
   "840": "USA",
 };
+// End of addition by Christella - 1/30/2026
 
 /* Country names */
 const countryNames: Record<string, string> = {
@@ -211,6 +216,7 @@ function StoryCard({
   );
 }
 
+// Added by Christella - 1/30/2026
 export default function StatisticsPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [liveResult, setLiveResult] = useState<LiveResponse | null>(null);
@@ -226,10 +232,12 @@ export default function StatisticsPage() {
   const [countriesList, setCountriesList] = useState<{ iso3: string; name?: string }[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [countriesError, setCountriesError] = useState<string | null>(null);
+  // End of addition by Christella - 1/30/2026
   
   /* user profile cache - daniel q. 2/4 */
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
 
+  // Added by Christella - 1/30/2026
   const selectedGeoId = useMemo(() => {
     if (!selectedCountry) return null;
     return (
@@ -506,6 +514,7 @@ export default function StatisticsPage() {
     }
   };
 
+  // Added by Christella - 1/30/2026
   const handleCountryClick = async (geoId: string) => {
     const iso3 = geoIdToCountryCode[geoId];
     if (!iso3) return;
@@ -529,7 +538,7 @@ export default function StatisticsPage() {
 
         {/* Grid for content display */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-          {/* Map panel (left) */}
+          {/* Map panel (left) - edited so that map doesn't overlap the navigation bar*/}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6 relative z-0">
             <h2 className="text-xl font-semibold mb-4">Map</h2>
             <div className="mb-4 relative z-0">

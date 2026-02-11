@@ -1,12 +1,16 @@
-// Done by Christella 01/29/2026
+// Page created by Christella 12/09/2025
+// Page updated by Christella 01/29/2026
 'use client';
 
 import { useEffect, useState } from "react";
+// Added by Christella of 1/29/2026 to update UI
 import { FileText } from 'lucide-react';
 const BACKEND_URL = 'http://localhost:4000';
 
+// Updated 01/29/2026 by Christella - added country options
 type CountryOption = { iso3: string; name: string };
 
+// Added by Christella - 1/29/2026
 const COUNTRY_OPTIONS = [
   { code: '', name: 'Select a country (optional)' },
   { code: 'USA', name: 'United States' },
@@ -35,19 +39,21 @@ const sharedInputStyle = {
   backgroundColor: '#ffffff',
   boxSizing: 'border-box' as const,
 };
+// End of 1/29/2026 addition by Christella
 
 export default function UploadStoryPage() {
+  // Sets the constants for the page
   const [title, setTitle] = useState('');
   const [story, setStory] = useState('');
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState(''); // Added country constant - 12/10/2025 - Christella
   const [displayName, setDisplayName] = useState(true);
   const [displayPhoto, setDisplayPhoto] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [colorScheme, setColorScheme] = useState(0);
 
-  const [countries, setCountries] = useState<CountryOption[]>([]);
-  const [countriesLoading, setCountriesLoading] = useState(false);
+  const [countries, setCountries] = useState<CountryOption[]>([]); // Added country constant - 02/03/2025 - Christella
+  const [countriesLoading, setCountriesLoading] = useState(false); // Added country setting constant - 02/03/2025 - Christella
 
   const bgColor = colorSchemes[colorScheme].bg;
   const accentColor = colorSchemes[colorScheme].accent;
@@ -66,6 +72,7 @@ export default function UploadStoryPage() {
           throw new Error("Failed to load countries list");
         }
 
+        // Normalizes the country codes for consistency
         const normalized: CountryOption[] = data
           .map((d: any) => ({
             iso3: String(d.iso3 || d.iso || d.code || "").trim().toUpperCase(),
@@ -86,6 +93,7 @@ export default function UploadStoryPage() {
     loadCountries();
   }, []);
 
+  // Handles submit if form fields are not filled out entirely
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -126,7 +134,7 @@ export default function UploadStoryPage() {
           displayName,
           displayPhoto,
           userEmail,
-          country,
+          country, // Added submission for country - 12/10/2025
         }),
       });
 
@@ -153,6 +161,7 @@ export default function UploadStoryPage() {
     }
   };
 
+  // Resets form when "clear" button is selected
   const handleClear = () => {
     setTitle('');
     setStory('');
@@ -295,8 +304,9 @@ export default function UploadStoryPage() {
                 onFocus={(e) => (e.target.style.borderColor = accentColor)}
                 onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
               >
+                
                 <option value="" disabled>
-                  {countriesLoading ? "Loading countries..." : "Select a country"}
+                  {countriesLoading ? "Loading countries..." : "Select a country"} 
                 </option>
 
                 {countries.map((c) => (
@@ -434,7 +444,7 @@ export default function UploadStoryPage() {
                   borderRadius: '8px',
                   border: 'none',
                   backgroundColor: accentColor,
-                  color: '#000000',
+                  color: '#000000', // Edited on 1/29/2026 to change text color to black
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   opacity: isSubmitting ? 0.5 : 1,
                   transition: 'opacity 0.2s',

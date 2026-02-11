@@ -172,14 +172,14 @@ export default function Home() {
             description: "Share your experience or insights about poverty and help build awareness in the community",
             icon: FileText,
             bgColor: "#E5F8FF",
-            href: "/uploadstory"
+            href: "/uploadstory" // Edited by Christella - 12/09/2025
         },
         {
             title: "View Stories",
             description: "Browse your contributions and explore stories shared by others in the community",
             icon: BookOpen,
             bgColor: "#FFFCEB",
-            href: "/viewstories"
+            href: "/viewstories" // Edited by Christella - 12/10/2025
         },
         {
             title: "Play FreeRice",

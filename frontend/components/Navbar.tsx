@@ -154,7 +154,7 @@ export default function Navbar() {
                                         </Link>
                                         <Link 
                                             href="/donationspages" 
-                                            className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-[#FEEE91]/30 transition-colors"
+                                            className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-[#FEEE91]/30 transition-colors" // Added by Christella - 12/08/2025
                                             onClick={() => setResourcesOpen(false)}
                                         >
                                             Donations & Volunteer
@@ -301,7 +301,7 @@ export default function Navbar() {
                                     <div className="ml-4 mt-2 space-y-2">
                                         <Link 
                                             href="/eduresource" 
-                                            className="block px-2 py-2 text-sm text-gray-600 hover:text-[#FFA239]"
+                                            className="block px-2 py-2 text-sm text-gray-600 hover:text-[#FFA239]" // Edited by Christella - 12/08/2025
                                             onClick={() => {
                                                 setResourcesOpen(false);
                                                 setMobileMenuOpen(false);
