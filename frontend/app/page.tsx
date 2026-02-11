@@ -106,7 +106,8 @@ export default function Home() {
             }
             // ============== Marisol Modified code 2/5/2026 End ==============
         } else {
-            // if not logged in, fetch daily fact
+            //Daily Facts added by Damon
+            //if not logged in, fetch daily fact
             (async () => {
                 try {
                     const res = await fetch('http://localhost:4000/api/daily-fact');
@@ -329,6 +330,7 @@ export default function Home() {
                 </div>
             </div>
 
+            {/*Daily Facts added by Damon */}
             {/* Notifications section at bottom - only visible when not logged in */}
             {!loadingFact && dailyFact && (
                 <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
