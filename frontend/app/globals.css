@@ -47,6 +47,44 @@
   --transition-slow: 0.3s ease-in-out;
 }
 
+/* ============== Marisol Morales Code 2/9/2026 - ADDED FOR DARK MODE FEATURE - START ============== */
+/* Dark Mode Variables */
+.dark {
+  /* Main Background Colors */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  
+  /* Keep brand colors vibrant in dark mode */
+  --color-cyan: #8CE4FF;
+  --color-yellow: #FEEE91;
+  --color-orange: #FFA239;
+  --color-red: #FF5656;
+  
+  /* Adjusted Neutral Colors for Dark Mode */
+  --color-gray-light: #1f1f1f;
+  --color-gray: #a0a0a0;
+  --color-gray-dark: #e0e0e0;
+  
+  /* Accent & Hover States - slightly brighter in dark mode */
+  --color-primary: #9DE9FF;
+  --color-primary-hover: #B3EEFF;
+  --color-secondary: #FFB660;
+  --color-secondary-hover: #FFC278;
+  --color-accent: #FF7676;
+  
+  /* Dark Mode Gradients - more subtle */
+  --gradient-light: linear-gradient(135deg, rgba(140, 228, 255, 0.05) 0%, rgba(254, 238, 145, 0.05) 100%);
+  --gradient-cyan-yellow: linear-gradient(135deg, #6DD5FF 0%, #F5E080 100%);
+  --gradient-orange-red: linear-gradient(135deg, #FF8E1A 0%, #FF7676 100%);
+  
+  /* Softer shadows for dark mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+}
+/* ============== Marisol Morales Code 2/9/2026 - ADDED FOR DARK MODE FEATURE - END ============== */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -54,14 +92,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Keep light theme even in dark mode preference */
-    /* The cheerful colors work best on light backgrounds */
-    --background: #ffffff;
-    --foreground: #1a1a1a;
-  }
-}
 
 body {
   background: var(--background);
@@ -69,6 +99,9 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* ============== Marisol Morales Code 2/9/2026 - ADDED FOR DARK MODE - Smooth transition when switching themes ============== */
+  transition: background-color var(--transition-base), color var(--transition-base);
+  /* ============== Marisol Morales Code 2/9/2026 -END ADDED TRANSITION ============== */
 }
 
 /* Smooth scrolling for the entire page */
@@ -176,6 +209,12 @@ button, a, input, select, textarea {
   border: 2px solid transparent;
   transition: all var(--transition-base);
 }
+
+/* ============== Marisol Morales Code 2/9/2026 - ADDED FOR DARK MODE - Card background in dark mode ============== */
+.dark .card {
+  background: #1a1a1a;
+}
+/* ============== END DARK MODE CARD STYLES ============== */
 
 .card:hover {
   box-shadow: var(--shadow-xl);
