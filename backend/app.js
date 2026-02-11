@@ -1,7 +1,9 @@
+//===== Created by Christella - 11/22/2025 =====//
 require('dotenv').config()
 const cors = require('cors')
 const express = require('express')
-const { MongoClient, ObjectId } = require('mongodb')
+const { MongoClient, ObjectId } = require('mongodb') // Added ObjectID - Christella 12/10/2025
+// ===== End of created code by Christella - 11/22/2025 =====//
 const bcrypt = require('bcryptjs')
 
 
@@ -11,14 +13,16 @@ const path = require('path') // Import path module for handling file paths
 const fs = require('fs').promises // Import fs module for file system operations
 // End of Marisol Morales Code 1/28/26
 
+//===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
+//===== End of code created by Christella - 11/22/2025 =====//
 
 const fetch = require('node-fetch')
 const countriesLib = require("i18n-iso-countries") // Added by Christella on 02/03/2026 for countries list
 countriesLib.registerLocale(require("i18n-iso-countries/langs/en.json")); // Added by Christella on 02/05/2026
 
-app.use(cors())
+app.use(cors()) // Created by Christella - 11/22/2025
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -70,9 +74,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // End of Marisol Morales Code 1/28/26 ===============
 
 const uri = process.env.CONNECTION_URI
-// edited by Christella, 1/26/2026
+// Edited by Christella, 1/26/2026
 const client = new MongoClient(uri);
-
+//===== Created by Christella - 11/22/2025 =====
 let db
 
 async function connectDB() {
@@ -80,7 +84,7 @@ async function connectDB() {
   db = client.db('povertylensapp')
   console.log('Connected to MongoDB')
 
-  // added by Christella, 1/26/2026
+  //===== Added by Christella, 1/26/2026 =====
   try {
     await db.collection('povertyLiveStats').createIndex({country: 1, year: -1, povline: 1, fetchedAt: -1 });
     await db.collection('povertyLiveStats').createIndex({ povline: 1, country: 1, year: -1, fetchedAt: -1});
@@ -88,7 +92,7 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create indexes for povertyLiveStats:', err.message || err);
   }
-
+  // ===== End of addition by Christella, 1/26/2026 =====
   try {
     await db.collection('notifications').createIndex({ userId: 1, createdAt: -1 });
     console.log('Index created on notifications collection');
@@ -102,14 +106,14 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create indexes for dailyFacts/notifications:', err.message || err);
   }
-  // added by Christella - 02/04/2026
+  // Added by Christella - 02/04/2026
   try {
     await db.collection('donations').createIndex({email: 1, createdAt: -1});
     console.log('Index created on donations collection');
   } catch (err) {
     console.warn('Could not create index for donation:', err.message || err);
   }
-  // end of addition by Christella - 02/04/2026
+  // End of addition by Christella - 02/04/2026
 }
 
 async function createNotification(userId, message) {
@@ -328,6 +332,7 @@ const ISO3_LIST = [
   "TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT",
   "VEN","VGB","VIR","VNM","VUT","WLF","WSM","YEM","ZAF","ZMB","ZWE"
 ];
+
 async function fetchPip({ country, year, povline }){
   let pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&povline=${povline}&fill_gaps=true&welfare_type=all`;
   if (year) pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${povline}&fill_gaps=true&welfare_type=all`;
@@ -338,6 +343,7 @@ async function fetchPip({ country, year, povline }){
   const row = Array.isArray(pipData) ? pipData[0] : null;
   return {pipData, row};
 }
+
 
 function extractMetricAndMeta(row){
   const metric = {
@@ -357,8 +363,9 @@ function extractMetricAndMeta(row){
   }
   return {metric, meta};
 }
+// End of addition by Christella - 02/03/2026
 
-// Defaults used by poverty endpoints
+// Defaults used by poverty endpoints - added by Christella 
 const DEFAULT_POVLINE = 2.15;
 const DEFAULT_YEAR = 2022;
 const DEFAULT_MAX_AGE_DAYS = 30;
@@ -372,6 +379,7 @@ app.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
+// End of creation by Christella - 11/22/2025
 
 // 12.15.2025 12:46pm
 
@@ -535,7 +543,7 @@ app.get('/api/user-by-email', async (req, res) => {
   }
 });
 
-// /api/poverty - done by Christella
+// /api/poverty - done by Christella - 12/05/2025
 
 // -----------------------
 // FreeRice endpoints (donate + leaderboard) Reymes 1/31/26
@@ -617,7 +625,7 @@ app.get('/api/freerice/leaderboard', async (req, res) => {
 });
 //end of FreeRice endpoints Reymes 1/26/26
 
-// Returns poverty statistics from "povertyStats" collection.
+// Returns poverty statistics from "povertyStats" collection. - added by Christella - 1/27/2026
 app.get('/api/poverty/summary', async(req,res) => {
   try {
     const country = String(req.query.country || '').toUpperCase().trim();
@@ -788,7 +796,9 @@ app.get('/api/poverty/pip-map', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error building map dataset' });
   }
 });
+// End of Christella's addition - 1/27/2026
 
+// Added by Christella - 02/04/2026
 app.get('/api/poverty/countries', async (req, res) => {
   try {
     // Uses ISO3_LIST already defined in this file
@@ -832,7 +842,7 @@ app.get('/api/poverty', async(req, res) => {
   }
 }) 
 
-// poverty live stats - done by Christella
+// Poverty live stats - done by Christella
 app.get('/api/poverty/live', async (req, res) => {
   try {
     const country = String(req.query.country || '').toUpperCase().trim();
@@ -925,7 +935,7 @@ app.get('/api/poverty/live', async (req, res) => {
     });
   }
 });
-
+// ===== End of addition by Christella - =====
 
 // Profile Update Route
 app.put('/api/profile/update', async (req, res) => {
@@ -1316,7 +1326,7 @@ app.get('/api/user-images', async (req, res) => {
 // Create a story
 app.post('/api/stories', async(req, res) => {
   try {
-    const {title, country, storyText, displayName, displayPhoto, userEmail } = req.body;
+    const {title, country, storyText, displayName, displayPhoto, userEmail } = req.body; // Added 'country' for the statistics page - Christella 12/10/2025
 
     if (!storyText || !storyText.trim()){
       return res.status(400).json({
@@ -1337,7 +1347,7 @@ app.post('/api/stories', async(req, res) => {
 
     const newStory = {
       title: title || '',
-      country: country ? String(country).toUpperCase():null,
+      country: country ? String(country).toUpperCase():null, // Ensures that country is uppercased - Christella 12/10/2025
       storyText,
       displayName: !!displayName,
       displayPhoto: !!displayPhoto,
@@ -1365,10 +1375,10 @@ app.post('/api/stories', async(req, res) => {
   }
 });
 
-// List of stories for editing, deleting, or archiving
+// List of stories for editing, deleting, or archiving - added 12/10/2025 by Christella
 app.get('/api/stories', async (req, res) => {
   try {
-    const { userEmail, includeArchived, country } = req.query;
+    const { userEmail, includeArchived, country } = req.query; // Added "country" to confirm that it is archived as well - Christella - 12/12/2025
 
     const filter = {};
     if (userEmail) {

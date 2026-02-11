@@ -1,3 +1,4 @@
+// Created by Christella - 12/8/2025
 'use client';
 
 // ============== Marisol Morales 2/5/2026 Code begins ==============
@@ -130,7 +131,7 @@ export default function EducationalResources(){
     );
 }
 
-// ORIGINAL ResourceCard - NOT MODIFIED
+// ORIGINAL ResourceCard - NOT MODIFIED - done by Christella - 12/08/2025
 function ResourceCard({name, description, url}: ResourceProps){
     return(
         <a
