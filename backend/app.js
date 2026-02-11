@@ -4,6 +4,8 @@ const cors = require('cors')
 const express = require('express')
 const { MongoClient, ObjectId } = require('mongodb') // Added ObjectID - Christella 12/10/2025
 // ===== End of created code by Christella - 11/22/2025 =====//
+
+//Password hashing/encryption added by Damon
 const bcrypt = require('bcryptjs')
 
 
@@ -99,6 +101,7 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create index for notifications:', err.message || err);
   }
+  //Daily facts added by Damon
   try {
     await db.collection('dailyFacts').createIndex({ createdAt: 1 });
     await db.collection('notifications').createIndex({ userId: 1, dailyFactDate: 1 });
@@ -136,7 +139,8 @@ async function createNotification(userId, message) {
   }
 }
 
-// Helper: get today's date string (UTC YYYY-MM-DD)
+//Daily facts helper added by Damon
+//Helper: get today's date string (UTC YYYY-MM-DD)
 function todayDateStringUTC() {
   const now = new Date();
   const y = now.getUTCFullYear();
@@ -145,13 +149,14 @@ function todayDateStringUTC() {
   return `${y}-${m}-${d}`;
 }
 
-// Get today's fact (deterministic random selection per-day)
+//Daily facts added by Damon
+//Get today's fact (deterministic random selection per-day)
 async function getTodaysFact() {
   const dfCol = db.collection('dailyFacts');
   const count = await dfCol.countDocuments();
   if (!count) return null;
 
-  // Deterministic selection per-day using date string as seed
+  //Deterministic selection per-day using date string as seed
   const seed = todayDateStringUTC();
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -236,8 +241,9 @@ app.post('/api/notifications/:id/read', async (req, res) => {
   }
 });
 
-// --- Daily Facts endpoints ---
-// Create a daily fact (admin UI or script can call this)
+//Daily facts added by Damon
+//--- Daily Facts endpoints ---
+//Create a daily fact
 app.post('/api/daily-facts', async (req, res) => {
   try {
     const { title, text } = req.body;
@@ -258,7 +264,8 @@ app.post('/api/daily-facts', async (req, res) => {
   }
 });
 
-// List daily facts
+//Daily facts added by Damon
+//List daily facts
 app.get('/api/daily-facts', async (req, res) => {
   try {
     const dfCol = db.collection('dailyFacts');
@@ -270,7 +277,8 @@ app.get('/api/daily-facts', async (req, res) => {
   }
 });
 
-// Get today's fact (deterministic per-day)
+//Daily facts added by Damon
+//Get today's fact (deterministic per-day)
 app.get('/api/daily-fact', async (req, res) => {
   try {
     const fact = await getTodaysFact();
@@ -282,7 +290,8 @@ app.get('/api/daily-fact', async (req, res) => {
   }
 });
 
-// Send today's daily fact as notifications to all users (idempotent per-day)
+//Daily facts added by Damon
+//Send today's daily fact as notifications to all users
 app.post('/api/daily-facts/notify', async (req, res) => {
   try {
     const fact = await getTodaysFact();
@@ -410,7 +419,8 @@ app.post('/api/signup', async (req, res) => {
       });
     }
 
-    // Hash the password
+    //Password hashing/encryption added by Damon
+    //Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create new user with hashed password
@@ -469,7 +479,8 @@ app.post('/api/login', async (req, res) => {
       });
     }
     
-    // Compare hashed password
+    //Password hashing/encryption added by Damon
+    //Compare hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ 
@@ -961,7 +972,8 @@ app.put('/api/profile/update', async (req, res) => {
       });
     }
     
-    // Verify current password using bcrypt
+    //Password hashing/encryption added by Damon
+    //Verify current password using bcrypt
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ 
@@ -992,7 +1004,8 @@ app.put('/api/profile/update', async (req, res) => {
       // Get password histroy (deafault to empty array)
       const passwordHistory = user.passwordHistory || [];
 
-      // check if new password matches current password 
+      //Password hashing/encryption added by Damon
+      //check if new password matches current password 
       const matchesCurrent = await bcrypt.compare(newPassword, user.password);
       if (matchesCurrent) {
         return res.status(400).json({
@@ -1000,7 +1013,8 @@ app.put('/api/profile/update', async (req, res) => {
           message: 'New password must be different from current password'        
         });
       }
-      // check if new password matches any in password history
+      //Password hashing/encryption added by Damon
+      //check if new password matches any in password history
       for (let i = 0; i < Math.min(passwordHistory.length, 3); i++) {
         const matchesOld = await bcrypt.compare(newPassword, passwordHistory[i]);
         if (matchesOld) {
@@ -1010,10 +1024,11 @@ app.put('/api/profile/update', async (req, res) => {
           });
         }
       }
-      // Hash new password 
+      //Password hashing/encryption added by Damon
+      //Hash new password 
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-      // add current password to history 
+      //add current password to history 
       const updatedPasswordHistory = [user.password, ...passwordHistory].slice(0, 3); // keep last 3 passwords
 
       //Keep only the last 3 passwords in history
