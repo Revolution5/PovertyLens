@@ -20,6 +20,7 @@ const POS: Record<string, { x: number; y: number }> = {
 }
 
 export default function StatisticsMap({ selectedGeoId, onCountryClick }: Props) {
+  // Added by Marisol for Dark Mode Start - 2/8/2026
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -36,12 +37,13 @@ export default function StatisticsMap({ selectedGeoId, onCountryClick }: Props) 
 
     return () => observer.disconnect();
   }, []);
+  // Added by Marisol for Dark Mode End - 2/8/2026
 
   return (
     <div 
       className="w-full h-[360px] rounded-lg border p-4"
       style={{
-        background: isDark 
+        background: isDark // Changed by Marisol for Dark Mode - 2/8/2026
           ? 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.05), rgba(254, 238, 145, 0.05))'
           : 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.05), rgba(254, 238, 145, 0.05))',
         borderColor: 'var(--color-gray-light)'

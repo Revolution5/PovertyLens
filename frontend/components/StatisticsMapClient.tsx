@@ -24,6 +24,7 @@ type Props = {
 
 export default function StatisticsMapClient({ selectedGeoId, onCountryClick, mapRows, showMarkers = true, }: Props) {
   const [Component, setComponent] = useState<any>(null)
+  // Added by Marisol for Dark Mode Start - 2/8/2026
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function StatisticsMapClient({ selectedGeoId, onCountryClick, map
 
     return () => observer.disconnect();
   }, []);
+  // Added by Marisol for Dark Mode End - 2/8/2026
 
   useEffect(() => {
     let mounted = true
@@ -63,7 +65,7 @@ export default function StatisticsMapClient({ selectedGeoId, onCountryClick, map
         <div 
           className="w-full h-[360px] rounded-lg flex items-center justify-center"
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)', // Changed by Marisol for Dark Mode End - 2/8/2026
             color: 'var(--color-gray)'
           }}
         >

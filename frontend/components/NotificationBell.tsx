@@ -14,7 +14,7 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-
+// Start of Added by Marisol for Dark Mode - 2/8/2026
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function NotificationBell() {
 
     return () => observer.disconnect();
   }, []);
-
+// End of Marisol's Code for Dark Mode Detection - 2/8/2026
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
@@ -94,13 +94,13 @@ export default function NotificationBell() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full transition-colors"
         style={{
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)' // Changed by Marisol for Dark Mode - 2/8/2026
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol for Dark Mode - 2/8/2026
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol for Dark Mode - 2/8/2026
         }}
         aria-label="Notifications"
       >
@@ -162,15 +162,15 @@ export default function NotificationBell() {
                       style={{
                         borderColor: 'var(--color-gray-light)',
                         backgroundColor: !notification.read 
-                          ? (isDark ? 'rgba(140, 228, 255, 0.1)' : 'rgba(140, 228, 255, 0.15)')
+                          ? (isDark ? 'rgba(140, 228, 255, 0.1)' : 'rgba(140, 228, 255, 0.15)') // Changed by Marisol for Dark Mode - 2/8/2026
                           : 'transparent'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol for Dark Mode - 2/8/2026
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = !notification.read 
-                          ? (isDark ? 'rgba(140, 228, 255, 0.1)' : 'rgba(140, 228, 255, 0.15)')
+                          ? (isDark ? 'rgba(140, 228, 255, 0.1)' : 'rgba(140, 228, 255, 0.15)') // Changed by Marisol for Dark Mode - 2/8/2026
                           : 'transparent';
                       }}
                     >

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ChevronDown, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
-// ============== Marisol Morales Code 2/9/2026 - Import ThemeToggle for dark mode ============== //
+// ============== Marisol Morales Code 1/9/2026 - Import ThemeToggle for dark mode ============== //
 import { ThemeToggle } from './ThemeToggle';
 // ============== End Import ============== //
 
@@ -90,7 +90,7 @@ export default function Navbar() {
     };
 
     return (
-        // ============== Marisol Morales Code 2/9/2026 - DARK MODE NAVBAR - Using CSS Variables ============== //
+        // ============== Marisol Morales Code 1/9/2026 - DARK MODE NAVBAR - Using CSS Variables ============== //
         <nav 
             className="sticky top-0 z-50 border-b shadow-sm transition-colors duration-200"
             style={{
@@ -111,7 +111,7 @@ export default function Navbar() {
                                 height={150}
                                 className="object-contain"/>
                         </Link>
-                        {/* ============== Marisol Morales Code 2/9/2026 - Theme Toggle Next to Logo ============== */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Theme Toggle Next to Logo ============== */}
                         <ThemeToggle />
                         {/* ============== End Theme Toggle ============== */}
                     </div>

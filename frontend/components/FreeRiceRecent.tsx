@@ -12,7 +12,7 @@ export default function FreeRiceRecent() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  // ============== Dark Mode Detection ============== //
+  // ============== Marisol Morales Code for Dark Mode Detection 2/9/2026 ============== //
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function FreeRiceRecent() {
 
     return () => observer.disconnect();
   }, []);
-  // ============== End Dark Mode Detection ============== //
+  // ============== End Of Marisols Code Dark Mode Detection 2/9/2026 ============== //
 
   async function fetchRecent() {
     setLoading(true)

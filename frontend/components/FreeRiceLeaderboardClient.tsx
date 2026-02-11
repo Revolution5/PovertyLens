@@ -163,13 +163,13 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
                         key={i} 
                         className="flex items-center justify-between p-3 rounded-lg transition-colors"
                         style={{
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)' // Changed by Marisol for Dark Mode - 2/9/2026
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol for Dark Mode - 2/9/2026
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol for Dark Mode - 2/9/2026
                         }}
                       >
                         <div>
@@ -220,8 +220,8 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
                   <div 
                     className="mb-3 p-2 rounded text-sm whitespace-normal break-words"
                     style={{
-                      backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : 'rgb(240, 253, 244)',
-                      borderColor: isDark ? 'rgba(34, 197, 94, 0.4)' : 'rgb(187, 247, 208)',
+                      backgroundColor: isDark ? 'rgba(34, 197, 94, 0.2)' : 'rgb(240, 253, 244)', // Changed by Marisol for Dark Mode - 2/9/2026
+                      borderColor: isDark ? 'rgba(34, 197, 94, 0.4)' : 'rgb(187, 247, 208)', // Changed by Marisol for Dark Mode - 2/9/2026
                       borderWidth: '1px',
                       borderStyle: 'solid',
                       color: 'var(--foreground)'
@@ -233,8 +233,8 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
                   <div 
                     className="mb-3 p-2 rounded text-sm whitespace-normal break-words"
                     style={{
-                      backgroundColor: isDark ? 'rgba(234, 179, 8, 0.2)' : 'rgb(254, 252, 232)',
-                      borderColor: isDark ? 'rgba(234, 179, 8, 0.4)' : 'rgb(254, 240, 138)',
+                      backgroundColor: isDark ? 'rgba(234, 179, 8, 0.2)' : 'rgb(254, 252, 232)', // Changed by Marisol for Dark Mode - 2/9/2026
+                      borderColor: isDark ? 'rgba(234, 179, 8, 0.4)' : 'rgb(254, 240, 138)', // Changed by Marisol for Dark Mode - 2/9/2026
                       borderWidth: '1px',
                       borderStyle: 'solid',
                       color: 'var(--foreground)'
@@ -298,7 +298,7 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
                 {message && (
                   <div 
                     className="mt-3 text-sm text-center whitespace-normal break-words"
-                    style={{ color: isDark ? '#FFB660' : '#623100' }}
+                    style={{ color: isDark ? '#FFB660' : '#623100' }} // Changed by Marisol for Dark Mode - 2/9/2026
                   >
                     {message}
                   </div>

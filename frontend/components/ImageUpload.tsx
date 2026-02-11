@@ -24,6 +24,7 @@ export default function ImageUpload({
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+// Added by Marisol for Dark Mode - 2/8/2026 Start
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function ImageUpload({
 
     return () => observer.disconnect();
   }, []);
+// Added by Marisol for Dark Mode - 2/8/2026 End
 
   // Update preview when currentImage prop changes (e.g., after login)
   useEffect(() => {
@@ -155,7 +157,7 @@ export default function ImageUpload({
               ? 'rounded-full' 
               : 'rounded-lg'
           } w-full h-full border-2`}
-          style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgb(243, 244, 246)' }}
+          style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgb(243, 244, 246)' }} // Changed by Marisol for Dark Mode - 2/8/2026
         >
           {hasCustomImage ? (
             <img
