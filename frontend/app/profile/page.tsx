@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
-  // ============== Dark Mode Detection ============== //
+  // ============== Marisol Code for Dark Mode Detection 1/12/2026 ============== //
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -285,7 +285,7 @@ export default function ProfilePage() {
   };
 
   return (
-    // ============== Dark Mode: Updated page background ============== //
+    // ============== Marisol Code for Dark Mode: Updated page background 1/12/2026 ============== //
     <div className="min-h-screen" style={{ 
       background: isDark 
         ? 'linear-gradient(to bottom, #0a0a0a, #0a0a0a)' 
@@ -293,7 +293,7 @@ export default function ProfilePage() {
     }}>
     {/* ============== End Dark Mode Background ============== */}
       {/* Header Section */}
-      {/* ============== Dark Mode: Updated header background and border ============== */}
+      {/* ============== Marisol Code for Dark Mode: Updated header background and border 1/12/2026 ============== */}
       <div className="border-b" style={{ 
         backgroundColor: 'var(--background)',
         borderColor: 'var(--color-gray-light)'
@@ -315,7 +315,7 @@ export default function ProfilePage() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="grid gap-6">
           {/* Profile Section */}
-          {/* ============== Dark Mode: Updated card background and border ============== */}
+          {/* ============== Marisol Code for Dark Mode: Updated card background and border 1/12/2026 ============== */}
           <div className="rounded-xl border overflow-hidden shadow-sm" style={{
             backgroundColor: 'var(--background)',
             borderColor: 'var(--color-gray-light)'
@@ -337,7 +337,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
-              {/* Marisol code for adding ImageUpload components  */}
+              {/* Marisol code for adding ImageUpload components 1/28/26 */}
               {/* Profile Picture & Banner */}
               <div className="space-y-6">
                 {/* Profile Picture */}
@@ -384,9 +384,8 @@ export default function ProfilePage() {
           </div>
 
           {/* Account Details */}
-          {/* ============== Dark Mode: Updated card background and border ============== */}
           <div className="rounded-xl border overflow-hidden shadow-sm" style={{
-            backgroundColor: 'var(--background)',
+            backgroundColor: 'var(--background)', 
             borderColor: 'var(--color-gray-light)'
           }}>
             <div className="p-6">
@@ -408,14 +407,13 @@ export default function ProfilePage() {
 
               <div className="space-y-4">
                 {/* Username */}
-                {/* ============== Dark Mode: Updated hover background ============== */}
                 <div 
                   className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
                   style={{
-                    backgroundColor: isDark ? 'transparent' : 'transparent'
+                    backgroundColor: isDark ? 'transparent' : 'transparent' // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -425,7 +423,6 @@ export default function ProfilePage() {
                     setEditUsername(true);
                   }}
                 >
-                {/* ============== End Dark Mode Hover ============== */}
                   <div className="flex-1">
                     <label className="text-sm" style={{ color: 'var(--color-gray)' }}>Username</label>
                     <p className="text-base mt-1" style={{ color: 'var(--foreground)' }}>
@@ -463,7 +460,6 @@ export default function ProfilePage() {
           </div>
 
           {/* Security */}
-          {/* ============== Dark Mode: Updated card background and border ============== */}
           <div className="rounded-xl border overflow-hidden shadow-sm" style={{
             backgroundColor: 'var(--background)',
             borderColor: 'var(--color-gray-light)'
@@ -486,14 +482,13 @@ export default function ProfilePage() {
               <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
               <div className="space-y-4">
-                {/* ============== Dark Mode: Updated hover background ============== */}
                 <div 
                   className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
                   style={{
-                    backgroundColor: isDark ? 'transparent' : 'transparent'
+                    backgroundColor: isDark ? 'transparent' : 'transparent' // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = 'transparent';
@@ -515,7 +510,6 @@ export default function ProfilePage() {
                   </div>
                   <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                 </div>
-                {/* ============== End Dark Mode Hover ============== */}
               </div>
             </div>
           </div>
@@ -555,7 +549,6 @@ export default function ProfilePage() {
       </div>
 
       {/* Message Display */}
-      {/* ============== Dark Mode: Updated message background ============== */}
       {message && (
         <div 
           className="fixed bottom-8 right-8 max-w-md p-4 rounded-lg shadow-lg font-semibold border-2 animate-fade-in" 
@@ -568,18 +561,15 @@ export default function ProfilePage() {
           {message}
         </div>
       )}
-      {/* ============== End Dark Mode Message ============== */}
 
       {/* Edit Username Modal */}
       {editUsername && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditUsername(false)}>
-          {/* ============== Dark Mode: Updated modal background ============== */}
           <div 
             className="rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" 
             style={{ backgroundColor: 'var(--background)' }}
             onClick={(e) => e.stopPropagation()}
           >
-          {/* ============== End Dark Mode Modal ============== */}
             <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
               Edit Username
             </h3>
@@ -639,16 +629,16 @@ export default function ProfilePage() {
                   className="flex-1 px-4 py-2 border rounded-lg transition-colors font-medium"
                   style={{
                     borderColor: 'var(--color-gray-light)',
-                    // ============== Dark Mode: Improved button text visibility ============== //
+                    // ============== Marisol Code for Dark Mode: Improved button text visibility 1/12/2026 ============== //
                     color: isDark ? '#e5e5e5' : '#374151',
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
                     // ============== End Dark Mode Button Text ============== //
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                 >
                   Cancel
@@ -656,7 +646,6 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  // ============== Dark Mode: Improved submit button contrast ============== //
                   className="flex-1 px-4 py-2 font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: '#8CE4FF',
@@ -668,7 +657,6 @@ export default function ProfilePage() {
                   onMouseLeave={(e) => {
                     if (!isLoading) e.currentTarget.style.backgroundColor = '#8CE4FF';
                   }}
-                  // ============== End Dark Mode Submit Button ============== //
                 >
                   {isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -681,7 +669,6 @@ export default function ProfilePage() {
       {/* Change Password Modal */}
       {changePasswordOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setChangePasswordOpen(false)}>
-          {/* ============== Dark Mode: Updated modal background ============== */}
           <div 
             className="rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" 
             style={{ backgroundColor: 'var(--background)' }}
@@ -765,7 +752,7 @@ export default function ProfilePage() {
                   className="flex-1 px-4 py-2 border rounded-lg transition-colors font-medium"
                   style={{
                     borderColor: 'var(--color-gray-light)',
-                    // ============== Dark Mode: Improved button text visibility ============== //
+                    // ============== Marisol Code for Dark Mode: Improved button text visibility 1/12/2026 ============== //
                     color: isDark ? '#e5e5e5' : '#374151',
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
                     // ============== End Dark Mode Button Text ============== //
@@ -782,7 +769,6 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  // ============== Dark Mode: Improved submit button contrast ============== //
                   className="flex-1 px-4 py-2 font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: '#8CE4FF',
@@ -794,7 +780,6 @@ export default function ProfilePage() {
                   onMouseLeave={(e) => {
                     if (!isLoading) e.currentTarget.style.backgroundColor = '#8CE4FF';
                   }}
-                  // ============== End Dark Mode Submit Button ============== //
                 >
                   {isLoading ? 'Updating...' : 'Update Password'}
                 </button>

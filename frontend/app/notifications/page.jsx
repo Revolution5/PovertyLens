@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Added by Marisol 2/10/2026 for Dark Mode Support
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -21,6 +22,7 @@ export default function NotificationsPage() {
 
     return () => observer.disconnect();
   }, []);
+  // End of Code by Marisol 2/10/2026 for Dark Mode Support
 
   useEffect(() => {
     const email = localStorage.getItem('userEmail');
@@ -57,7 +59,8 @@ export default function NotificationsPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6" style={{ color: isDark ? '#FFB660' : '#623100' }}>Notifications</h1>
+      <h1 className="text-3xl font-bold mb-6" style={{ color: isDark ? '#FFB660' : '#623100' }}> {/* Changed by Marisol 2/10/2026 for Dark Mode Support */}
+        Notifications</h1> 
       
       {notifications.length === 0 ? (
         <div className="text-center py-12">
@@ -72,8 +75,8 @@ export default function NotificationsPage() {
               style={{
                 borderColor: note.read ? 'var(--color-gray-light)' : '#C8AB8F',
                 backgroundColor: note.read 
-                  ? (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgb(249, 250, 251)')
-                  : (isDark ? 'rgba(254, 238, 145, 0.1)' : '#F9F5ED')
+                  ? (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgb(249, 250, 251)') // Changed by Marisol 2/10/2026 for Dark Mode Support
+                  : (isDark ? 'rgba(254, 238, 145, 0.1)' : '#F9F5ED') // Changed by Marisol 2/10/2026 for Dark Mode Support
               }}
               onClick={() => !note.read && markAsRead(note.id)}
             >
@@ -90,8 +93,8 @@ export default function NotificationsPage() {
                   <span 
                     className="ml-3 px-2 py-1 text-xs rounded"
                     style={{
-                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgb(219, 234, 254)',
-                      color: isDark ? '#93c5fd' : 'rgb(30, 64, 175)'
+                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgb(219, 234, 254)', // Changed by Marisol 2/10/2026 for Dark Mode Support
+                      color: isDark ? '#93c5fd' : 'rgb(30, 64, 175)' // Changed by Marisol 2/10/2026 for Dark Mode Support
                     }}
                   >
                     New

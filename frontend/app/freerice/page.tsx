@@ -7,7 +7,7 @@ import FreeRiceLeaderboardClient from '../../components/FreeRiceLeaderboardClien
 import FreeRiceRecent from '../../components/FreeRiceRecent';
 
 export default function FreeRicePage() {
-  // ============== Dark Mode Detection ============== //
+  // ============== Added by Marisol Dark Mode Detection 1/12/2026 ============== //
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -29,11 +29,11 @@ export default function FreeRicePage() {
   // ============== End Dark Mode Detection ============== //
 
   return (
-    // ============== Dark Mode: Updated page background ============== //
+    // ============== Changed by Marisol Dark Mode: Updated page background 2/10/2026 ============== //
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-    {/* ============== End Dark Mode Background ============== */}
+    {/* ============== Marisol End Dark Mode Background 2/10/2026 ============== */}
       {/* Hero */}
-      {/* ============== Dark Mode: Updated hero gradient background ============== */}
+      {/* ============== Marisol Dark Mode: Updated hero gradient background 2/10/2026 ============== */}
       <section 
         className="py-12"
         style={{
@@ -42,28 +42,28 @@ export default function FreeRicePage() {
             : 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.1), white, rgba(254, 238, 145, 0.1))'
         }}
       >
-      {/* ============== End Dark Mode Hero ============== */}
+      {/* ============== Marisol End Dark Mode Hero 2/10/2026 ============== */}
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h1 className="text-5xl font-black mb-4 bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
             FreeRice — Play for Rice
           </h1>
-          {/* ============== Dark Mode: Updated subtitle text ============== */}
+          {/* ============== Marisol Dark Mode: Updated subtitle text 2/10/2026 ============== */}
           <p className="text-lg font-semibold max-w-2xl mx-auto mb-4" style={{ color: 'var(--color-gray-dark)' }}>
+          {/* ============== Marisol End Dark Mode Text 2/10/2026 ============== */}
             Answer quick trivia. Earn grains. Help provide rice worldwide.
           </p>
-          {/* ============== End Dark Mode Text ============== */}
+
         </div> 
       </section>
 
       <main className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left: Info */}
         <div className="lg:col-span-4 space-y-6">
-          {/* ============== Dark Mode: Updated card backgrounds and borders ============== */}
           <div 
             className="p-6 rounded-2xl shadow-sm border flex flex-col items-center gap-4"
             style={{
               backgroundColor: 'var(--background)',
-              borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)'
+              borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)' // changed by Marisol for dark mode 2/10/2026
             }}
           >
             <Image src="/WFP-trans.png" alt="WFP" width={260} height={260} className="object-contain rounded-md" />
@@ -81,7 +81,7 @@ export default function FreeRicePage() {
             className="p-6 rounded-2xl shadow-sm border"
             style={{
               backgroundColor: 'var(--background)',
-              borderColor: isDark ? 'rgba(254, 238, 145, 0.4)' : 'rgba(254, 238, 145, 0.3)'
+              borderColor: isDark ? 'rgba(254, 238, 145, 0.4)' : 'rgba(254, 238, 145, 0.3)' // Changed by Marisol for dark mode 2/10/2026
             }}
           >
             <h3 className="text-lg font-bold bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
@@ -113,7 +113,7 @@ export default function FreeRicePage() {
             className="p-6 rounded-2xl shadow-sm border"
             style={{
               backgroundColor: 'var(--background)',
-              borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)'
+              borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)' // Changed by Marisol for dark mode 2/10/2026
             }}
           >
             <h3 className="text-lg font-bold bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
@@ -127,17 +127,15 @@ export default function FreeRicePage() {
           <div>
             <FreeRiceRecent />
           </div>
-          {/* ============== End Dark Mode Cards ============== */}
         </div>
 
         {/* Center + Right: Leaderboard + Donation Form */}
         <div className="lg:col-span-8 space-y-6">
-          {/* ============== Dark Mode: Updated card backgrounds and borders ============== */}
           <div 
             className="p-6 rounded-2xl shadow-sm border"
             style={{
               backgroundColor: 'var(--background)',
-              borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)'
+              borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)' // Changed by Marisol for dark mode 2/10/2026
             }}
           >
             <FreeRiceLeaderboardClient showRecent={false} />
@@ -147,7 +145,7 @@ export default function FreeRicePage() {
             className="p-6 rounded-2xl shadow-sm border"
             style={{
               backgroundColor: 'var(--background)',
-              borderColor: isDark ? 'rgba(254, 238, 145, 0.4)' : 'rgba(254, 238, 145, 0.3)'
+              borderColor: isDark ? 'rgba(254, 238, 145, 0.4)' : 'rgba(254, 238, 145, 0.3)' // Changed by Marisol for dark mode 2/10/2026
             }}
           >
             <h3 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
@@ -161,7 +159,6 @@ export default function FreeRicePage() {
               page to explore verified organizations and volunteer opportunities.
             </p>
           </div>
-          {/* ============== End Dark Mode Cards ============== */}
         </div>
       </main>
     </div>

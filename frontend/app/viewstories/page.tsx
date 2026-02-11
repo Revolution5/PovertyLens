@@ -610,13 +610,13 @@ function TabButton({
     onClick,
     color,
     children,
-    isDark,
+    isDark, // Added by Marisol for Dark Mode - 2/8/2026
 }: {
     active: boolean;
     onClick: () => void;
     color: string;
     children: React.ReactNode;
-    isDark?: boolean;
+    isDark?: boolean; // Added by Marisol for Dark Mode - 2/8/2026
 }) {
     return (
         <button
@@ -627,14 +627,14 @@ function TabButton({
                 borderRadius: '0.5rem',
                 border: 'none',
                 background: active ? color : 'transparent',
-                color: active && color === '#FFA239' ? '#fff' : (isDark ? 'var(--foreground)' : '#1a1a1a'),
+                color: active && color === '#FFA239' ? '#fff' : (isDark ? 'var(--foreground)' : '#1a1a1a'), // Changed by Marisol for Dark Mode - 2/8/2026
                 fontSize: '0.95rem',
                 fontWeight: active ? 600 : 500,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+                if (!active) e.currentTarget.style.background = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol for Dark Mode - 2/8/2026
             }}
             onMouseLeave={(e) => {
                 if (!active) e.currentTarget.style.background = 'transparent';
@@ -650,16 +650,16 @@ function ToggleRow({
     label,
     checked,
     onToggle,
-    isDark,
+    isDark, // Added by Marisol for Dark Mode - 2/8/2026
 }: {
     label: string;
     checked: boolean;
     onToggle: () => void;
-    isDark?: boolean;
+    isDark?: boolean; // Added by Marisol for Dark Mode - 2/8/2026
 }) {
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.95rem', color: isDark ? 'var(--foreground)' : '#333', fontWeight: 500 }}>{label}</span>
+            <span style={{ fontSize: '0.95rem', color: isDark ? 'var(--foreground)' : '#333', fontWeight: 500 }}>{label}</span> {/* Changed by Marisol for Dark Mode - 2/8/2026 */}
             <ToggleSwitch checked={checked} onChange={onToggle} />
         </div>
     );
@@ -754,13 +754,13 @@ function StoryCard({
     onEdit,
     onArchive,
     onDelete,
-    isDark,
+    isDark, // Added by Marisol for Dark Mode - 2/8/2026
 }: {
     story: Story;
     onEdit: () => void;
     onArchive: () => void;
     onDelete: () => void;
-    isDark?: boolean;
+    isDark?: boolean; // Added by Marisol for Dark Mode - 2/8/2026
 }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const maxPreviewLength = 200;
@@ -771,21 +771,21 @@ function StoryCard({
 
     return (
         <div style={{
-            background: isDark ? 'var(--background)' : 'white',
+            background: isDark ? 'var(--background)' : 'white', // Changed by Marisol for Dark Mode - 2/8/2026
             borderRadius: '1rem',
             padding: '1.5rem',
-            boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
+            boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)', // Changed by Marisol for Dark Mode - 2/8/2026
             border: '2px solid transparent',
             borderColor: story.archived ? '#FEEE91' : '#8CE4FF',
             transition: 'all 0.2s ease',
         }}
             onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = isDark ? '0 8px 16px rgba(0, 0, 0, 0.4)' : '0 8px 16px rgba(0, 0, 0, 0.1)';
+                e.currentTarget.style.boxShadow = isDark ? '0 8px 16px rgba(0, 0, 0, 0.4)' : '0 8px 16px rgba(0, 0, 0, 0.1)'; // Changed by Marisol for Dark Mode - 2/8/2026
             }}
             onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)';
+                e.currentTarget.style.boxShadow = isDark ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)'; // Changed by Marisol for Dark Mode - 2/8/2026
             }}
         >
             <div style={{
@@ -798,7 +798,7 @@ function StoryCard({
                     fontSize: '1.25rem',
                     fontWeight: 700,
                     margin: 0,
-                    color: isDark ? 'var(--foreground)' : '#1a1a1a',
+                    color: isDark ? 'var(--foreground)' : '#1a1a1a', // Changed by Marisol for Dark Mode - 2/8/2026
                     flex: 1,
                 }}>
                     {story.title || 'Untitled Story'}
@@ -826,7 +826,7 @@ function StoryCard({
                 gap: '0.5rem',
                 marginBottom: '1rem',
                 fontSize: '0.85rem',
-                color: isDark ? 'var(--color-gray)' : '#666',
+                color: isDark ? 'var(--color-gray)' : '#666', // Changed by Marisol for Dark Mode - 2/8/2026
             }}>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                     <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
@@ -853,7 +853,7 @@ function StoryCard({
             <p style={{
                 fontSize: '0.95rem',
                 lineHeight: 1.6,
-                color: isDark ? 'var(--foreground)' : '#333',
+                color: isDark ? 'var(--foreground)' : '#333', // Changed by Marisol for Dark Mode - 2/8/2026
                 marginBottom: '1rem',
                 whiteSpace: 'pre-wrap',
             }}>
@@ -885,7 +885,7 @@ function StoryCard({
                 flexWrap: 'wrap',
                 marginTop: '1rem',
                 paddingTop: '1rem',
-                borderTop: `1px solid ${isDark ? 'var(--color-gray-light)' : '#e0e0e0'}`,
+                borderTop: `1px solid ${isDark ? 'var(--color-gray-light)' : '#e0e0e0'}`, // Changed by Marisol for Dark Mode - 2/8/2026
             }}>
                 <ActionButton
                     label="Edit"

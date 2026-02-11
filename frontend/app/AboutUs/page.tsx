@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { BarChart3, Heart, HandHeart } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
+// Added by Marisol Morales on 1/11/2026 - For dark mode support
 export default function AboutUs() {
     const [isDark, setIsDark] = useState(false);
 
@@ -23,13 +23,13 @@ export default function AboutUs() {
 
         return () => observer.disconnect();
     }, []);
-
+// End of Marisol Morales code 1/11/2026 - For dark mode support
     return (
-        // ============== Marisol Morales Code 2/9/2026 - Dark Mode Background ============== //
+        // ============== Marisol Morales Code 1/11/2026 - Dark Mode Background ============== //
         <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
         {/* ============== End Dark Mode Background ============== */}
             {/* Hero Section */}
-            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Hero Section ============== */}
+            {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Hero Section ============== */}
             <section 
                 className="relative py-8 px-6"
                 style={{
@@ -52,7 +52,7 @@ export default function AboutUs() {
                 <div className="max-w-7xl mx-auto">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         {/* Text on the left */}
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors ============== */}
+                        {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Text Colors ============== */}
                         <div className="space-y-8">
                             <p 
                                 className="text-xl leading-relaxed"
@@ -85,7 +85,7 @@ export default function AboutUs() {
             </section>
 
             {/* What We Do Section */}
-            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Section Background ============== */}
+            {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Section Background ============== */}
             <section 
                 className="py-16 px-6"
                 style={{
@@ -98,7 +98,7 @@ export default function AboutUs() {
                         What We Do
                     </h2>
                     
-                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text ============== */}
+                    {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Text ============== */}
                     <p 
                         className="text-xl leading-relaxed mb-10 text-center max-w-4xl mx-auto"
                         style={{ color: 'var(--color-gray-dark)' }}
@@ -108,7 +108,7 @@ export default function AboutUs() {
                     {/* ============== End Dark Mode Text ============== */}
 
                     <div className="grid md:grid-cols-3 gap-8 mb-12">
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Cards ============== */}
+                        {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Cards ============== */}
                         <div 
                             className="p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
                             style={{
@@ -165,7 +165,7 @@ export default function AboutUs() {
                         {/* ============== End Dark Mode Cards ============== */}
                     </div>
 
-                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text ============== */}
+                    {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Text ============== */}
                     <div className="max-w-4xl mx-auto space-y-6">
                         <p 
                             className="text-xl leading-relaxed"
@@ -185,7 +185,7 @@ export default function AboutUs() {
             </section>
 
             {/* Meet the Team Section */}
-            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Section Background ============== */}
+            {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Section Background ============== */}
             <section 
                 className="py-16 px-6"
                 style={{
@@ -201,7 +201,7 @@ export default function AboutUs() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
                         {/* Team Member 1 - Damon */}
                         <div className="group">
-                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Team Card ============== */}
+                            {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Team Card ============== */}
                             <div 
                                 className="relative overflow-hidden rounded-2xl mb-4 aspect-[3/4] shadow-md hover:shadow-xl transition-all duration-300"
                                 style={{ backgroundColor: 'var(--color-gray-light)' }}
@@ -216,7 +216,6 @@ export default function AboutUs() {
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#FF5656]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             </div>
-                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text ============== */}
                             <div className="text-center">
                                 <h3 
                                     className="text-xl mb-1 font-bold"
@@ -228,7 +227,6 @@ export default function AboutUs() {
                                     Developer
                                 </p>
                             </div>
-                            {/* ============== End Dark Mode Text ============== */}
                         </div>
 
                         {/* Team Member 2 - Marisol */}

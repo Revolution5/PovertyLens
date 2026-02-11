@@ -15,7 +15,7 @@ export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
-  // ============== Dark Mode Detection - Listen for theme changes ============== //
+  // ============== Dark Mode Detection - Listen for theme changes 2/10/2026 ============== //
   useEffect(() => {
     // Check initial theme
     setIsDark(document.documentElement.classList.contains('dark'));
@@ -55,9 +55,9 @@ export default function Contact() {
   };
 
   return (
-    // ============== Dark Mode: Updated background ============== //
+    // ============== Marisol Dark Mode: Updated background 2/10/2026 ============== //
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-    {/* ============== End Dark Mode Background ============== */}
+    {/* ============== Marisol End Dark Mode Background 2/10/2026 ============== */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-16 lg:py-20">
           {/* Header Section */}
@@ -67,24 +67,24 @@ export default function Contact() {
                 Get in Touch
               </span>
             </h1>
-            {/* ============== Dark Mode: Updated text color ============== */}
+            {/* ============== Marisol Dark Mode: Updated text color 2/10/2026 ============== */}
             <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-gray)' }}>
               Have questions or want to learn more about our mission? We'd love to hear from you.
             </p>
-            {/* ============== End Dark Mode Text ============== */}
+            {/* ============== Marisol End Dark Mode Text 2/10/2026 ============== */}
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
             {/* Left side - Contact Information */}
             <div>
-              {/* ============== Dark Mode: Updated heading color ============== */}
+              {/* ============== Marisol Dark Mode: Updated heading color 2/10/2026 ============== */}
               <h2 className="text-2xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
                 Contact Information
               </h2>
               <p className="mb-8 leading-relaxed" style={{ color: 'var(--color-gray)' }}>
                 Reach out to us through any of the following channels. Our team is here to help and will respond to your inquiry as soon as possible.
               </p>
-              {/* ============== End Dark Mode Heading ============== */}
+              {/* ============== Marisol End Dark Mode Heading 2/10/2026 ============== */}
 
               {/* Contact Details - Only Address */}
               <div className="space-y-6 mb-10">
@@ -95,7 +95,7 @@ export default function Contact() {
                   >
                     <MapPin size={20} className="text-orange-500" />
                   </div>
-                  {/* ============== Dark Mode: Updated address text colors ============== */}
+                  {/* ============== Marisol Dark Mode: Updated address text colors 2/10/2026 ============== */}
                   <div>
                     <h3 className="font-semibold mb-1" style={{ color: 'var(--foreground)' }}>
                       Address
@@ -113,7 +113,7 @@ export default function Contact() {
 
             {/* Right side - Contact Form */}
             <div>
-              {/* ============== Dark Mode: Updated form container background ============== */}
+              {/* ============== Marisol Dark Mode: Updated form container background 2/10/2026 ============== */}
               <div 
                 className="p-8 rounded-2xl"
                 style={{ 
@@ -146,7 +146,7 @@ export default function Contact() {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Name Field */}
-                    {/* ============== Dark Mode: Updated form field styles ============== */}
+                    {/* ============== Marisol Dark Mode: Updated form field styles 2/10/2026 ============== */}
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                         Full Name *

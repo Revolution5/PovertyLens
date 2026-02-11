@@ -104,6 +104,7 @@ function StoryCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const maxChars = 220;
+  // Start of Marisol Code for dark mode support - 2/8/2026
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -120,7 +121,7 @@ function StoryCard({
 
     return () => observer.disconnect();
   }, []);
-
+// End of Marisol Code for dark mode support - 2/8/2026
   const text = story.storyText || "";
   const needsTruncate = text.length > maxChars;
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
@@ -266,7 +267,7 @@ export default function StatisticsPage() {
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
 
   const [isDark, setIsDark] = useState(false);
-
+// Marisol code to detect dark mode changes - 2/8/2026
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
 
@@ -281,6 +282,7 @@ export default function StatisticsPage() {
 
     return () => observer.disconnect();
   }, []);
+// End of Marisol code to detect dark mode changes - 2/8/2026
 
   // Added by Christella - 1/30/2026
   const selectedGeoId = useMemo(() => {
@@ -665,7 +667,7 @@ export default function StatisticsPage() {
                 <div className="grid grid-cols-3 gap-3 pt-2">
                   <div 
                     className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }}
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
                   >
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Headcount</div>
                     <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
@@ -674,7 +676,7 @@ export default function StatisticsPage() {
                   </div>
                   <div 
                     className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }}
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
                   >
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Gap</div>
                     <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
@@ -683,7 +685,7 @@ export default function StatisticsPage() {
                   </div>
                   <div 
                     className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }}
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
                   >
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Severity</div>
                     <div className="font-semibold" style={{ color: 'var(--foreground)' }}>

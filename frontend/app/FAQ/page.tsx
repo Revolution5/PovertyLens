@@ -47,7 +47,7 @@ export default function FAQ() {
     ];
 
     return (
-        // ============== Marisol Morales Code 2/9/2026 - Dark Mode Background ============== //
+        // ============== Marisol Morales Code 1/9/2026 - Dark Mode Background ============== //
         <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
         {/* ============== End Dark Mode Background ============== */}
             {/* Main Content */}
@@ -60,7 +60,7 @@ export default function FAQ() {
                                 Frequently Asked Questions
                             </span>
                         </h1>
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text ============== */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text ============== */}
                         <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
                             Got questions? We've got answers.
                         </p>
@@ -71,7 +71,7 @@ export default function FAQ() {
                     {/* Added by Marisol 2/4/2026 for updated UI and providing contact form */}
                     <div className="grid lg:grid-cols-2 gap-12 mb-16 items-center">
                         {/* Left - Description Text */}
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors ============== */}
+                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text Colors ============== */}
                         <div>
                             <p className="text-lg leading-relaxed mb-4" style={{ color: 'var(--color-gray)' }}>
                                 Find answers to common questions about poverty, our mission, and how you can make a difference.
@@ -107,7 +107,7 @@ export default function FAQ() {
                         {faqs.map((faq, index) => (
                             <div
                                 key={index}
-                                // ============== Marisol Morales Code 2/9/2026 - Dark Mode Border ============== //
+                                // ============== Marisol Morales Code 1/9/2026 - Dark Mode Border ============== //
                                 className="py-6"
                                 style={{ borderBottom: '1px solid var(--color-gray-light)' }}
                                 // ============== End Dark Mode Border ============== //
@@ -116,7 +116,7 @@ export default function FAQ() {
                                     onClick={() => setOpenIndex(openIndex === index ? null : index)}
                                     className="w-full text-left flex items-start justify-between gap-4 group"
                                 >
-                                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Question Text ============== */}
+                                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Question Text ============== */}
                                     <span 
                                         className="font-medium text-lg flex-1"
                                         style={{ color: 'var(--foreground)' }}
@@ -137,7 +137,7 @@ export default function FAQ() {
                                         openIndex === index ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'
                                     }`}
                                 >
-                                    {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Answer Text ============== */}
+                                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Answer Text ============== */}
                                     <div 
                                         className="leading-relaxed pl-0"
                                         style={{ color: 'var(--color-gray-dark)' }}

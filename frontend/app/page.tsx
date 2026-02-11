@@ -56,20 +56,19 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
     <Link
       href={href}
       className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left w-full block"
-      // ============== Marisol Morales Code 1/9/2026 - Dark Mode Support ============== //
+
       style={{ 
-        backgroundColor: isDark ? darkBgColor : bgColor,
+        backgroundColor: isDark ? darkBgColor : bgColor, //  ============== Marisol Morales Code 1/9/2026 - Dark Mode Support ============== //
         borderWidth: '1px',
         borderStyle: 'solid',
-        borderColor: isDark ? accentColor + '40' : 'var(--color-gray-light)' // Add accent color border in dark mode
+        borderColor: isDark ? accentColor + '40' : 'var(--color-gray-light)' // Marisol Code 1/9/2026 Add accent color border in dark mode
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = accentColor;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = isDark ? accentColor + '40' : 'var(--color-gray-light)';
+        e.currentTarget.style.borderColor = isDark ? accentColor + '40' : 'var(--color-gray-light)'; // Marisol Code 1/9/2026 Add accent color border in dark mode
       }}
-      // ============== End Dark Mode Support ============== //
     >
       {/* Icon */}
       <div 
@@ -80,20 +79,18 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
       </div>
 
       {/* Content */}
-      {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text ============== */}
       <h3 
         className="text-xl font-bold mb-2 transition-colors"
-        style={{ color: isDark ? 'var(--foreground)' : 'var(--color-gray-dark)' }}
+        style={{ color: isDark ? 'var(--foreground)' : 'var(--color-gray-dark)' }} // Changed by Marisol 1/12/2026 for Dark Mode Support
       >
         {title}
       </h3>
       <p 
         className="text-sm leading-relaxed"
-        style={{ color: isDark ? 'var(--color-gray)' : 'var(--color-gray)' }}
+        style={{ color: isDark ? 'var(--color-gray)' : 'var(--color-gray)' }} // Changed by Marisol 1/12/2026 for Dark Mode Support - using same gray but could adjust if needed
       >
         {description}
       </p>
-      {/* ============== End Dark Mode Text ============== */}
 
       {/* Arrow indicator */}
       <div className="mt-4 flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ color: accentColor }}>
@@ -252,7 +249,6 @@ export default function Home() {
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Welcome Section */}
                     <div className="mb-12 dashboard-header">
-                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text Colors ============== */}
                         <h1 
                             className="text-4xl sm:text-5xl font-bold mb-3"
                             style={{ color: 'var(--foreground)' }}
@@ -265,7 +261,6 @@ export default function Home() {
                         >
                             Here's your dashboard
                         </p>
-                        {/* ============== End Dark Mode Text Colors ============== */}
                     </div>
 
                     {/* Action Cards Grid */}
@@ -284,7 +279,6 @@ export default function Home() {
 
                     {/* Quick Stats Section */}
                     <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Card Styling ============== */}
                         <div 
                             className="rounded-xl p-6 shadow-sm transition-colors"
                             style={{
@@ -340,7 +334,6 @@ export default function Home() {
                                 </div>
                             </div>
                         </div>
-                        {/* ============== End Dark Mode Card Styling ============== */}
 
                         {/* ============== Marisol Modified code for fav Resource 2/5/2026 Begin ==============*/}
                         {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Card Styling ============== */}
@@ -423,7 +416,6 @@ export default function Home() {
                 {/* Creating the columns*/}
                 <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
                     {/* Left column - Introductory text */}
-                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Styling Start ============== */}
                     <div 
                         className="flex-[11] card card-cyan p-8 md:p-10 transition-colors"
                         style={{
@@ -431,8 +423,6 @@ export default function Home() {
                             border: '2px solid var(--color-cyan)'
                         }}
                     >
-                    {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Styling End ============== */}
-                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text Colors ============== */}
                         <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
                             Our Mission:
                         </h2>
@@ -446,7 +436,6 @@ export default function Home() {
                             We hope to empower everyone, whether that's supporting global initiatives, 
                             donating, or spreading awareness within their own communities.
                         </p>
-                        {/* ============== End Dark Mode Text Colors ============== */}
                     </div>
 
                     {/* Right column - Logo */}
@@ -465,28 +454,22 @@ export default function Home() {
             {!loadingFact && dailyFact && (
                 <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
                     <div className="">
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors Start ============== */}
                         <h3 
                             className="font-semibold text-2xl md:text-3xl mb-3"
                             style={{ color: 'var(--foreground)' }}
                         >
-                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text End ============== */}
                             {dailyFact.title || 'Daily Fact'}
                         </h3>
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors Start ============== */}
                         <p 
                             className="text-lg md:text-xl leading-relaxed"
                             style={{ color: 'var(--color-gray-dark)' }}
                         >
-                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors End ============== */}
                             {dailyFact.text}
                         </p>
-                        {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors Start ============== */}
                         <p 
                             className="text-sm mt-4"
                             style={{ color: 'var(--color-gray)' }}
                         >
-                            {/* ============== Marisol Morales Code 2/9/2026 - Dark Mode Text Colors End ============== */}
                             Learn more by signing in to PovertyLens
                         </p>
                     </div>
