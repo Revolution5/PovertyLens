@@ -1,6 +1,7 @@
+// Done by Christella - 12/08/2025
 'use client';
 
-import Link from 'next/link';
+import Link from 'next/link'; // Added on 02/04/2026 by Christella to connect PLdonation page
 
 type OrgCardProps = {
   name: string;
@@ -13,6 +14,7 @@ const cardHover = '#c9956e';
 const textBrown = '#623100';
 const pageBg = '#ffffff';
 
+// Sets the donations and volunteering resources
 export default function DonationsAndVolunteeringPage() {
   return (
     <div
@@ -173,7 +175,7 @@ export default function DonationsAndVolunteeringPage() {
   );
 }
 
-/* ---- Card component ---- */
+/* ---- Card component ---- No change - 02/04/2026*/
 function Card({ name, description, url }: OrgCardProps) {
   const isInternal = url.startsWith('/');
 
@@ -207,7 +209,7 @@ function Card({ name, description, url }: OrgCardProps) {
       </Link>
     );
   }
-
+  // Changed font size 20 to 30 - Christella 12/08/2025
   return (
     <a
       href={url}
@@ -217,7 +219,7 @@ function Card({ name, description, url }: OrgCardProps) {
       onMouseEnter={hoverIn}
       onMouseLeave={hoverOut}
     >
-      <h3 style={{ margin: '0 0 10px 0', fontSize: 30, fontWeight: 700 }}>{name}</h3>
+      <h3 style={{ margin: '0 0 10px 0', fontSize: 30, fontWeight: 700 }}>{name}</h3>  
       <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55 }}>{description}</p>
     </a>
   );

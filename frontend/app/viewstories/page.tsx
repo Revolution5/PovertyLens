@@ -1,9 +1,11 @@
+// Created by Christella - 12/10/2025
 'use client';
 
 import { useEffect, useState } from 'react';
 
 const BACKEND_URL = 'http://localhost:4000';
 
+// Sets the types of each component
 type Story = {
     _id: string;
     title: string;
@@ -11,11 +13,12 @@ type Story = {
     displayName: boolean;
     displayPhoto: boolean;
     createdAt?: string;
-    updatedAt?: string;
+    updatedAt?: string; // Added for "updated story" date/time
     archived?: boolean;
-    published?: boolean;
+    published?: boolean; // Added to show "published" status
 };
 
+// Formats date for "date posted" - added by Christella - 1/30/2026
 function formatDate(dateString?: string): string {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -26,6 +29,7 @@ function formatDate(dateString?: string): string {
     });
 }
 
+// Formats time for "last updated" time  - added by Christella - 1/30/2026
 function formatDateTime(dateString?: string): string {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -39,13 +43,14 @@ function formatDateTime(dateString?: string): string {
     });
 }
 
+// Sets the constants for the view stories page
 export default function ViewStoriesPage() {
     const [stories, setStories] = useState<Story[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>('active');
+    const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>('active');  // Added by Christella - 1/30/2026
 
     const [editTitle, setEditTitle] = useState('');
     const [editText, setEditText] = useState('');
@@ -55,10 +60,11 @@ export default function ViewStoriesPage() {
 
     const selectedStory = stories[selectedIndex];
 
+    // Ensures that frontend can communicate with the backend
     useEffect(() => {
         const fetchStories = async () => {
             try {
-                const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+                const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null; // Added by Christella - 1/30/2026
                 if (!userEmail) {
                     setMessage('You must be logged in to view your stories.');
                     setLoading(false);
@@ -96,6 +102,7 @@ export default function ViewStoriesPage() {
         }
     }, [selectedStory, editing]);
 
+    // Sets a timer for "success" message to go away  - added by Christella - 1/30/2026
     useEffect(() => {
         if (message) {
             const timer = setTimeout(() => {
@@ -105,17 +112,20 @@ export default function ViewStoriesPage() {
         }
     }, [message]);
 
+    // Handles edit feature
     const startEdit = () => {
         if (!selectedStory) return;
         setEditing(true);
         setMessage(null);
     };
 
+    // Handles cancel feature
     const cancelEdit = () => {
         setEditing(false);
         setMessage(null);
     };
 
+    // Handles saving edits to the stories
     const handleSaveEdit = async () => {
         if (!selectedStory) return;
 
@@ -170,6 +180,7 @@ export default function ViewStoriesPage() {
         }
     };
 
+    // Handles archiving the story and ensures that it is updated in the database
     const handleArchive = async () => {
         if (!selectedStory) return;
 
@@ -202,6 +213,7 @@ export default function ViewStoriesPage() {
         }
     };
 
+    // Handles delete and confirms with user prior to removal from database - added by Christella - 1/30/2026
     const handleDelete = async (storyId?: string) => {
         const targetStory = storyId ? stories.find(s => s._id === storyId) : selectedStory;
         if (!targetStory) return;
@@ -238,13 +250,14 @@ export default function ViewStoriesPage() {
         }
     };
 
-    // Filter stories based on active tab
+    // Filter stories based on active tab  - added by Christella - 1/30/2026
     const filteredStories = stories.filter(story => {
         if (activeTab === 'active') return !story.archived;
         if (activeTab === 'archived') return story.archived;
         return true; 
     });
 
+    // Edited by Christella - 1/30/2026
     return (
         <div style={{
             minHeight: '100vh',
@@ -621,6 +634,7 @@ function ToggleRow({
     );
 }
 
+// Toggle Switch function to show changes
 function ToggleSwitch({
     checked,
     onChange,
