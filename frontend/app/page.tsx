@@ -216,18 +216,18 @@ export default function Home() {
     // Action cards configuration
     const actionCards = [
         {
-            title: "View Stories",
-            description: "Read real stories from people affected by poverty and share your experiences",
+            title: "Upload a Story",
+            description: "Share your experience or insights about poverty and help build awareness in the community",
             icon: FileText,
             bgColor: "#E5F8FF",
-            href: "/viewstories"
+            href: "/uploadstory"
         },
         {
-            title: "Education Center",
-            description: "Access curated resources and learn about poverty and its global impact",
+            title: "View Stories",
+            description: "Browse your contributions and explore stories shared by others in the community",
             icon: BookOpen,
             bgColor: "#FFFCEB",
-            href: "/eduresource"
+            href: "/viewstories"
         },
         {
             title: "Play FreeRice",
