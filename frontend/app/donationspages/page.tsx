@@ -4,6 +4,7 @@
 import Link from 'next/link'; // Added on 02/04/2026 by Christella to connect PLdonation page
 
 type OrgCardProps = {
+  // Edited by Christella - 02/05/2026
   name: string;
   description: string;
   url: string; // external (https://...) OR internal (/PLdonation)
@@ -15,6 +16,7 @@ const textBrown = '#623100';
 const pageBg = '#ffffff';
 
 // Sets the donations and volunteering resources
+// Edited by Christella - 02/05/2026
 export default function DonationsAndVolunteeringPage() {
   return (
     <div
@@ -110,7 +112,7 @@ export default function DonationsAndVolunteeringPage() {
           {/* Internal navigation to your donation route */}
           <Card
             name="PovertyLens"
-            url="/PLdonation"
+            url="/PLdonation" // Edited by Christella - 02/05/2026
             description="PovertyLens is a centralized platform that aims to inform the public about the complexities of poverty. The donations would support our mission of education and awareness, while also supporting other humanitarian groups like the Red Cross for emergency relief and aid, and direct poverty interventions for long-term solutions."
           />
         </div>
