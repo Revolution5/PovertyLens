@@ -1,7 +1,7 @@
 // Created by Christella - 02/04/2026
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Gift, Users, Sparkles, Check, ArrowRight } from 'lucide-react';
 
 // Quick-select buttons
@@ -34,6 +34,23 @@ export default function PLDonationPage() {
     email: '',
     message: '',
   });
+  
+// Added by Marisol Morales 2/11/2026 for dark mode support - listens for changes to the document's class list to detect theme changes
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkTheme();
+    
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
+// End of dark mode support code
 
   // Update inputs by name
   const handleInputChange = (
@@ -97,14 +114,14 @@ export default function PLDonationPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{backgroundColor: '#ffffff'}}>
+    <div className="min-h-screen" style={{backgroundColor: 'var(--background)'}}>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-12">
           <div className="text-center">
 
             <h1
               className="text-4xl sm:text-5xl lg:text-6xl mb-6"
-              style={{ fontWeight: 700, lineHeight: 1.2 }}
+              style={{ fontWeight: 700, lineHeight: 1.2, color: 'var(--foreground)' }}
             >
               Your Generosity{' '}
               <span
@@ -137,8 +154,9 @@ export default function PLDonationPage() {
               key={index}
               className="card"
               style={{
-                background: 'white',
+                background: 'var(--background)',
                 boxShadow: 'var(--shadow-lg)',
+                border: '1px solid var(--color-gray-light)',
               }}
             >
               <div className="flex items-center gap-4">
@@ -151,7 +169,7 @@ export default function PLDonationPage() {
                   <stat.icon className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <div className="text-2xl" style={{ fontWeight: 700 }}>
+                  <div className="text-2xl" style={{ fontWeight: 700, color: 'var(--foreground)' }}>
                     {stat.value}
                   </div>
                   <div className="text-sm" style={{ color: 'var(--color-gray)' }}>
@@ -166,7 +184,14 @@ export default function PLDonationPage() {
 
       {/* Donation Form */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-        <div className="card" style={{ boxShadow: 'var(--shadow-xl)', background: 'white' }}>
+        <div 
+          className="card" 
+          style={{ 
+            boxShadow: 'var(--shadow-xl)', 
+            background: 'var(--background)',
+            border: '1px solid var(--color-gray-light)',
+          }}
+        >
           <form onSubmit={handleSubmit}>
             {/* One-time vs Monthly */}
             <div className="flex justify-center mb-8">
@@ -179,6 +204,7 @@ export default function PLDonationPage() {
                     background: !isMonthly ? 'var(--gradient-cyan-yellow)' : 'transparent',
                     fontWeight: 600,
                     boxShadow: !isMonthly ? 'var(--shadow-md)' : 'none',
+                    color: !isMonthly ? (isDark ? '#000' : '#000') : 'var(--foreground)',
                   }}
                 >
                   One-time
@@ -189,7 +215,7 @@ export default function PLDonationPage() {
                   className="px-6 py-2 rounded-full transition-all"
                   style={{
                     background: isMonthly ? 'var(--gradient-orange-red)' : 'transparent',
-                    color: isMonthly ? 'white' : 'inherit',
+                    color: isMonthly ? 'white' : 'var(--foreground)',
                     fontWeight: 600,
                     boxShadow: isMonthly ? 'var(--shadow-md)' : 'none',
                   }}
@@ -201,7 +227,7 @@ export default function PLDonationPage() {
 
             {/* Amount selection */}
             <div className="mb-8">
-              <label className="block text-lg mb-4" style={{ fontWeight: 600 }}>
+              <label className="block text-lg mb-4" style={{ fontWeight: 600, color: 'var(--foreground)' }}>
                 Select Amount
               </label>
 
@@ -222,6 +248,7 @@ export default function PLDonationPage() {
                       padding: '1.5rem 1rem',
                       boxShadow: selectedAmount === option.amount ? 'var(--shadow-lg)' : 'var(--shadow-md)',
                       transform: selectedAmount === option.amount ? 'scale(1.05)' : 'scale(1)',
+                      background: 'var(--background)',
                     }}
                   >
                     {selectedAmount === option.amount && (
@@ -232,7 +259,7 @@ export default function PLDonationPage() {
                         <Check className="w-4 h-4 text-white" />
                       </div>
                     )}
-                    <div className="text-3xl mb-2" style={{ fontWeight: 700 }}>
+                    <div className="text-3xl mb-2" style={{ fontWeight: 700, color: 'var(--foreground)' }}>
                       ${option.amount}
                     </div>
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
@@ -266,6 +293,7 @@ export default function PLDonationPage() {
                     style={{
                       background: 'var(--color-gray-light)',
                       borderColor: customAmount ? 'var(--color-cyan)' : 'transparent',
+                      color: 'var(--foreground)',
                     }}
                     min="1"
                   />
@@ -275,7 +303,7 @@ export default function PLDonationPage() {
 
             {/* Donor info */}
             <div className="space-y-4 mb-8">
-              <h3 className="text-lg" style={{ fontWeight: 600 }}>
+              <h3 className="text-lg" style={{ fontWeight: 600, color: 'var(--foreground)' }}>
                 Your Information
               </h3>
 
@@ -293,6 +321,7 @@ export default function PLDonationPage() {
                   style={{
                     background: 'var(--color-gray-light)',
                     borderColor: formData.name ? 'var(--color-cyan)' : 'transparent',
+                    color: 'var(--foreground)',
                   }}
                   placeholder="John Doe"
                 />
@@ -312,6 +341,7 @@ export default function PLDonationPage() {
                   style={{
                     background: 'var(--color-gray-light)',
                     borderColor: formData.email ? 'var(--color-cyan)' : 'transparent',
+                    color: 'var(--foreground)',
                   }}
                   placeholder="john@example.com"
                 />
@@ -330,6 +360,7 @@ export default function PLDonationPage() {
                   style={{
                     background: 'var(--color-gray-light)',
                     borderColor: formData.message ? 'var(--color-cyan)' : 'transparent',
+                    color: 'var(--foreground)',
                   }}
                   placeholder="Share your reason for giving..."
                 />
@@ -372,7 +403,7 @@ export default function PLDonationPage() {
             >
               <Check className="w-6 h-6 text-white" />
             </div>
-            <h4 style={{ fontWeight: 600 }}>100% Secure</h4>
+            <h4 style={{ fontWeight: 600, color: 'var(--foreground)' }}>100% Secure</h4>
             <p className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
               Bank-level encryption
             </p>
@@ -385,7 +416,7 @@ export default function PLDonationPage() {
             >
               <Users className="w-6 h-6 text-white" />
             </div>
-            <h4 style={{ fontWeight: 600 }}>Trusted by Thousands</h4>
+            <h4 style={{ fontWeight: 600, color: 'var(--foreground)' }}>Trusted by Thousands</h4>
             <p className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
               5,000+ active supporters
             </p>
@@ -398,7 +429,7 @@ export default function PLDonationPage() {
             >
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h4 style={{ fontWeight: 600 }}>Maximum Impact</h4>
+            <h4 style={{ fontWeight: 600, color: 'var(--foreground)' }}>Maximum Impact</h4>
             <p className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
               95% goes to programs
             </p>
