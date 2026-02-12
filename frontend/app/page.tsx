@@ -12,6 +12,8 @@ import { FileText, BookOpen, Gamepad2, Heart } from 'lucide-react';
 import { Star } from 'lucide-react';
 // ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000' // Added by Marisol for easier backend URL management 2/3/2025
+
 // ActionCard Component (integrated)
 interface ActionCardProps {
   title: string;
@@ -116,6 +118,11 @@ export default function Home() {
     const [favoritedResources, setFavoritedResources] = useState<Array<{name: string, url: string}>>([]);
     // ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
 
+    // ============== FreeRice Total Grains State - Added by Marisol 2/3/2026 ==============
+    const [totalGrains, setTotalGrains] = useState<number>(0);
+    const [loadingGrains, setLoadingGrains] = useState(true);
+    // ============== End FreeRice Total Grains State ==============
+
     // Check if user is logged in when page loads
     useEffect(() => {
         const userEmail = localStorage.getItem('userEmail');
@@ -126,7 +133,7 @@ export default function Home() {
             if (storedUsername) {
                 setUsername(storedUsername);
             }
-            // ============== Marisol Modified code for fav resources2/5/2026 Begin ==============
+            // ============== Marisol Modified code for fav resources 2/5/2026 Begin ==============
             // Make favorites user-specific by using email in the key
             const favoritesKey = `favoriteResources_${userEmail}`;
             const storedFavorites = localStorage.getItem(favoritesKey);
@@ -150,6 +157,10 @@ export default function Home() {
                 }
             }
             // ============== Marisol Modified code for fav resources 2/5/2026 End ==============
+            
+            // ============== Fetch FreeRice Total Grains - Added by Marisol 2/3/2026 ==============
+            fetchUserTotalGrains(userEmail);
+            // ============== End Fetch FreeRice Total Grains ==============
         } else {
             //Daily Facts added by Damon
             //if not logged in, fetch daily fact
@@ -168,6 +179,38 @@ export default function Home() {
             })();
         }
     }, []);
+
+    // ============== Fetch User's Total FreeRice Grains - Added by Marisol 2/3/2026 ==============
+    async function fetchUserTotalGrains(email: string) {
+        setLoadingGrains(true);
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/freerice/user-total?email=${encodeURIComponent(email)}`);
+            
+            if (!res.ok) {
+                console.error('Failed to fetch FreeRice data:', res.status);
+                setLoadingGrains(false);
+                return;
+            }
+
+            const contentType = res.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                console.error('FreeRice endpoint returned non-JSON');
+                setLoadingGrains(false);
+                return;
+            }
+
+            const data = await res.json();
+            if (data && data.success) {
+                // Use the totalGrains directly from the dedicated endpoint
+                setTotalGrains(data.totalGrains || 0);
+            }
+        } catch (err) {
+            console.error('Error fetching FreeRice total:', err);
+        } finally {
+            setLoadingGrains(false);
+        }
+    }
+    // ============== End Fetch User's Total FreeRice Grains ==============
 
     // GSAP Staggered Entrance Animation
     useEffect(() => {
@@ -327,7 +370,7 @@ export default function Home() {
                                         className="text-3xl font-semibold"
                                         style={{ color: 'var(--foreground)' }}
                                     >
-                                        1,250
+                                        {loadingGrains ? '...' : totalGrains.toLocaleString()}
                                     </p>
                                 </div>
                                 <div className="w-12 h-12 rounded-full bg-[#FFA239]/20 flex items-center justify-center">
