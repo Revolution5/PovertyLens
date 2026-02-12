@@ -14,6 +14,7 @@ type MapRow = {
   source?: string
   error?: string
 }
+// End of addition by Christella, 02/03/2026
 
 type Props = {
   selectedGeoId: string | null

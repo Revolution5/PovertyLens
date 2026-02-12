@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 // Added by Christella of 1/29/2026 to update UI
 import { FileText } from 'lucide-react';
+// End of addition by Christella of 1/29/2026
 const BACKEND_URL = 'http://localhost:4000';
 
 // Updated 01/29/2026 by Christella - added country options

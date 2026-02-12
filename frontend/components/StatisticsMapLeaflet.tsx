@@ -18,6 +18,8 @@ type MapRow = {
   source?: string
   error?: string
 }
+// End of addition by Christella, 02/03/2026
+
 
 // Function to get color based on poverty rate
 function getPovertyColor(povertyRate: number | null | undefined): string {
