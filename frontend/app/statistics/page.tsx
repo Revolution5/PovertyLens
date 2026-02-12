@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
 import StatisticsMapClient from "../../components/StatisticsMapClient";
 
+// Added by Christella Taguicana - 02/03/2026
+/* Typees relative to Statistics */
 type Story = {
   _id: string;
   title: string;
@@ -15,6 +17,7 @@ type Story = {
   userEmail?: string | null;
   archived?: boolean;
 };
+// End of addition by Christella Taguicana - 02/03/2026
 
 type UserProfile = {
   email: string;
@@ -39,7 +42,6 @@ type LiveResponse = {
   data?: any;
   message?: string;
 };
-// End of addition by Christella - 1/30/2026
 
 type CachedStat = {
   country: string;
@@ -65,6 +67,7 @@ type MapRow = {
   source?: string;
   error?: string;
 };
+// End of addition by Christella - 1/30/2026
 
 // Added by Christella - 1/30/2026
 const BACKEND_URL =
@@ -95,21 +98,24 @@ const countryNames: Record<string, string> = {
   USA: "United States",
 };
 
+// Added by Christella - 1/30/2026
 function StoryCard({ 
+  // Added by Daniel
   story, 
   userProfile 
 }: { 
   story: Story; 
   userProfile?: UserProfile | null;
-}) {
+}) // End of addition by Daniel
+  {
   const [expanded, setExpanded] = useState(false);
   const maxChars = 220;
 
   const text = story.storyText || "";
   const needsTruncate = text.length > maxChars;
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
-  const showName = story.displayName && userProfile?.username;
-  const showPhoto = story.displayPhoto && userProfile?.profileImage;
+  const showName = story.displayName && userProfile?.username; // Added by Daniel
+  const showPhoto = story.displayPhoto && userProfile?.profileImage; // Added by Daniel
 
   return (
     <div className="rounded-xl border bg-white shadow-sm p-4">
@@ -308,6 +314,7 @@ export default function StatisticsPage() {
     await Promise.all(profilePromises);
   }, [fetchUserProfile, userProfilesCache]);
 
+  // End of addition by Christella - 1/30/2026, edited by Daniel
   const fetchStories = useCallback(async (iso3: string) => {
     setStoriesLoading(true);
     setStoriesError("");
@@ -335,6 +342,8 @@ export default function StatisticsPage() {
     }
   }, [fetchProfilesForStories]);
 
+  // Added by Christella Taguicana - 02/03/2026
+  // Loads dataset used to decide which countries to show markers for
   const fetchMapData = async () => {
     setMapLoading(true);
     setMapError(null);
@@ -361,6 +370,7 @@ export default function StatisticsPage() {
     }
   };
 
+  // Countries endpoint fetch
   const fetchCountriesFromBackend = async () => {
     setCountriesLoading(true);
     setCountriesError(null);
@@ -399,6 +409,7 @@ export default function StatisticsPage() {
     }
   };
 
+  // Fallback deriving list from mapRows if backend endpoint is not present/failed
   const derivedCountriesFromMapRows = useMemo(() => {
     const setIso = new Set<string>();
     mapRows.forEach((r) => {
@@ -409,6 +420,7 @@ export default function StatisticsPage() {
       .sort()
       .map((iso3) => ({ iso3, name: countryNames[iso3] ?? iso3 }));
   }, [mapRows]);
+  // End of addition by Christella - 01/30/2026
 
   const countriesToShow = useMemo(() => {
     // If we have a proper countries list with names, use it
@@ -445,7 +457,8 @@ export default function StatisticsPage() {
         console.warn("fetchCountryStat failed:", data);
         return null;
       }
-
+      
+      // Edit by Christella - 01/30/2026
       const stat: CachedStat = {
         country: iso3,
         year: data.year ?? null,
@@ -509,6 +522,7 @@ export default function StatisticsPage() {
         fetchedAt: stat.fetchedAt,
         metric: stat.metric,
       });
+      // End of addition by Christella - 01/30/2026
     } finally {
       setLoading(false);
     }
@@ -520,6 +534,7 @@ export default function StatisticsPage() {
     if (!iso3) return;
     await handleSelectCountry(iso3);
   };
+  // End of addition by Christella - 1/30/2026
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#8CE4FF]/10 via-[#FEEE91]/10 to-[#FFA239]/10">
@@ -560,6 +575,7 @@ export default function StatisticsPage() {
             </div>
           </div>
 
+          {/* Added by Christella - 01/30/2026 */}
           {/* Statistics panel (right) */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Statistics</h2>
