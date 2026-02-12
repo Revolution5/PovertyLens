@@ -636,6 +636,32 @@ app.get('/api/freerice/leaderboard', async (req, res) => {
 });
 //end of FreeRice endpoints Reymes 1/26/26
 
+// Start of - Get a specific user's total grains donated Marisol 2/3/2026
+
+app.get('/api/freerice/user-total', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email parameter required' });
+    }
+
+    // Aggregate all donations for this specific user
+    const userTotal = await db.collection('freericeDonations').aggregate([
+      { $match: { email: String(email) } },
+      { $group: { _id: null, totalGrains: { $sum: '$grains' } } }
+    ]).toArray();
+
+    const total = userTotal.length > 0 ? userTotal[0].totalGrains : 0;
+
+    res.json({ success: true, email, totalGrains: total });
+  } catch (err) {
+    console.error('Error in /api/freerice/user-total:', err);
+    res.status(500).json({ success: false, message: 'Server error while fetching user total' });
+  }
+});
+// End of Get a specific user's total grains donated Marisol 2/3/2026
+
 // Returns poverty statistics from "povertyStats" collection. - added by Christella - 1/27/2026
 app.get('/api/poverty/summary', async(req,res) => {
   try {
