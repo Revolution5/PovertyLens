@@ -6,11 +6,15 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FileText, BookOpen, Gamepad2, Heart } from 'lucide-react';
+import { FileText, BookOpen, Gamepad2, Heart, Compass } from 'lucide-react';
 
 // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
 // ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
+
+// ============== App Tour Component - Added by Marisol 2/9/2026 ==============
+import { AppTour } from '@/components/AppTour';
+// ============== End App Tour Import ==============
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000' // Added by Marisol for easier backend URL management 2/3/2025
 
@@ -122,6 +126,10 @@ export default function Home() {
     const [totalGrains, setTotalGrains] = useState<number>(0);
     const [loadingGrains, setLoadingGrains] = useState(true);
     // ============== End FreeRice Total Grains State ==============
+
+    // ============== App Tour State - Added by Marisol 2/9/2026 ==============
+    const [isTourOpen, setIsTourOpen] = useState(false);
+    // ============== End App Tour State ==============
 
     // Check if user is logged in when page loads
     useEffect(() => {
@@ -453,7 +461,11 @@ export default function Home() {
     return (
         <div className="min-h-screen pb-12 flex flex-col" style={{ background: 'var(--background)' }}>
             <div className="flex-1">
-                <h1 className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" style={{ color: 'var(--foreground)' }}>
+                <h1 
+                    className="pt-16 pb-8 text-center text-5xl md:text-6xl font-bold" 
+                    style={{ color: 'var(--foreground)' }}
+                    data-tour="welcome"
+                >
                     Welcome To PovertyLens!
                 </h1>
                 
@@ -466,6 +478,7 @@ export default function Home() {
                             backgroundColor: 'var(--background)',
                             border: '2px solid var(--color-cyan)'
                         }}
+                        data-tour="mission" // Added by Marisol for App Tour 2/10/2026
                     >
                         <h2 className="font-bold text-3xl md:text-4xl mb-6" style={{ color: 'var(--foreground)' }}>
                             Our Mission:
@@ -480,6 +493,21 @@ export default function Home() {
                             We hope to empower everyone, whether that's supporting global initiatives, 
                             donating, or spreading awareness within their own communities.
                         </p>
+
+                        {/* ============== App Tour Button - Added by Marisol 2/10/2026 ============== */}
+                        <button
+                            onClick={() => setIsTourOpen(true)}
+                            className="mt-6 w-full group px-6 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center gap-3"
+                            style={{
+                                background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
+                                color: 'white'
+                            }}
+                            data-tour="tour-button"
+                        >
+                            <Compass className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
+                            <span>Take the App Tour</span>
+                        </button>
+                        {/* ============== End App Tour Button ============== */}
                     </div>
 
                     {/* Right column - Logo */}
@@ -497,7 +525,7 @@ export default function Home() {
             {/*Daily Facts added by Damon */}
             {/* Notifications section at bottom - only visible when not logged in */}
             {!loadingFact && dailyFact && (
-                <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
+                <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full" data-tour="daily-fact">
                     <div className="">
                         <h3 
                             className="font-semibold text-2xl md:text-3xl mb-3"
@@ -520,6 +548,10 @@ export default function Home() {
                     </div>
                 </div>
             )}
+
+            {/* ============== App Tour Component - Added by Marisol 2/10/2026 ============== */}
+            <AppTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+            {/* ============== End App Tour Component ============== */}
         </div>
     );
 }
