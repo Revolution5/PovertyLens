@@ -9,7 +9,7 @@ const { MongoClient, ObjectId } = require('mongodb') // Added ObjectID - Christe
 const bcrypt = require('bcryptjs')
 
 
-// Code for allowing for Image uploads : Marisol Morale 1/28/26 
+// Code for allowing for Image uploads : Marisol Morales 1/28/26 
 const multer = require('multer') // Import multer for handling file uploads
 const path = require('path') // Import path module for handling file paths
 const fs = require('fs').promises // Import fs module for file system operations
@@ -1341,6 +1341,7 @@ app.get('/api/user-images', async (req, res) => {
     });
   }
 });
+// End of Marisol Morales Code 1/28/26 =====================
 
 // Start server and connect to MongoDB
 (async () => {
@@ -1361,7 +1362,7 @@ app.get('/api/user-images', async (req, res) => {
     console.log(`Backend listening on port ${port}`);
   });
 })();
-// End of Marisol Morales Code 1/28/26 =====================
+
 
 // Added by Christella - 12/10/2025
 // Create a story
