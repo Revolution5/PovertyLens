@@ -266,7 +266,7 @@ export default function SignInPage() {
         {/* Right column - Just Logo (matching home page) */}
         <div className="flex-[9] flex justify-center items-center">
           <Image
-            src="/logo vertical.png" 
+            src="/logo vertical.png" //logo update Reymes 1/31/26
             alt="PovertyLens Logo" 
             width={450} 
             height={450}

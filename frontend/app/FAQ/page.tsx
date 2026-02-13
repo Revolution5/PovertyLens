@@ -93,7 +93,7 @@ export default function FAQ() {
                         {/* Right - Logo/Image */}
                         <div className="flex items-center justify-center">
                             <Image
-                                src="/faqicon.png"
+                                src="/faqicon.png" //log update Reymes 1/30/26
                                 alt="World in hands illustration"
                                 width={400}
                                 height={400}

@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
-
+//Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
 type MapRow = {
   country: string // ISO3
@@ -19,9 +19,7 @@ type MapRow = {
   error?: string
 }
 // End of addition by Christella, 02/03/2026
-
-
-// Function to get color based on poverty rate
+// Function to get color based on poverty rate 2/10/26 - Reymes Olide
 function getPovertyColor(povertyRate: number | null | undefined): string {
   if (povertyRate === null || povertyRate === undefined) return "#D3D3D3" // Light gray - untracked country
   if (povertyRate > 40) return "#8B0000" // Dark red - very high poverty
@@ -37,27 +35,47 @@ type Props = {
   mapRows: MapRow[]
   showMarkers?: boolean
 }
-
+// Mapping of geoId to country coordinates and names
+//updated by Reymes 2/13/26
 const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
+  "36": { lat: -25.2744, lng: 133.7751, name: "Australia" },
   "50": { lat: 23.685, lng: 90.3563, name: "Bangladesh" },
   "76": { lat: -14.235, lng: -51.9253, name: "Brazil" },
+  "124": { lat: 56.1304, lng: -106.3468, name: "Canada" },
   "231": { lat: 9.145, lng: 40.4897, name: "Ethiopia" },
+  "250": { lat: 46.2276, lng: 2.2137, name: "France" },
+  "276": { lat: 51.1657, lng: 10.4515, name: "Germany" },
   "356": { lat: 20.5937, lng: 78.9629, name: "India" },
+  "380": { lat: 41.8719, lng: 12.5674, name: "Italy" },
+  "392": { lat: 36.2048, lng: 138.2529, name: "Japan" },
   "404": { lat: -0.0236, lng: 37.9062, name: "Kenya" },
+  "410": { lat: 35.9078, lng: 127.7669, name: "South Korea" },
   "484": { lat: 23.6345, lng: -102.5528, name: "Mexico" },
   "566": { lat: 9.082, lng: 8.6753, name: "Nigeria" },
+  "724": { lat: 40.4637, lng: -3.7492, name: "Spain" },
+  "826": { lat: 55.3781, lng: -3.4360, name: "United Kingdom" },
   "840": { lat: 37.0902, lng: -95.7129, name: "United States" },
 }
 
-// Mapping of country names to ISO3 codes and GeoJSON country names
+// Mapping of country names to ISO3 codes and GeoJSON country names 
+//Updated countires 2/13/26
 const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName: string }> = {
+  "36": { iso3: "AUS", name: "Australia", geojsonName: "Australia" },
   "50": { iso3: "BGD", name: "Bangladesh", geojsonName: "Bangladesh" },
   "76": { iso3: "BRA", name: "Brazil", geojsonName: "Brazil" },
+  "124": { iso3: "CAN", name: "Canada", geojsonName: "Canada" },
   "231": { iso3: "ETH", name: "Ethiopia", geojsonName: "Ethiopia" },
+  "250": { iso3: "FRA", name: "France", geojsonName: "France" },
+  "276": { iso3: "DEU", name: "Germany", geojsonName: "Germany" },
   "356": { iso3: "IND", name: "India", geojsonName: "India" },
+  "380": { iso3: "ITA", name: "Italy", geojsonName: "Italy" },
+  "392": { iso3: "JPN", name: "Japan", geojsonName: "Japan" },
   "404": { iso3: "KEN", name: "Kenya", geojsonName: "Kenya" },
+  "410": { iso3: "KOR", name: "South Korea", geojsonName: "South Korea" },
   "484": { iso3: "MEX", name: "Mexico", geojsonName: "Mexico" },
   "566": { iso3: "NGA", name: "Nigeria", geojsonName: "Nigeria" },
+  "724": { iso3: "ESP", name: "Spain", geojsonName: "Spain" },
+  "826": { iso3: "GBR", name: "United Kingdom", geojsonName: "United Kingdom" },
   "840": { iso3: "USA", name: "United States", geojsonName: "United States of America" },
 }
 
@@ -98,19 +116,43 @@ export default function StatisticsMapLeaflet({
       })
       .catch((err) => console.error("Failed to load GeoJSON:", err))
   }, [])
+  //Added by Reymes 2/13/26 to use national poverty rates for developed countries
+  // National poverty rates for developed countries (using national poverty lines)
+  // Added to account for different poverty standards - international vs national
+  const NATIONAL_POVERTY_RATES: Record<string, number> = {
+    "USA": 10.6,    // US Census Bureau 2023
+    "CAN": 9.4,     // Statistics Canada
+    "GBR": 18.0,    // UK relative poverty
+    "DEU": 14.8,    // Germany
+    "FRA": 14.5,    // France
+    "JPN": 15.7,    // Japan
+    "AUS": 13.4,    // Australia
+    "ITA": 20.1,    // Italy
+    "ESP": 20.4,    // Spain
+    "KOR": 16.7,    // South Korea
+  };
 
   // Create a map of country ISO3 to poverty rate from mapRows
   const povertyRateMap = React.useMemo(() => {
     const rates: Record<string, number> = {}
     
     const geoIdToIso3: Record<string, string> = {
+      "36": "AUS",
       "50": "BGD",
       "76": "BRA",
+      "124": "CAN",
       "231": "ETH",
+      "250": "FRA",
+      "276": "DEU",
       "356": "IND",
+      "380": "ITA",
+      "392": "JPN",
       "404": "KEN",
+      "410": "KOR",
       "484": "MEX",
       "566": "NGA",
+      "724": "ESP",
+      "826": "GBR",
       "840": "USA",
     }
 
@@ -122,8 +164,15 @@ export default function StatisticsMapLeaflet({
             ([, iso3]) => iso3 === row.country.toUpperCase()
           )?.[0]
           if (geoId) {
-            // Convert decimal to percentage (API returns 0.0096 as 0.96%)
-            rates[geoId] = row.headcount * 100
+            const iso3 = row.country.toUpperCase();
+            // Use national poverty rate if available, otherwise use World Bank international line
+            //Reymes 2/13/26
+            if (NATIONAL_POVERTY_RATES[iso3]) {
+              rates[geoId] = NATIONAL_POVERTY_RATES[iso3];
+            } else {
+              // Convert decimal to percentage (API returns 0.0096 as 0.96%)
+              rates[geoId] = row.headcount * 100;
+            }
           }
         }
       })
