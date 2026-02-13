@@ -69,13 +69,17 @@ export default function AboutUs() {
                         </div>
                         {/* ============== End Dark Mode Text Colors ============== */}
 
-                        {/* Placeholder shape on the right */}
+                        {/* Logo on the right */}
                         <div className="relative">
-                            <div className="relative overflow-hidden rounded-2xl shadow-xl h-[500px] bg-gradient-to-br from-[#8CE4FF]/30 via-[#FEEE91]/20 to-[#FFA239]/30 flex items-center justify-center">
-                                <div className="text-center text-gray-400">
-                                    <Heart className="w-24 h-24 mx-auto mb-4 opacity-50" />
-                                    <p className="text-lg">Image Placeholder</p>
-                                </div>
+                            <div className="relative overflow-hidden rounded-2xl shadow-xl h-[500px] bg-transparent flex items-center justify-center">
+                                <Image
+                                    src="/logo vertical.png"
+                                    alt="PovertyLens logo"
+                                    width={360}
+                                    height={480}
+                                    className="h-[420px] w-auto object-contain"
+                                    priority
+                                />
                             </div>
                             <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-gradient-to-br from-[#FFA239] to-[#FF5656] rounded-2xl -z-10"></div>
                             <div className="absolute -top-4 -left-4 w-24 h-24 bg-gradient-to-br from-[#8CE4FF] to-[#FEEE91] rounded-2xl -z-10"></div>
