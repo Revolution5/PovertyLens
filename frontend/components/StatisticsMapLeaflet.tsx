@@ -18,7 +18,7 @@ type MapRow = {
   source?: string
   error?: string
 }
-
+// End of addition by Christella, 02/03/2026
 // Function to get color based on poverty rate 2/10/26 - Reymes Olide
 function getPovertyColor(povertyRate: number | null | undefined): string {
   if (povertyRate === null || povertyRate === undefined) return "#D3D3D3" // Light gray - untracked country
@@ -35,7 +35,8 @@ type Props = {
   mapRows: MapRow[]
   showMarkers?: boolean
 }
-
+// Mapping of geoId to country coordinates and names
+//updated by Reymes 2/13/26
 const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "36": { lat: -25.2744, lng: 133.7751, name: "Australia" },
   "50": { lat: 23.685, lng: 90.3563, name: "Bangladesh" },
@@ -57,6 +58,7 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
 }
 
 // Mapping of country names to ISO3 codes and GeoJSON country names 
+//Updated countires 2/13/26
 const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName: string }> = {
   "36": { iso3: "AUS", name: "Australia", geojsonName: "Australia" },
   "50": { iso3: "BGD", name: "Bangladesh", geojsonName: "Bangladesh" },
