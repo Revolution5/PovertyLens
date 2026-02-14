@@ -74,7 +74,7 @@ export default function SearchPage() {
                                     className="p-6 rounded-lg transition-colors cursor-pointer border-l-4"
                                     style={{
                                         backgroundColor: isDark ? 'rgba(217, 209, 183, 0.1)' : '#D9D1B7', // Changed by Marisol 1/12/2026 for Dark Mode Support
-                                        borderColor: isDark ? '#AC7F5E' : '#AC7F5E'
+                                        borderColor: isDark ? '#AC7F5E' : '#AC7F5E' // Changed by Marisol 1/12/2026 for Dark Mode Support
                                     }}
                                     onMouseEnter={(e) => {
                                         e.currentTarget.style.backgroundColor = isDark ? 'rgba(200, 171, 143, 0.2)' : '#C8AB8F'; // Changed by Marisol 1/12/2026 for Dark Mode Support

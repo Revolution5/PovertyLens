@@ -58,20 +58,25 @@ export default function ViewStoriesPage() {
     const [editDisplayPhoto, setEditDisplayPhoto] = useState(true);
     const [savingEdit, setSavingEdit] = useState(false);
 {/* ============== Marisol Morales Code 2/8/2026 - Dark Mode Start ============== */}
+    // Track dark mode state
     const [isDark, setIsDark] = useState(false);
 
     useEffect(() => {
+        // Check initial dark mode state
         setIsDark(document.documentElement.classList.contains('dark'));
 
+        // Create observer to detect theme changes
         const observer = new MutationObserver(() => {
             setIsDark(document.documentElement.classList.contains('dark'));
         });
 
+        // Watch for class attribute changes on html element
         observer.observe(document.documentElement, {
             attributes: true,
             attributeFilter: ['class']
         });
 
+        // Clean up observer on component unmount
         return () => observer.disconnect();
     }, []);
 {/* ============== Marisol Morales Code 2/8/2026 - Dark Mode End ============== */}
