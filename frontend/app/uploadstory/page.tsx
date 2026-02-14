@@ -66,19 +66,24 @@ export default function UploadStoryPage() {
   const [countriesLoading, setCountriesLoading] = useState(false); // Added country setting constant - 02/03/2025 - Christella
 
   // ============== Marisol Morales Code 2/11/2026 - Dark Mode Detection ============== //
+  // State to track if dark mode is active
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    // Function to check if dark mode class exists
     const checkTheme = () => {
       setIsDark(document.documentElement.classList.contains('dark'));
     };
     
+    // Check theme on initial load
     checkTheme();
     
     // Watch for theme changes
     const observer = new MutationObserver(checkTheme);
+    // Observe class attribute changes on html element
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     
+    // Cleanup observer on unmount
     return () => observer.disconnect();
   }, []);
   // ============== End Dark Mode Detection ============== //

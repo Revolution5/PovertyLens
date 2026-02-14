@@ -14,22 +14,37 @@ export default function SignInPage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 // Added by Marisol 1/12/2026 for Dark Mode Support
-  const [isDark, setIsDark] = useState(false);
 
-  useEffect(() => {
+// State variable to track whether dark mode is currently active (true) or not (false)
+const [isDark, setIsDark] = useState(false);
+
+// useEffect hook runs when the component first mounts (loads)
+useEffect(() => {
+  // Initial check: Look at the root HTML element (<html>) and see if it has the 'dark' class
+  // If the class exists, set isDark to true; otherwise false
+  setIsDark(document.documentElement.classList.contains('dark'));
+
+  // Create a MutationObserver to watch for changes to the DOM
+  // This observer will trigger whenever the HTML element's attributes change
+  const observer = new MutationObserver(() => {
+    // When a change is detected, check again if the 'dark' class exists
+    // and update the isDark state accordingly
     setIsDark(document.documentElement.classList.contains('dark'));
+  });
 
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    });
+  // Tell the observer what to watch:
+  // - Target: document.documentElement (the <html> tag)
+  // - What to watch: changes to attributes (specifically the 'class' attribute)
+  observer.observe(document.documentElement, {
+    attributes: true,           // Watch for any attribute changes
+    attributeFilter: ['class']  // But only pay attention to the 'class' attribute
+  });
 
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
+  // Cleanup function: runs when the component unmounts (is removed from the page)
+  // Disconnects the observer to prevent memory leaks and unnecessary processing
+  return () => observer.disconnect();
+}, []); // Empty dependency array [] means this effect only runs once when component mounts
 
-    return () => observer.disconnect();
-  }, []);
 // End of Code by Marisol 1/12/2026 for Dark Mode Support
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

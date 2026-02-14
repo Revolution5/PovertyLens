@@ -111,20 +111,25 @@ function StoryCard({
   const [expanded, setExpanded] = useState(false);
   const maxChars = 220;
   // Start of Marisol Code for dark mode support - 2/8/2026
+  // Track if dark mode is active
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    // Check initial dark mode state
     setIsDark(document.documentElement.classList.contains('dark'));
 
+    // Watch for dark mode changes
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
     });
 
+    // Start observing class changes on html element
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
     });
 
+    // Cleanup observer on unmount
     return () => observer.disconnect();
   }, []);
 // End of Marisol Code for dark mode support - 2/8/2026
@@ -275,17 +280,21 @@ export default function StatisticsPage() {
   const [isDark, setIsDark] = useState(false);
 // Marisol code to detect dark mode changes - 2/8/2026
   useEffect(() => {
+    // Set initial dark mode state
     setIsDark(document.documentElement.classList.contains('dark'));
 
+    // Create observer to watch for theme changes
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains('dark'));
     });
 
+    // Observe class attribute changes on html element
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
     });
 
+    // Disconnect observer when component unmounts
     return () => observer.disconnect();
   }, []);
 // End of Marisol code to detect dark mode changes - 2/8/2026

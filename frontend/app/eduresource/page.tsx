@@ -3,7 +3,7 @@
 
 // ============== Marisol Morales 2/5/2026 Code begins ==============
 import { useState, useEffect } from 'react';
-// ============== Marisol Mores Code Ends 2/5/2026 ==============
+// ============== Marisol Morales Code Ends 2/5/2026 ==============
 
 type ResourceProps = {
     name: string;

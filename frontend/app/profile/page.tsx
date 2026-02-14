@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound } from 'lucide-react';
-import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import 
+import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import for profile images 1/28/26
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -758,10 +758,10 @@ export default function ProfilePage() {
                     // ============== End Dark Mode Button Text ============== //
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
                   }}
                 >
                   Cancel
