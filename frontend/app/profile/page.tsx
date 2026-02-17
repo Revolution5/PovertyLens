@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound } from 'lucide-react';
-import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import 
+import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import for profile images 1/28/26
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,6 +25,27 @@ export default function ProfilePage() {
   const [editUsername, setEditUsername] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // ============== Marisol Code for Dark Mode Detection 1/12/2026 ============== //
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Check initial theme
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    // Listen for theme changes
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+  // ============== End Dark Mode Detection ============== //
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail');
@@ -264,13 +285,28 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    // ============== Marisol Code for Dark Mode: Updated page background 1/12/2026 ============== //
+    <div className="min-h-screen" style={{ 
+      background: isDark 
+        ? 'linear-gradient(to bottom, #0a0a0a, #0a0a0a)' 
+        : 'linear-gradient(to bottom, #f9fafb, white)' 
+    }}>
+    {/* ============== End Dark Mode Background ============== */}
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-200">
+      {/* ============== Marisol Code for Dark Mode: Updated header background and border 1/12/2026 ============== */}
+      <div className="border-b" style={{ 
+        backgroundColor: 'var(--background)',
+        borderColor: 'var(--color-gray-light)'
+      }}>
+      {/* ============== End Dark Mode Header ============== */}
         <div className="max-w-5xl mx-auto px-6 py-8">
           <div>
-            <h1 className="text-3xl mb-1 font-bold">Account Settings</h1>
-            <p className="text-gray-500">Manage your account settings and preferences</p>
+            <h1 className="text-3xl mb-1 font-bold" style={{ color: 'var(--foreground)' }}>
+              Account Settings
+            </h1>
+            <p style={{ color: 'var(--color-gray)' }}>
+              Manage your account settings and preferences
+            </p>
           </div>
         </div>
       </div>
@@ -279,20 +315,29 @@ export default function ProfilePage() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="grid gap-6">
           {/* Profile Section */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          {/* ============== Marisol Code for Dark Mode: Updated card background and border 1/12/2026 ============== */}
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}>
+          {/* ============== End Dark Mode Card ============== */}
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Profile Information</h2>
-                  <p className="text-sm text-gray-500">Update your profile picture and personal details</p>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Profile Information
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Update your profile picture and personal details
+                  </p>
                 </div>
               </div>
 
-              <div className="h-px bg-gray-200 mb-6"></div>
-              {/* Marisol code for adding ImageUpload components  */}
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+              {/* Marisol code for adding ImageUpload components 1/28/26 */}
               {/* Profile Picture & Banner */}
               <div className="space-y-6">
                 {/* Profile Picture */}
@@ -306,18 +351,26 @@ export default function ProfilePage() {
                       username={user.username}
                     />
                     <div>
-                      <h3 className="font-medium mb-1">Profile Photo</h3>
-                      <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
+                      <h3 className="font-medium mb-1" style={{ color: 'var(--foreground)' }}>
+                        Profile Photo
+                      </h3>
+                      <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                        PNG, JPG up to 5MB
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="h-px bg-gray-200"></div>
+                <div className="h-px" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
                 {/* Banner Image */}
                 <div className="space-y-2">
-                  <h3 className="font-medium">Cover Image</h3>
-                  <p className="text-sm text-gray-500 mb-4">Recommended: 1584x396px</p>
+                  <h3 className="font-medium" style={{ color: 'var(--foreground)' }}>
+                    Cover Image
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: 'var(--color-gray)' }}>
+                    Recommended: 1584x396px
+                  </p>
                   <ImageUpload
                     currentImage={user.bannerImage}
                     onImageUpdate={handleBannerImageUpdate}
@@ -331,53 +384,75 @@ export default function ProfilePage() {
           </div>
 
           {/* Account Details */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)', 
+            borderColor: 'var(--color-gray-light)'
+          }}>
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FEEE91] to-[#FFA239] flex items-center justify-center">
                   <User className="w-5 h-5 text-gray-700" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Account Details</h2>
-                  <p className="text-sm text-gray-500">Manage your account information</p>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Account Details
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Manage your account information
+                  </p>
                 </div>
               </div>
 
-              <div className="h-px bg-gray-200 mb-6"></div>
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
               <div className="space-y-4">
                 {/* Username */}
                 <div 
-                  className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" 
+                  className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
+                  style={{
+                    backgroundColor: isDark ? 'transparent' : 'transparent' // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                   onClick={() => {
                     setUser(prev => ({ ...prev, newUsername: prev.username }));
                     setEditUsername(true);
                   }}
                 >
                   <div className="flex-1">
-                    <label className="text-sm text-gray-500">Username</label>
-                    <p className="text-base mt-1">@{user.username || 'Not set'}</p>
+                    <label className="text-sm" style={{ color: 'var(--color-gray)' }}>Username</label>
+                    <p className="text-base mt-1" style={{ color: 'var(--foreground)' }}>
+                      @{user.username || 'Not set'}
+                    </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                 </div>
 
-                <div className="h-px bg-gray-200"></div>
+                <div className="h-px" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
                 {/* Email (Read-only) */}
                 <div className="flex items-center justify-between p-4 rounded-lg">
                   <div className="flex-1">
-                    <label className="text-sm text-gray-500">Email Address</label>
-                    <p className="text-base mt-1">{user.email || 'Not set'}</p>
+                    <label className="text-sm" style={{ color: 'var(--color-gray)' }}>Email Address</label>
+                    <p className="text-base mt-1" style={{ color: 'var(--foreground)' }}>
+                      {user.email || 'Not set'}
+                    </p>
                   </div>
                 </div>
 
-                <div className="h-px bg-gray-200"></div>
+                <div className="h-px" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
                 {/* Member Since */}
                 <div className="flex items-center justify-between p-4 rounded-lg">
                   <div className="flex-1">
-                    <label className="text-sm text-gray-500">Member Since</label>
-                    <p className="text-base mt-1">{formatJoinDate()}</p>
+                    <label className="text-sm" style={{ color: 'var(--color-gray)' }}>Member Since</label>
+                    <p className="text-base mt-1" style={{ color: 'var(--foreground)' }}>
+                      {formatJoinDate()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -385,53 +460,79 @@ export default function ProfilePage() {
           </div>
 
           {/* Security */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}>
             <div className="p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
                   <Shield className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">Security</h2>
-                  <p className="text-sm text-gray-500">Manage your password and security settings</p>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Security
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Manage your password and security settings
+                  </p>
                 </div>
               </div>
 
-              <div className="h-px bg-gray-200 mb-6"></div>
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
               <div className="space-y-4">
                 <div 
-                  className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" 
+                  className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
+                  style={{
+                    backgroundColor: isDark ? 'transparent' : 'transparent' // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                   onClick={() => setChangePasswordOpen(true)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <KeyRound className="w-5 h-5 text-gray-600" />
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{
+                      backgroundColor: 'var(--color-gray-light)'
+                    }}>
+                      <KeyRound className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                     </div>
                     <div>
-                      <p className="font-medium">Password</p>
-                      <p className="text-sm text-gray-500">Change your password</p>
+                      <p className="font-medium" style={{ color: 'var(--foreground)' }}>Password</p>
+                      <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                        Change your password
+                      </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Delete Account */}
-          <div className="bg-white rounded-xl border-2 border-red-200 overflow-hidden shadow-sm">
+          <div className="rounded-xl border-2 border-red-200 overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)'
+          }}>
             <div className="p-6">
               <div className="mb-6">
                 <h2 className="text-xl text-red-600 mb-1 font-semibold">Delete Account</h2>
-                <p className="text-sm text-gray-500">Permanently delete your account and all data. This action cannot be undone.</p>
+                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                  Permanently delete your account and all data. This action cannot be undone.
+                </p>
               </div>
 
-              <div className="h-px bg-gray-200 mb-6"></div>
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Once you delete your account, there is no going back. Please be certain.</p>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Once you delete your account, there is no going back. Please be certain.
+                  </p>
                 </div>
                 <button
                   onClick={handleDeleteAccount}
@@ -449,7 +550,14 @@ export default function ProfilePage() {
 
       {/* Message Display */}
       {message && (
-        <div className="fixed bottom-8 right-8 max-w-md p-4 rounded-lg shadow-lg font-semibold bg-white border-2 border-gray-200 text-gray-800 animate-fade-in">
+        <div 
+          className="fixed bottom-8 right-8 max-w-md p-4 rounded-lg shadow-lg font-semibold border-2 animate-fade-in" 
+          style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)',
+            color: 'var(--foreground)'
+          }}
+        >
           {message}
         </div>
       )}
@@ -457,35 +565,57 @@ export default function ProfilePage() {
       {/* Edit Username Modal */}
       {editUsername && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditUsername(false)}>
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold mb-2">Edit Username</h3>
-            <p className="text-sm text-gray-500 mb-6">
+          <div 
+            className="rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" 
+            style={{ backgroundColor: 'var(--background)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+              Edit Username
+            </h3>
+            <p className="text-sm mb-6" style={{ color: 'var(--color-gray)' }}>
               Update your username. This will change how others see you.
             </p>
             
             <form onSubmit={handleUpdateUsername} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                  Username
+                </label>
                 <input
                   type="text"
                   name="newUsername"
                   value={user.newUsername}
                   onChange={handleChange}
                   placeholder="Enter new username"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 />
-                <p className="text-xs text-gray-500 mt-1">Use letters, numbers, and underscores only</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-gray)' }}>
+                  Use letters, numbers, and underscores only
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm with Current Password</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                  Confirm with Current Password
+                </label>
                 <input
                   type="password"
                   name="password"
                   value={user.password}
                   onChange={handleChange}
                   placeholder="Enter current password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 />
               </div>
 
@@ -496,14 +626,37 @@ export default function ProfilePage() {
                     setEditUsername(false);
                     setUser(prev => ({ ...prev, newUsername: '', password: '' }));
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border rounded-lg transition-colors font-medium"
+                  style={{
+                    borderColor: 'var(--color-gray-light)',
+                    // ============== Marisol Code for Dark Mode: Improved button text visibility 1/12/2026 ============== //
+                    color: isDark ? '#e5e5e5' : '#374151',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                    // ============== End Dark Mode Button Text ============== //
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-[#8CE4FF] text-gray-900 font-semibold rounded-lg hover:bg-[#6DD5FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: '#8CE4FF',
+                    color: '#1a1a1a'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#6DD5FF';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#8CE4FF';
+                  }}
                 >
                   {isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -516,47 +669,76 @@ export default function ProfilePage() {
       {/* Change Password Modal */}
       {changePasswordOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setChangePasswordOpen(false)}>
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-semibold mb-2">Change Password</h3>
-            <p className="text-sm text-gray-500 mb-6">
+          <div 
+            className="rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" 
+            style={{ backgroundColor: 'var(--background)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+              Change Password
+            </h3>
+            <p className="text-sm mb-6" style={{ color: 'var(--color-gray)' }}>
               Ensure your account is using a strong password to stay secure.
             </p>
             
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                  Current Password
+                </label>
                 <input
                   type="password"
                   name="password"
                   value={user.password}
                   onChange={handleChange}
                   placeholder="Enter current password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                  New Password
+                </label>
                 <input
                   type="password"
                   name="newPassword"
                   value={user.newPassword}
                   onChange={handleChange}
                   placeholder="Enter new password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 />
-                <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-gray)' }}>
+                  Must be at least 6 characters
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
+                  Confirm Password
+                </label>
                 <input
                   type="password"
                   name="confirmPassword"
                   value={user.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm new password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 />
               </div>
 
@@ -567,14 +749,37 @@ export default function ProfilePage() {
                     setChangePasswordOpen(false);
                     setUser(prev => ({ ...prev, password: '', newPassword: '', confirmPassword: '' }));
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border rounded-lg transition-colors font-medium"
+                  style={{
+                    borderColor: 'var(--color-gray-light)',
+                    // ============== Marisol Code for Dark Mode: Improved button text visibility 1/12/2026 ============== //
+                    color: isDark ? '#e5e5e5' : '#374151',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                    // ============== End Dark Mode Button Text ============== //
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; // Changed by Marisol 1/12/2026 for Dark Mode Support
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-[#8CE4FF] text-gray-900 font-semibold rounded-lg hover:bg-[#6DD5FF] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: '#8CE4FF',
+                    color: '#1a1a1a'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#6DD5FF';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = '#8CE4FF';
+                  }}
                 >
                   {isLoading ? 'Updating...' : 'Update Password'}
                 </button>

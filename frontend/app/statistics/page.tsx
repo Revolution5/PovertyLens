@@ -1,11 +1,11 @@
-/* Beginning of Christella's Code - 1/30/2026 (Map-only left, dropdown+stats right) */
+// Edited by Christella - 1/30/2026
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
 import StatisticsMapClient from "../../components/StatisticsMapClient";
 
-/* Types relative to Statistics */
-
+// Added by Christella Taguicana - 02/03/2026
+/* Typees relative to Statistics */
 type Story = {
   _id: string;
   title: string;
@@ -17,7 +17,16 @@ type Story = {
   userEmail?: string | null;
   archived?: boolean;
 };
+// End of addition by Christella Taguicana - 02/03/2026
 
+type UserProfile = {
+  email: string;
+  username: string;
+  profileImage?: string | null;
+  bannerImage?: string | null;
+};
+
+// Added by Christella - 1/30/2026
 type LiveResponse = {
   success: boolean;
   source?: string;
@@ -48,7 +57,7 @@ type CachedStat = {
 };
 
 type MapRow = {
-  country: string; // ISO3
+  country: string;
   headcount: number | null;
   poverty_gap?: number | null;
   poverty_severity?: number | null;
@@ -58,11 +67,13 @@ type MapRow = {
   source?: string;
   error?: string;
 };
+// End of addition by Christella - 1/30/2026
 
+// Added by Christella - 1/30/2026
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
-/* Geographical IDs to Country Code (kept for map-clicks) */
+/* Geographical IDs to Country Code */
 const geoIdToCountryCode: Record<string, string> = {
   "50": "BGD",
   "76": "BRA",
@@ -73,8 +84,9 @@ const geoIdToCountryCode: Record<string, string> = {
   "566": "NGA",
   "840": "USA",
 };
+// End of addition by Christella - 1/30/2026
 
-/* Partial fallback names (used only when backend doesn't provide names) */
+/* Country names */
 const countryNames: Record<string, string> = {
   BGD: "Bangladesh",
   BRA: "Brazil",
@@ -86,29 +98,124 @@ const countryNames: Record<string, string> = {
   USA: "United States",
 };
 
-/* Story card component (unchanged) */
-function StoryCard({ story }: { story: Story }) {
+// Added by Christella - 1/30/2026
+function StoryCard({ 
+  // Added by Daniel
+  story, 
+  userProfile 
+}: { 
+  story: Story; 
+  userProfile?: UserProfile | null;
+}) // End of addition by Daniel
+  {
   const [expanded, setExpanded] = useState(false);
   const maxChars = 220;
+  // Start of Marisol Code for dark mode support - 2/8/2026
+  // Track if dark mode is active
+  const [isDark, setIsDark] = useState(false);
 
+  useEffect(() => {
+    // Check initial dark mode state
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    // Watch for dark mode changes
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    // Start observing class changes on html element
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    // Cleanup observer on unmount
+    return () => observer.disconnect();
+  }, []);
+// End of Marisol Code for dark mode support - 2/8/2026
   const text = story.storyText || "";
   const needsTruncate = text.length > maxChars;
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
+  const showName = story.displayName && userProfile?.username; // Added by Daniel
+  const showPhoto = story.displayPhoto && userProfile?.profileImage; // Added by Daniel
 
   return (
-    <div className="rounded-xl border bg-white shadow-sm p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 font-semibold text-gray-900 break-words">
-          {story.title?.trim() ? story.title : "Untitled Story"}
+    <div 
+      className="rounded-xl border shadow-sm p-4"
+      style={{
+        backgroundColor: 'var(--background)',
+        borderColor: 'var(--color-gray-light)'
+      }}
+    >
+      {/* redesigned to show user info */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3">
+          {/* conditional display */}
+          {showPhoto ? (
+            // SHOW ACTUAL PROFILE PHOTO WHEN displayPhoto = true
+            <div className="flex-shrink-0">
+              <img
+                src={userProfile!.profileImage!.startsWith('http') 
+                  ? userProfile!.profileImage!
+                  : `${BACKEND_URL}${userProfile!.profileImage}`}
+                alt={userProfile!.username}
+                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              {/* FALLBACK AVATAR - Shown if image fails to load */}
+              <div className="hidden w-10 h-10 rounded-full bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">
+                  {userProfile!.username.substring(0, 2).toUpperCase()}
+                </span>
+              </div>
+            </div>
+          ) : (
+            // PLACEHOLDER AVATAR - Shown when displayPhoto = false
+            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </span>
+            </div>
+          )}
+
+          {/* story title and author section */}
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="font-semibold break-all" style={{ color: 'var(--foreground)' }}>
+              {story.title?.trim() ? story.title : "Untitled Story"}
+            </div>
+            
+            {/* SHOW AUTHOR NAME WHEN displayName = true */}
+            {showName ? (
+              <div className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
+                By {userProfile!.username}
+              </div>
+            ) : (
+              // SHOW "ANONYMOUS" WHEN displayName = false
+              <div className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
+                Anonymous
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Date */}
         {story.createdAt && (
-          <div className="text-xs text-gray-400 whitespace-nowrap">
+          <div className="text-xs whitespace-nowrap" style={{ color: 'var(--color-gray)' }}>
             {new Date(story.createdAt).toLocaleDateString()}
           </div>
         )}
       </div>
 
-      <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap break-words">
+      {/* Story Content (Unchanged) */}
+      <div className="mt-2 text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--foreground)' }}>
         {expanded ? text : preview}
       </div>
 
@@ -121,38 +228,78 @@ function StoryCard({ story }: { story: Story }) {
           {expanded ? "Show less" : "Read more"}
         </button>
       )}
+
+      <div 
+        className="mt-3 pt-3 border-t text-xs"
+        style={{
+          borderColor: 'var(--color-gray-light)',
+          color: 'var(--color-gray)'
+        }}
+      >
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Name: {story.displayName ? "Shown" : "Hidden"}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            <span>Photo: {story.displayPhoto ? "Shown" : "Hidden"}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* Page Code - UI */
-
+// Added by Christella - 1/30/2026
 export default function StatisticsPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-
   const [liveResult, setLiveResult] = useState<LiveResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const [stories, setStories] = useState<Story[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
   const [storiesError, setStoriesError] = useState("");
-
-  const [statsByCountry, setStatsByCountry] = useState<
-    Record<string, CachedStat>
-  >({});
-
+  const [statsByCountry, setStatsByCountry] = useState<Record<string, CachedStat>>({});
   const [mapRows, setMapRows] = useState<MapRow[]>([]);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-
-  // canonical countries list from backend (iso3 + name)
-  const [countriesList, setCountriesList] = useState<
-    { iso3: string; name?: string }[]
-  >([]);
+  const [countriesList, setCountriesList] = useState<{ iso3: string; name?: string }[]>([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [countriesError, setCountriesError] = useState<string | null>(null);
+  // End of addition by Christella - 1/30/2026
+  
+  /* user profile cache - daniel q. 2/4 */
+  const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
 
+  const [isDark, setIsDark] = useState(false);
+// Marisol code to detect dark mode changes - 2/8/2026
+  useEffect(() => {
+    // Set initial dark mode state
+    setIsDark(document.documentElement.classList.contains('dark'));
+
+    // Create observer to watch for theme changes
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+
+    // Observe class attribute changes on html element
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    // Disconnect observer when component unmounts
+    return () => observer.disconnect();
+  }, []);
+// End of Marisol code to detect dark mode changes - 2/8/2026
+
+  // Added by Christella - 1/30/2026
   const selectedGeoId = useMemo(() => {
     if (!selectedCountry) return null;
     return (
@@ -162,7 +309,69 @@ export default function StatisticsPage() {
     );
   }, [selectedCountry]);
 
-  const fetchStories = async (iso3: string) => {
+  /* fetch user profile - daniel q. 2/4 */
+  const fetchUserProfile = useCallback(async (email: string): Promise<UserProfile | null> => {
+    if (!email) return null;
+    
+    if (userProfilesCache[email]) {
+      return userProfilesCache[email];
+    }
+
+    try {
+      const profileRes = await fetch(
+        `${BACKEND_URL}/api/user-images?email=${encodeURIComponent(email)}`
+      );
+      const profileData = await profileRes.json();
+
+      let profileImage = null;
+      let bannerImage = null;
+      
+      if (profileData.success) {
+        profileImage = profileData.profileImage;
+        bannerImage = profileData.bannerImage;
+      }
+
+      const userRes = await fetch(`${BACKEND_URL}/api/user-by-email?email=${encodeURIComponent(email)}`);
+      let username = email.split('@')[0];
+      
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        if (userData.success && userData.user) {
+          username = userData.user.username || username;
+        }
+      }
+
+      const profile: UserProfile = {
+        email,
+        username,
+        profileImage,
+        bannerImage
+      };
+
+      setUserProfilesCache(prev => ({ ...prev, [email]: profile }));
+      return profile;
+
+    } catch (error) {
+      console.error(`Error fetching profile for ${email}:`, error);
+      return null;
+    }
+  }, [userProfilesCache]);
+
+  /* fetch profiles for stories - daniel q. 2/4 */
+  const fetchProfilesForStories = useCallback(async (storiesList: Story[]) => {
+    const emails = storiesList
+      .map(story => story.userEmail)
+      .filter((email): email is string => !!email && !userProfilesCache[email]);
+
+    if (emails.length === 0) return;
+
+    // FETCH ALL PROFILES IN PARALLEL
+    const profilePromises = emails.map(email => fetchUserProfile(email));
+    await Promise.all(profilePromises);
+  }, [fetchUserProfile, userProfilesCache]);
+
+  // End of addition by Christella - 1/30/2026, edited by Daniel
+  const fetchStories = useCallback(async (iso3: string) => {
     setStoriesLoading(true);
     setStoriesError("");
 
@@ -176,15 +385,20 @@ export default function StatisticsPage() {
         throw new Error(data.message || "Failed to load stories");
       }
 
-      setStories(Array.isArray(data.stories) ? data.stories : []);
+      const storiesList = Array.isArray(data.stories) ? data.stories : [];
+      setStories(storiesList);
+
+      await fetchProfilesForStories(storiesList);
+
     } catch (e: any) {
       setStories([]);
       setStoriesError(e?.message || "Server error");
     } finally {
       setStoriesLoading(false);
     }
-  };
+  }, [fetchProfilesForStories]);
 
+  // Added by Christella Taguicana - 02/03/2026
   // Loads dataset used to decide which countries to show markers for
   const fetchMapData = async () => {
     setMapLoading(true);
@@ -212,7 +426,7 @@ export default function StatisticsPage() {
     }
   };
 
-  // canonical countries endpoint fetch
+  // Countries endpoint fetch
   const fetchCountriesFromBackend = async () => {
     setCountriesLoading(true);
     setCountriesError(null);
@@ -251,36 +465,37 @@ export default function StatisticsPage() {
     }
   };
 
-  // Fallback deriving list from mapRows if backend endpoint is not present / failed
-  const deriveCountriesFromMapRows = () => {
+  // Fallback deriving list from mapRows if backend endpoint is not present/failed
+  const derivedCountriesFromMapRows = useMemo(() => {
     const setIso = new Set<string>();
     mapRows.forEach((r) => {
       if (r?.country) setIso.add(r.country.toUpperCase());
     });
-    const derived = Array.from(setIso)
+
+    return Array.from(setIso)
       .sort()
       .map((iso3) => ({ iso3, name: countryNames[iso3] ?? iso3 }));
-    setCountriesList(derived);
-  };
-
-  useEffect(() => {
-    // background prefetch
-    fetchMapData();
-    // try canonical countries from backend; fallback uses mapRows later
-    fetchCountriesFromBackend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // When mapRows finishes loading, if we don't have a canonical list, derive it
-  useEffect(() => {
-    if (!countriesList || countriesList.length === 0) {
-      deriveCountriesFromMapRows();
-    } else {
-      const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
-      if (allNamesAreIso) deriveCountriesFromMapRows();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapRows]);
+  // End of addition by Christella - 01/30/2026
+
+  const countriesToShow = useMemo(() => {
+    // If we have a proper countries list with names, use it
+    if (countriesList && countriesList.length > 0) {
+      const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
+      // If all names are just ISO codes, fall back to derived list
+      if (allNamesAreIso) {
+        return derivedCountriesFromMapRows;
+      }
+      return countriesList;
+    }
+    // No countries list, use derived
+    return derivedCountriesFromMapRows;
+  }, [countriesList, derivedCountriesFromMapRows]);
+
+  useEffect(() => {
+    fetchMapData();
+    fetchCountriesFromBackend();
+  }, []);
 
   async function fetchCountryStat(iso3: string): Promise<CachedStat | null> {
     try {
@@ -298,7 +513,8 @@ export default function StatisticsPage() {
         console.warn("fetchCountryStat failed:", data);
         return null;
       }
-
+      
+      // Edit by Christella - 01/30/2026
       const stat: CachedStat = {
         country: iso3,
         year: data.year ?? null,
@@ -362,68 +578,79 @@ export default function StatisticsPage() {
         fetchedAt: stat.fetchedAt,
         metric: stat.metric,
       });
+      // End of addition by Christella - 01/30/2026
     } finally {
       setLoading(false);
     }
   };
 
+  // Added by Christella - 1/30/2026
   const handleCountryClick = async (geoId: string) => {
     const iso3 = geoIdToCountryCode[geoId];
     if (!iso3) return;
     await handleSelectCountry(iso3);
   };
+  // End of addition by Christella - 1/30/2026
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#8CE4FF]/10 via-[#FEEE91]/10 to-[#FFA239]/10">
+    <div 
+      className="min-h-screen"
+      style={{
+        background: isDark 
+          ? 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.05), rgba(254, 238, 145, 0.05), rgba(255, 162, 57, 0.05))'
+          : 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.1), rgba(254, 238, 145, 0.1), rgba(255, 162, 57, 0.1))'
+      }}
+    >
       <main className="max-w-[1600px] mx-auto px-6 py-10">
-        {/* Header code */}
+        {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold mb-3">
             <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
               Global Poverty Statistics
             </span>
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
             Select a country from the dropdown to explore poverty statistics and stories
           </p>
         </div>
 
         {/* Grid for content display */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-          {/* Map panel (left) */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Map</h2>
-
-            <div className="mb-4">
+          {/* Map panel (left) - edited so that map doesn't overlap the navigation bar*/}
+          <div 
+            className="lg:col-span-2 rounded-lg shadow-md p-6 relative z-0"
+            style={{ backgroundColor: 'var(--background)' }}
+          >
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Map</h2>
+            <div className="mb-4 relative z-0">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
                 onCountryClick={handleCountryClick}
                 mapRows={mapRows}
                 showMarkers={false}
               />
-              <div className="mt-2 text-sm text-gray-500">
+              <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                 The map shows a baselayer only. Pick a country from the panel to the right.
               </div>
-
               {mapLoading && (
-                <div className="mt-2 text-sm text-gray-500">
+                <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                   Loading map data in background...
                 </div>
               )}
               {mapError && <div className="mt-2 text-sm text-red-600">{mapError}</div>}
             </div>
-
-            {/* NOTE: quick-pick buttons removed to keep map visually minimal */}
           </div>
 
+          {/* Added by Christella - 01/30/2026 */}
           {/* Statistics panel (right) */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Statistics</h2>
-
-            {/* Dropdown populated from backend (or derived from mapRows) */}
+          <div 
+            className="rounded-lg shadow-md p-6"
+            style={{ backgroundColor: 'var(--background)' }}
+          >
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Statistics</h2>
             <div className="mb-3">
               {countriesLoading ? (
-                <div className="text-sm text-gray-500">Loading countries…</div>
+                <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading countries…</div>
               ) : countriesError ? (
                 <div className="text-sm text-red-600">Could not load countries: {countriesError}</div>
               ) : (
@@ -431,9 +658,14 @@ export default function StatisticsPage() {
                   value={selectedCountry ?? ""}
                   onChange={(e) => handleSelectCountry(e.target.value || null)}
                   className="w-full border rounded p-2 mb-4"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)'
+                  }}
                 >
                   <option value="">— Select a country —</option>
-                  {countriesList.map((c) => (
+                  {countriesToShow.map((c) => (
                     <option key={c.iso3} value={c.iso3}>
                       {c.name ?? c.iso3} ({c.iso3})
                     </option>
@@ -443,14 +675,14 @@ export default function StatisticsPage() {
             </div>
 
             {loading && (
-              <div className="text-sm text-gray-500">Loading statistics...</div>
+              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading statistics...</div>
             )}
 
             {error && <div className="text-red-600 text-sm">{error}</div>}
 
             {liveResult?.metric && (
               <>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
                   {liveResult.source ? `Source: ${liveResult.source}` : ""}
                   {liveResult.fetchedAt
                     ? ` • Updated: ${new Date(liveResult.fetchedAt).toLocaleString()}`
@@ -458,21 +690,30 @@ export default function StatisticsPage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">Headcount</div>
-                    <div className="font-semibold">
+                  <div 
+                    className="p-3 rounded"
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Headcount</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
                       {liveResult.metric.headcount ?? "N/A"}
                     </div>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">Gap</div>
-                    <div className="font-semibold">
+                  <div 
+                    className="p-3 rounded"
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Gap</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
                       {liveResult.metric.poverty_gap ?? "N/A"}
                     </div>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">Severity</div>
-                    <div className="font-semibold">
+                  <div 
+                    className="p-3 rounded"
+                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Severity</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
                       {liveResult.metric.poverty_severity ?? "N/A"}
                     </div>
                   </div>
@@ -481,25 +722,28 @@ export default function StatisticsPage() {
             )}
 
             {!loading && selectedCountry && !liveResult?.metric && !error && (
-              <div className="text-sm text-gray-500">Select a country to load statistics.</div>
+              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Select a country to load statistics.</div>
             )}
           </div>
         </div>
 
-        {/* Stories section under BOTH map and statistics */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-3">
+        {/* now shows profile picture and names - daniel q. 2/4 */}
+        <div 
+          className="rounded-lg shadow-md p-6"
+          style={{ backgroundColor: 'var(--background)' }}
+        >
+          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
             Stories {selectedCountry ? `from ${countryNames[selectedCountry] ?? selectedCountry}` : ""}
           </h3>
 
           {!selectedCountry && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
               Select a country from the dropdown to view stories from that country.
             </p>
           )}
 
           {selectedCountry && storiesLoading && (
-            <p className="text-sm text-gray-500">Loading stories...</p>
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading stories...</p>
           )}
 
           {selectedCountry && storiesError && (
@@ -510,12 +754,17 @@ export default function StatisticsPage() {
             !storiesLoading &&
             !storiesError &&
             stories.length === 0 && (
-              <p className="text-sm text-gray-500">No stories for this country yet.</p>
+              <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
             )}
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stories.map((s) => (
-              <StoryCard key={s._id} story={s} />
+            {stories.map((story) => (
+              <StoryCard
+                key={story._id}
+                story={story}
+                /* passes user profile data to storycard - daniel q. 2/4 */
+                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+              />
             ))}
           </div>
         </div>
@@ -523,4 +772,3 @@ export default function StatisticsPage() {
     </div>
   );
 }
-/* End of Christella's Code - 1/30/2026 */

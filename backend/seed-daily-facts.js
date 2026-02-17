@@ -1,3 +1,5 @@
+//Script to add daily facts to database created by Damon
+
 // Script to seed daily facts into the database
 // Run with: node seed-daily-facts.js
 

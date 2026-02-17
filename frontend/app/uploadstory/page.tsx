@@ -1,12 +1,17 @@
-// Done by Christella 01/29/2026
+// Page created by Christella 12/09/2025
+// Page updated by Christella 01/29/2026
 'use client';
 
 import { useEffect, useState } from "react";
+// Added by Christella of 1/29/2026 to update UI
 import { FileText } from 'lucide-react';
+// End of addition by Christella of 1/29/2026
 const BACKEND_URL = 'http://localhost:4000';
 
+// Updated 01/29/2026 by Christella - added country options
 type CountryOption = { iso3: string; name: string };
 
+// Added by Christella - 1/29/2026
 const COUNTRY_OPTIONS = [
   { code: '', name: 'Select a country (optional)' },
   { code: 'USA', name: 'United States' },
@@ -26,6 +31,15 @@ const colorSchemes = [
   { bg: "#FFE5E5", accent: "#FF5656", name: "Rose" }
 ];
 
+// ============== Marisol Morales Code 2/11/2026 - Dark Mode Color Schemes ============== //
+const darkColorSchemes = [
+  { bg: "#0a2a35", accent: "#8CE4FF", name: "Ocean" },
+  { bg: "#2d2a1a", accent: "#F5D547", name: "Sunshine" },
+  { bg: "#2d1f14", accent: "#FFA239", name: "Sunset" },
+  { bg: "#2d1414", accent: "#FF5656", name: "Rose" }
+];
+// ============== End Dark Mode Color Schemes ============== //
+
 const sharedInputStyle = {
   width: '100%',
   fontSize: '16px',
@@ -35,22 +49,49 @@ const sharedInputStyle = {
   backgroundColor: '#ffffff',
   boxSizing: 'border-box' as const,
 };
+// End of 1/29/2026 addition by Christella
 
 export default function UploadStoryPage() {
+  // Sets the constants for the page
   const [title, setTitle] = useState('');
   const [story, setStory] = useState('');
-  const [country, setCountry] = useState('');
+  const [country, setCountry] = useState(''); // Added country constant - 12/10/2025 - Christella
   const [displayName, setDisplayName] = useState(true);
   const [displayPhoto, setDisplayPhoto] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [colorScheme, setColorScheme] = useState(0);
 
-  const [countries, setCountries] = useState<CountryOption[]>([]);
-  const [countriesLoading, setCountriesLoading] = useState(false);
+  const [countries, setCountries] = useState<CountryOption[]>([]); // Added country constant - 02/03/2025 - Christella
+  const [countriesLoading, setCountriesLoading] = useState(false); // Added country setting constant - 02/03/2025 - Christella
 
-  const bgColor = colorSchemes[colorScheme].bg;
-  const accentColor = colorSchemes[colorScheme].accent;
+  // ============== Marisol Morales Code 2/11/2026 - Dark Mode Detection ============== //
+  // State to track if dark mode is active
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Function to check if dark mode class exists
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    };
+    
+    // Check theme on initial load
+    checkTheme();
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(checkTheme);
+    // Observe class attribute changes on html element
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    // Cleanup observer on unmount
+    return () => observer.disconnect();
+  }, []);
+  // ============== End Dark Mode Detection ============== //
+
+  // ============== Marisol Morales Code 2/11/2026 - Dynamic Color Scheme Selection ============== //
+  const bgColor = isDark ? darkColorSchemes[colorScheme].bg : colorSchemes[colorScheme].bg;
+  const accentColor = isDark ? darkColorSchemes[colorScheme].accent : colorSchemes[colorScheme].accent;
+  // ============== End Dynamic Color Scheme Selection ============== //
 
   const wordCount = story.trim() ? story.trim().split(/\s+/).length : 0;
 
@@ -66,6 +107,7 @@ export default function UploadStoryPage() {
           throw new Error("Failed to load countries list");
         }
 
+        // Normalizes the country codes for consistency
         const normalized: CountryOption[] = data
           .map((d: any) => ({
             iso3: String(d.iso3 || d.iso || d.code || "").trim().toUpperCase(),
@@ -86,6 +128,7 @@ export default function UploadStoryPage() {
     loadCountries();
   }, []);
 
+  // Handles submit if form fields are not filled out entirely
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -126,7 +169,7 @@ export default function UploadStoryPage() {
           displayName,
           displayPhoto,
           userEmail,
-          country,
+          country, // Added submission for country - 12/10/2025
         }),
       });
 
@@ -153,6 +196,7 @@ export default function UploadStoryPage() {
     }
   };
 
+  // Resets form when "clear" button is selected
   const handleClear = () => {
     setTitle('');
     setStory('');
@@ -170,7 +214,9 @@ export default function UploadStoryPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#ffffff',
+        // ============== Marisol Morales Code 2/11/2026 - Dark Mode Page Background ============== //
+        backgroundColor: isDark ? 'var(--background)' : '#ffffff',
+        // ============== End Dark Mode Page Background ============== //
       }}
     >
       <div
@@ -200,7 +246,7 @@ export default function UploadStoryPage() {
                   fontSize: '30px',
                   fontWeight: '600',
                   margin: 0,
-                  color: '#0f172a',
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
               >
                 Share Your Story
@@ -217,7 +263,9 @@ export default function UploadStoryPage() {
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    border: colorScheme === index ? '2px solid #000' : '2px solid transparent',
+                    // ============== Marisol Morales Code 2/9/2026 - Dark Mode Border ============== //
+                    border: colorScheme === index ? `2px solid ${isDark ? 'var(--foreground)' : '#000'}` : '2px solid transparent',
+                    // ============== End Dark Mode Border ============== //
                     backgroundColor: scheme.accent,
                     cursor: 'pointer',
                     transition: 'transform 0.2s',
@@ -228,7 +276,7 @@ export default function UploadStoryPage() {
               ))}
             </div>
           </div>
-          <p style={{ fontSize: '16px', color: '#64748b', margin: 0 }}>
+          <p style={{ fontSize: '16px', color: isDark ? 'var(--color-gray)' : '#64748b', margin: 0 }}> {/*Edit by Marisol 2/11/2026 for Dark mode*/}
             Tell us your story and share it with the world
           </p>
         </div>
@@ -245,10 +293,10 @@ export default function UploadStoryPage() {
                   fontSize: '16px',
                   fontWeight: '500',
                   marginBottom: '12px',
-                  color: '#0f172a',
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
               >
-                Story Title <span style={{color: '#B00020'}}>*</span>
+                Story Title <span style={{ color: '#b00020' }}>*</span>
               </label>
               <input
                 id="title"
@@ -260,9 +308,12 @@ export default function UploadStoryPage() {
                   ...sharedInputStyle,
                   height: '48px',
                   padding: '0 16px',
+                  backgroundColor: isDark ? 'var(--color-gray-light)' : '#ffffff', // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  borderColor: isDark ? 'var(--color-gray-light)' : '#d1d5db', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
                 onFocus={(e) => (e.target.style.borderColor = accentColor)}
-                onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
+                onBlur={(e) => (e.target.style.borderColor = isDark ? 'var(--color-gray-light)' : '#d1d5db')} // Edited by Marisol Morales 2/11/2026 for dark mode support
               />
             </div>
 
@@ -275,12 +326,11 @@ export default function UploadStoryPage() {
                   fontSize: '16px',
                   fontWeight: '500',
                   marginBottom: '12px',
-                  color: '#0f172a',
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
               >
                 Country <span style={{ color: '#b00020' }}>*</span>
               </label>
-
               <select
                 id="country"
                 value={country}
@@ -291,12 +341,16 @@ export default function UploadStoryPage() {
                   height: '48px',
                   padding: '0 16px',
                   cursor: 'pointer',
+                  backgroundColor: isDark ? 'var(--color-gray-light)' : '#ffffff', // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  borderColor: isDark ? 'var(--color-gray-light)' : '#d1d5db', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
                 onFocus={(e) => (e.target.style.borderColor = accentColor)}
-                onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
+                onBlur={(e) => (e.target.style.borderColor = isDark ? 'var(--color-gray-light)' : '#d1d5db')} // Edited by Marisol Morales 2/11/2026 for dark mode support
               >
+                
                 <option value="" disabled>
-                  {countriesLoading ? "Loading countries..." : "Select a country"}
+                  {countriesLoading ? "Loading countries..." : "Select a country"} 
                 </option>
 
                 {countries.map((c) => (
@@ -316,7 +370,7 @@ export default function UploadStoryPage() {
                   fontSize: '16px',
                   fontWeight: '500',
                   marginBottom: '12px',
-                  color: '#0f172a',
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
               >
                 Your Story <span style={{color: '#B00020'}}>*</span>
@@ -332,9 +386,12 @@ export default function UploadStoryPage() {
                   padding: '16px',
                   resize: 'vertical',
                   fontFamily: 'inherit',
+                  backgroundColor: isDark ? 'var(--color-gray-light)' : '#ffffff', // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  borderColor: isDark ? 'var(--color-gray-light)' : '#d1d5db', // Edited by Marisol Morales 2/11/2026 for dark mode support
                 }}
                 onFocus={(e) => (e.target.style.borderColor = accentColor)}
-                onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
+                onBlur={(e) => (e.target.style.borderColor = isDark ? 'var(--color-gray-light)' : '#d1d5db')} // Edited by Marisol Morales 2/11/2026 for dark mode support
               />
               <p
                 style={{
@@ -360,7 +417,7 @@ export default function UploadStoryPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <label
                   htmlFor="displayName"
-                  style={{ fontSize: '16px', cursor: 'pointer', color: '#0f172a' }}
+                  style={{ fontSize: '16px', cursor: 'pointer', color: isDark ? 'var(--foreground)' : '#0f172a' }}
                 >
                   Display name?
                 </label>
@@ -373,7 +430,7 @@ export default function UploadStoryPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <label
                   htmlFor="displayPhoto"
-                  style={{ fontSize: '16px', cursor: 'pointer', color: '#0f172a' }}
+                  style={{ fontSize: '16px', cursor: 'pointer', color: isDark ? 'var(--foreground)' : '#0f172a' }} // Edited by Marisol Morales 2/11/2026 for dark mode support
                 >
                   Display photo?
                 </label>
@@ -413,13 +470,26 @@ export default function UploadStoryPage() {
                   fontSize: '16px',
                   fontWeight: '500',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
-                  backgroundColor: '#ffffff',
+                  border: `1px solid ${isDark ? 'var(--color-gray-light)' : '#d1d5db'}`, // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  backgroundColor: isDark ? 'var(--color-gray-light)' : '#ffffff',  // Edited by Marisol Morales 2/11/2026 for dark mode support
+                  color: isDark ? 'var(--foreground)' : '#0f172a', // Edited by Marisol Morales 2/11/2026 for dark mode support
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+                onMouseEnter={(e) => {
+                  if (isDark) {
+                    e.currentTarget.style.backgroundColor = '#2a2a2a';
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (isDark) {
+                    e.currentTarget.style.backgroundColor = 'var(--color-gray-light)';
+                  } else {
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                  }
+                }}
               >
                 Clear
               </button>
@@ -434,7 +504,7 @@ export default function UploadStoryPage() {
                   borderRadius: '8px',
                   border: 'none',
                   backgroundColor: accentColor,
-                  color: '#000000',
+                  color: '#000000', // Edited on 1/29/2026 to change text color to black
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   opacity: isSubmitting ? 0.5 : 1,
                   transition: 'opacity 0.2s',

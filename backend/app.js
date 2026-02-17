@@ -1,23 +1,30 @@
+//===== Created by Christella - 11/22/2025 =====//
 require('dotenv').config()
 const cors = require('cors')
 const express = require('express')
-const { MongoClient, ObjectId } = require('mongodb')
+const { MongoClient, ObjectId } = require('mongodb') // Added ObjectID - Christella 12/10/2025
+// ===== End of created code by Christella - 11/22/2025 =====//
+
+//Password hashing/encryption added by Damon
 const bcrypt = require('bcryptjs')
 
 
-// Code for allowing for Image uploads : Marisol Morale 1/28/26 
+// Code for allowing for Image uploads : Marisol Morales 1/28/26 
 const multer = require('multer') // Import multer for handling file uploads
 const path = require('path') // Import path module for handling file paths
 const fs = require('fs').promises // Import fs module for file system operations
 // End of Marisol Morales Code 1/28/26
 
+//===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
+//===== End of code created by Christella - 11/22/2025 =====//
 
 const fetch = require('node-fetch')
 const countriesLib = require("i18n-iso-countries") // Added by Christella on 02/03/2026 for countries list
+countriesLib.registerLocale(require("i18n-iso-countries/langs/en.json")); // Added by Christella on 02/05/2026
 
-app.use(cors())
+app.use(cors()) // Created by Christella - 11/22/2025
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -69,9 +76,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // End of Marisol Morales Code 1/28/26 ===============
 
 const uri = process.env.CONNECTION_URI
-// edited by Christella, 1/26/2026
+// Edited by Christella, 1/26/2026
 const client = new MongoClient(uri);
-
+//===== Created by Christella - 11/22/2025 =====
 let db
 
 async function connectDB() {
@@ -79,7 +86,7 @@ async function connectDB() {
   db = client.db('povertylensapp')
   console.log('Connected to MongoDB')
 
-  // added by Christella, 1/26/2026
+  //===== Added by Christella, 1/26/2026 =====
   try {
     await db.collection('povertyLiveStats').createIndex({country: 1, year: -1, povline: 1, fetchedAt: -1 });
     await db.collection('povertyLiveStats').createIndex({ povline: 1, country: 1, year: -1, fetchedAt: -1});
@@ -87,13 +94,14 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create indexes for povertyLiveStats:', err.message || err);
   }
-
+  // ===== End of addition by Christella, 1/26/2026 =====
   try {
     await db.collection('notifications').createIndex({ userId: 1, createdAt: -1 });
     console.log('Index created on notifications collection');
   } catch (err) {
     console.warn('Could not create index for notifications:', err.message || err);
   }
+  //Daily facts added by Damon
   try {
     await db.collection('dailyFacts').createIndex({ createdAt: 1 });
     await db.collection('notifications').createIndex({ userId: 1, dailyFactDate: 1 });
@@ -101,6 +109,14 @@ async function connectDB() {
   } catch (err) {
     console.warn('Could not create indexes for dailyFacts/notifications:', err.message || err);
   }
+  // Added by Christella - 02/04/2026
+  try {
+    await db.collection('donations').createIndex({email: 1, createdAt: -1});
+    console.log('Index created on donations collection');
+  } catch (err) {
+    console.warn('Could not create index for donation:', err.message || err);
+  }
+  // End of addition by Christella - 02/04/2026
 }
 
 async function createNotification(userId, message) {
@@ -123,7 +139,8 @@ async function createNotification(userId, message) {
   }
 }
 
-// Helper: get today's date string (UTC YYYY-MM-DD)
+//Daily facts helper added by Damon
+//Helper: get today's date string (UTC YYYY-MM-DD)
 function todayDateStringUTC() {
   const now = new Date();
   const y = now.getUTCFullYear();
@@ -132,13 +149,14 @@ function todayDateStringUTC() {
   return `${y}-${m}-${d}`;
 }
 
-// Get today's fact (deterministic random selection per-day)
+//Daily facts added by Damon
+//Get today's fact (deterministic random selection per-day)
 async function getTodaysFact() {
   const dfCol = db.collection('dailyFacts');
   const count = await dfCol.countDocuments();
   if (!count) return null;
 
-  // Deterministic selection per-day using date string as seed
+  //Deterministic selection per-day using date string as seed
   const seed = todayDateStringUTC();
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -223,8 +241,9 @@ app.post('/api/notifications/:id/read', async (req, res) => {
   }
 });
 
-// --- Daily Facts endpoints ---
-// Create a daily fact (admin UI or script can call this)
+//Daily facts added by Damon
+//--- Daily Facts endpoints ---
+//Create a daily fact
 app.post('/api/daily-facts', async (req, res) => {
   try {
     const { title, text } = req.body;
@@ -245,7 +264,8 @@ app.post('/api/daily-facts', async (req, res) => {
   }
 });
 
-// List daily facts
+//Daily facts added by Damon
+//List daily facts
 app.get('/api/daily-facts', async (req, res) => {
   try {
     const dfCol = db.collection('dailyFacts');
@@ -257,7 +277,8 @@ app.get('/api/daily-facts', async (req, res) => {
   }
 });
 
-// Get today's fact (deterministic per-day)
+//Daily facts added by Damon
+//Get today's fact (deterministic per-day)
 app.get('/api/daily-fact', async (req, res) => {
   try {
     const fact = await getTodaysFact();
@@ -269,7 +290,8 @@ app.get('/api/daily-fact', async (req, res) => {
   }
 });
 
-// Send today's daily fact as notifications to all users (idempotent per-day)
+//Daily facts added by Damon
+//Send today's daily fact as notifications to all users
 app.post('/api/daily-facts/notify', async (req, res) => {
   try {
     const fact = await getTodaysFact();
@@ -300,6 +322,7 @@ app.post('/api/daily-facts/notify', async (req, res) => {
   }
 });
 
+
 // Edited by Christella 1/30/2026, UPDATED 02/03/2026 (expanded list)
 const ISO3_LIST = [
   "ABW","AFG","AGO","AIA","ALA","ALB","AND","ARE","ARG","ARM","ASM","ATA","ATF","ATG","AUS","AUT","AZE",
@@ -318,6 +341,7 @@ const ISO3_LIST = [
   "TKM","TLS","TON","TTO","TUN","TUR","TUV","TWN","TZA","UGA","UKR","UMI","URY","USA","UZB","VAT","VCT",
   "VEN","VGB","VIR","VNM","VUT","WLF","WSM","YEM","ZAF","ZMB","ZWE"
 ];
+
 async function fetchPip({ country, year, povline }){
   let pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&povline=${povline}&fill_gaps=true&welfare_type=all`;
   if (year) pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${povline}&fill_gaps=true&welfare_type=all`;
@@ -328,6 +352,7 @@ async function fetchPip({ country, year, povline }){
   const row = Array.isArray(pipData) ? pipData[0] : null;
   return {pipData, row};
 }
+
 
 function extractMetricAndMeta(row){
   const metric = {
@@ -347,8 +372,9 @@ function extractMetricAndMeta(row){
   }
   return {metric, meta};
 }
+// End of addition by Christella - 02/03/2026
 
-// Defaults used by poverty endpoints
+// Defaults used by poverty endpoints - added by Christella 
 const DEFAULT_POVLINE = 2.15;
 const DEFAULT_YEAR = 2022;
 const DEFAULT_MAX_AGE_DAYS = 30;
@@ -362,6 +388,7 @@ app.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
+// End of creation by Christella - 11/22/2025
 
 // 12.15.2025 12:46pm
 
@@ -392,7 +419,8 @@ app.post('/api/signup', async (req, res) => {
       });
     }
 
-    // Hash the password
+    //Password hashing/encryption added by Damon
+    //Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create new user with hashed password
@@ -451,7 +479,8 @@ app.post('/api/login', async (req, res) => {
       });
     }
     
-    // Compare hashed password
+    //Password hashing/encryption added by Damon
+    //Compare hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ 
@@ -480,7 +509,52 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// /api/poverty - done by Christella
+// Get user by email (for profile display in statistics page) - daniel q. 2/4
+app.get('/api/user-by-email', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+    
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne(
+      { email },
+      { projection: { password: 0, passwordHistory: 0 } } // Exclude sensitive data
+    );
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      user: {
+        email: user.email,
+        username: user.username,
+        profileImage: user.profileImage || null,
+        bannerImage: user.bannerImage || null,
+        createdAt: user.createdAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching user by email:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+// /api/poverty - done by Christella - 12/05/2025
 
 // -----------------------
 // FreeRice endpoints (donate + leaderboard) Reymes 1/31/26
@@ -562,7 +636,33 @@ app.get('/api/freerice/leaderboard', async (req, res) => {
 });
 //end of FreeRice endpoints Reymes 1/26/26
 
-// Returns poverty statistics from "povertyStats" collection.
+// Start of - Get a specific user's total grains donated Marisol 2/3/2026
+
+app.get('/api/freerice/user-total', async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email parameter required' });
+    }
+
+    // Aggregate all donations for this specific user
+    const userTotal = await db.collection('freericeDonations').aggregate([
+      { $match: { email: String(email) } },
+      { $group: { _id: null, totalGrains: { $sum: '$grains' } } }
+    ]).toArray();
+
+    const total = userTotal.length > 0 ? userTotal[0].totalGrains : 0;
+
+    res.json({ success: true, email, totalGrains: total });
+  } catch (err) {
+    console.error('Error in /api/freerice/user-total:', err);
+    res.status(500).json({ success: false, message: 'Server error while fetching user total' });
+  }
+});
+// End of Get a specific user's total grains donated Marisol 2/3/2026
+
+// Returns poverty statistics from "povertyStats" collection. - added by Christella - 1/27/2026
 app.get('/api/poverty/summary', async(req,res) => {
   try {
     const country = String(req.query.country || '').toUpperCase().trim();
@@ -582,11 +682,11 @@ app.get('/api/poverty/summary', async(req,res) => {
 
     // Find most recent cached doc for country + poverty line
     const cached = await col
-      .find({ country, povline })
-      .sort({ year: -1, fetchedAt: -1 })
+      .find({country, povline})
+      .sort({year: -1, fetchedAt: -1})
       .limit(1)
       .next();
-
+    
     if (cached && cached.fetchedAt && new Date(cached.fetchedAt) >= cutoff) {
       return res.json({
         success: true,
@@ -616,11 +716,7 @@ app.get('/api/poverty/summary', async(req,res) => {
       meta,
     };
 
-    await col.updateOne(
-      { country, povline, year: yearToFetch },
-      { $set: docToStore },
-      { upsert: true }
-    );
+    await col.updateOne({ country, povline, year: yearToFetch }, {$set: docToStore}, {upsert: true});
 
     return res.json({
       success: true,
@@ -641,23 +737,15 @@ app.get('/api/poverty/summary', async(req,res) => {
 
 app.get('/api/poverty/pip-map', async (req, res) => {
   try {
-    const DEFAULT_POVLINE_LOCAL = 2.15;
-    const DEFAULT_YEAR_LOCAL = new Date().getUTCFullYear() - 1;
-    const DEFAULT_MAX_AGE_DAYS_LOCAL = 30;
-
-    const povline = Number(req.query.povline ?? DEFAULT_POVLINE_LOCAL);
-    const year = Number(req.query.year ?? DEFAULT_YEAR_LOCAL);
-    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS_LOCAL);
+    const povline = Number(req.query.povline ?? DEFAULT_POVLINE);
+    const year = Number(req.query.year ?? DEFAULT_YEAR);
+    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS);
 
     if (!Number.isFinite(povline) || povline <= 0 || povline > 100) {
       return res.status(400).json({ success: false, message: 'Invalid povline' });
     }
     if (!Number.isFinite(year) || year < 1960 || year > 2100) {
       return res.status(400).json({ success: false, message: 'Invalid year' });
-    }
-
-    if (!db) {
-      return res.status(500).json({ success: false, message: 'Database not initialized' });
     }
 
     const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
@@ -667,35 +755,30 @@ app.get('/api/poverty/pip-map', async (req, res) => {
     const rows = [];
     let idx = 0;
 
+    // Worker pool to limit concurrent PIP API requests
     async function worker() {
       while (idx < ISO3_LIST.length) {
         const country = ISO3_LIST[idx++];
         const cacheKey = { country, povline, year };
 
+        const cached = await col.findOne({ ...cacheKey, fetchedAt: { $gte: cutoff } });
+        if (cached) {
+          rows.push({
+            country,
+            year,
+            povline,
+            headcount:
+              cached.metric?.headcount ??
+              (Array.isArray(cached.data) ? cached.data[0]?.headcount : null),
+            poverty_gap: cached.metric?.poverty_gap ?? null,
+            poverty_severity: cached.metric?.poverty_severity ?? null,
+            source: 'cache',
+            fetchedAt: cached.fetchedAt,
+          });
+          continue;
+        }
+
         try {
-          // <-- IMPORTANT: cache lookup (col.findOne) is INSIDE the try/catch
-          const cached = await col.findOne({ ...cacheKey, fetchedAt: { $gte: cutoff } });
-
-          if (cached) {
-            rows.push({
-              country,
-              year,
-              povline,
-              headcount:
-                cached.metric?.headcount ??
-                (Array.isArray(cached.data) ? cached.data[0]?.headcount : null),
-              poverty_gap:
-                cached.metric?.poverty_gap ??
-                (Array.isArray(cached.data) ? cached.data[0]?.poverty_gap : null),
-              poverty_severity:
-                cached.metric?.poverty_severity ??
-                (Array.isArray(cached.data) ? cached.data[0]?.poverty_severity : null),
-              source: 'cache',
-              fetchedAt: cached.fetchedAt,
-            });
-            continue;
-          }
-
           const { pipData, row } = await fetchPip({ country, year, povline });
           const { metric, meta } = extractMetricAndMeta(row);
 
@@ -707,6 +790,7 @@ app.get('/api/poverty/pip-map', async (req, res) => {
             meta,
           };
 
+          // upsert to keep one doc per (country, year, povline)
           await col.updateOne(cacheKey, { $set: docToStore }, { upsert: true });
 
           rows.push({
@@ -720,7 +804,6 @@ app.get('/api/poverty/pip-map', async (req, res) => {
             fetchedAt: docToStore.fetchedAt,
           });
         } catch (e) {
-          // only this country recorded as error; loop continues for others
           rows.push({
             country,
             year,
@@ -735,9 +818,7 @@ app.get('/api/poverty/pip-map', async (req, res) => {
       }
     }
 
-    await Promise.all(
-      Array.from({ length: Math.min(CONCURRENCY, ISO3_LIST.length) }, () => worker())
-    );
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
 
     res.json({
       success: true,
@@ -752,15 +833,59 @@ app.get('/api/poverty/pip-map', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error building map dataset' });
   }
 });
+// End of Christella's addition - 1/27/2026
 
+// Added by Christella - 02/04/2026
+app.get('/api/poverty/countries', async (req, res) => {
+  try {
+    // Uses ISO3_LIST already defined in this file
+    const out = ISO3_LIST.map((iso3) => {
+      let name = iso3;
 
-// poverty live stats - done by Christella
+      // If you have i18n-iso-countries available, use it for nicer labels
+      try {
+        // countriesLib was imported earlier
+        // If not registered, fallback to ISO3
+        if (countriesLib && typeof countriesLib.getName === 'function') {
+          name = countriesLib.getName(iso3, 'en') || iso3;
+        }
+      } catch (e) {
+        name = iso3;
+      }
+
+      return { iso3, name };
+    });
+
+    res.json(out);
+  } catch (err) {
+    console.error('Error in /api/poverty/countries:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+app.get('/api/poverty', async(req, res) => {
+  try{
+    const stats = await db.collection('povertyStats').find({}).toArray()
+    res.json({
+      success: true,
+      stats,
+    })
+  } catch (err) {
+    console.error('Error fetching poverty stats:', err)
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching poverty stats',
+    })
+  }
+}) 
+
+// Poverty live stats - done by Christella
 app.get('/api/poverty/live', async (req, res) => {
   try {
     const country = String(req.query.country || '').toUpperCase().trim();
     const yearRaw = String(req.query.year || '').trim();
     const lineRaw =
-      (req.query.line !== undefined && req.query.line !== null)
+      req.query.line !== undefined && req.query.line !== null
         ? String(req.query.line).trim()
         : '';
 
@@ -791,11 +916,7 @@ app.get('/api/poverty/live', async (req, res) => {
     const cacheCollection = db.collection('povertyLiveStats');
     const cacheKey = year ? { country, year, povline } : { country, povline };
 
-    const cached = await cacheCollection
-      .find(cacheKey)
-      .sort({ fetchedAt: -1 })
-      .limit(1)
-      .next();
+    const cached = await cacheCollection.findOne(cacheKey);
 
     if (cached) {
       return res.json({
@@ -811,8 +932,8 @@ app.get('/api/poverty/live', async (req, res) => {
       });
     }
 
+    // Fetch from PIP and store
     const yearToFetch = year ?? DEFAULT_YEAR;
-
     const { pipData, row } = await fetchPip({ country, year: yearToFetch, povline });
     const { metric, meta } = extractMetricAndMeta(row);
 
@@ -851,54 +972,7 @@ app.get('/api/poverty/live', async (req, res) => {
     });
   }
 });
-
-//Added by Christella on 02/03/2026 for countries list
-app.get("/api/poverty/countries", (req, res) => {
-  try {
-    // Prefer the server's ISO3_LIST if available (many of your earlier files had it)
-    // NOTE: if ISO3_LIST is declared with `const`/`let` at top-level of app.js it will be visible here.
-    const isoList =
-      typeof ISO3_LIST !== "undefined" && Array.isArray(ISO3_LIST) && ISO3_LIST.length > 0
-        ? ISO3_LIST
-        : [
-            // fallback minimal list — replace if you want a different default
-            "USA",
-            "IND",
-            "BRA",
-            "CHN",
-            "DEU",
-            "FRA",
-            "GBR",
-            "MEX",
-            "NGA",
-            "KEN"
-          ];
-
-    // Normalize: filter out invalid entries and uppercase
-    const uniqIso = Array.from(
-      new Set(
-        isoList
-          .filter(Boolean)
-          .map((c) => (typeof c === "string" ? c.trim().toUpperCase() : c))
-          .filter((c) => typeof c === "string" && c.length === 3)
-      )
-    );
-
-    const out = uniqIso.map((iso3) => {
-      // Try to get a proper English name; fallback to iso3 itself when unknown
-      const name = countriesLib.getName(iso3, "en") || iso3;
-      return { iso3, name };
-    });
-
-    // Sort alphabetically by human name for a nicer dropdown
-    out.sort((a, b) => a.name.localeCompare(b.name));
-
-    res.json(out);
-  } catch (err) {
-    console.error("Error in /api/poverty/countries:", err);
-    res.status(500).json({ error: "Failed to build countries list" });
-  }
-});
+// ===== End of addition by Christella - =====
 
 // Profile Update Route
 app.put('/api/profile/update', async (req, res) => {
@@ -924,7 +998,8 @@ app.put('/api/profile/update', async (req, res) => {
       });
     }
     
-    // Verify current password using bcrypt
+    //Password hashing/encryption added by Damon
+    //Verify current password using bcrypt
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({ 
@@ -955,7 +1030,8 @@ app.put('/api/profile/update', async (req, res) => {
       // Get password histroy (deafault to empty array)
       const passwordHistory = user.passwordHistory || [];
 
-      // check if new password matches current password 
+      //Password hashing/encryption added by Damon
+      //check if new password matches current password 
       const matchesCurrent = await bcrypt.compare(newPassword, user.password);
       if (matchesCurrent) {
         return res.status(400).json({
@@ -963,7 +1039,8 @@ app.put('/api/profile/update', async (req, res) => {
           message: 'New password must be different from current password'        
         });
       }
-      // check if new password matches any in password history
+      //Password hashing/encryption added by Damon
+      //check if new password matches any in password history
       for (let i = 0; i < Math.min(passwordHistory.length, 3); i++) {
         const matchesOld = await bcrypt.compare(newPassword, passwordHistory[i]);
         if (matchesOld) {
@@ -973,10 +1050,11 @@ app.put('/api/profile/update', async (req, res) => {
           });
         }
       }
-      // Hash new password 
+      //Password hashing/encryption added by Damon
+      //Hash new password 
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-      // add current password to history 
+      //add current password to history 
       const updatedPasswordHistory = [user.password, ...passwordHistory].slice(0, 3); // keep last 3 passwords
 
       //Keep only the last 3 passwords in history
@@ -1263,6 +1341,7 @@ app.get('/api/user-images', async (req, res) => {
     });
   }
 });
+// End of Marisol Morales Code 1/28/26 =====================
 
 // Start server and connect to MongoDB
 (async () => {
@@ -1283,12 +1362,13 @@ app.get('/api/user-images', async (req, res) => {
     console.log(`Backend listening on port ${port}`);
   });
 })();
-// End of Marisol Morales Code 1/28/26 =====================
 
+
+// Added by Christella - 12/10/2025
 // Create a story
 app.post('/api/stories', async(req, res) => {
   try {
-    const {title, country, storyText, displayName, displayPhoto, userEmail } = req.body;
+    const {title, country, storyText, displayName, displayPhoto, userEmail } = req.body; // Added 'country' for the statistics page - Christella 12/10/2025
 
     if (!storyText || !storyText.trim()){
       return res.status(400).json({
@@ -1309,7 +1389,7 @@ app.post('/api/stories', async(req, res) => {
 
     const newStory = {
       title: title || '',
-      country: country ? String(country).toUpperCase():null,
+      country: country ? String(country).toUpperCase():null, // Ensures that country is uppercased - Christella 12/10/2025
       storyText,
       displayName: !!displayName,
       displayPhoto: !!displayPhoto,
@@ -1337,10 +1417,10 @@ app.post('/api/stories', async(req, res) => {
   }
 });
 
-// List of stories for editing, deleting, or archiving
+// List of stories for editing, deleting, or archiving - added 12/10/2025 by Christella
 app.get('/api/stories', async (req, res) => {
   try {
-    const { userEmail, includeArchived, country } = req.query;
+    const { userEmail, includeArchived, country } = req.query; // Added "country" to confirm that it is archived as well - Christella - 12/12/2025
 
     const filter = {};
     if (userEmail) {
@@ -1497,3 +1577,81 @@ app.delete('/api/stories/:id', async (req, res) => {
     });
   }
 });
+// End of addition by Christella - 12/10/25
+
+// Added by Christella - 02/04/2026
+// Log a donation (no payments yet - just saves to MongoDB)
+app.post('/api/donations', async (req, res) => {
+  try {
+    if (!db) {
+      console.warn('DB not initialized when /api/donations called');
+      return res.status(500).json({ success: false, message: 'Database not initialized' });
+    }
+
+    let { amount, isMonthly, name, email, message } = req.body;
+
+    // basic validation
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid donation amount' });
+    }
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ success: false, message: 'Name is required' });
+    }
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const donationDoc = {
+      amount: parsedAmount,
+      isMonthly: !!isMonthly,
+      name: String(name).trim(),
+      email: String(email).trim().toLowerCase(),
+      message: message ? String(message).trim().slice(0, 1000) : '',
+      createdAt: new Date(),
+      status: 'logged',
+    };
+
+    const result = await db.collection('donations').insertOne(donationDoc);
+
+    // createNotification(donationDoc.email, `Thanks for donating $${donationDoc.amount}!`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Donation logged',
+      donationId: String(result.insertedId),
+    });
+  } catch (err) {
+    console.error('Error in /api/donations:', err && err.stack ? err.stack : err);
+    res.status(500).json({ success: false, message: 'Server error while logging donation' });
+  }
+});
+
+// View recent donations (useful for testing/admin)
+app.get('/api/donations', async (req, res) => {
+  try {
+    if (!db) {
+      console.warn('DB not initialized when GET /api/donations called');
+      return res.status(500).json({ success: false, message: 'Database not initialized' });
+    }
+
+    const donations = await db
+      .collection('donations')
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .toArray();
+
+    const out = donations.map(d => ({
+      ...d,
+      _id: d._id ? String(d._id) : null,
+      id: d._id ? String(d._id) : null,
+    }));
+
+    res.json({ success: true, donations: out });
+  } catch (err) {
+    console.error('Error fetching donations:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+// End of addition by Christella - 02/04/2026
