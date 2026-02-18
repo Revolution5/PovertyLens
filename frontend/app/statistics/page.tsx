@@ -636,6 +636,7 @@ export default function StatisticsPage() {
             Select a country from the dropdown to explore poverty statistics and stories.
           </p>
         </header>
+        {/* ---- End of edit by Christella Taguicana - 02/17/2026 */}
 
         {/* Grid for content display */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">

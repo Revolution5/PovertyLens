@@ -3,9 +3,10 @@
 // UI updated to use globals.css design system - Edited by Christella Taguicana - 02/17/2026
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'; // Edited by Christella Taguicana - 02/17/2026
 
 type OrgCardProps = {
+  // Edited by Christella - 02/05/2026
   name: string;
   description: string;
   url: string;
@@ -50,6 +51,8 @@ export default function DonationsAndVolunteeringPage() {
   };
   // ============== End Added by Christella Taguicana - 02/17/2026 ==============
 
+  // ============== Edited by Christella Taguicana - 02/17/2026 ==============
+  // Edited for consistent theming across the web app
   return (
     <main
       style={{
@@ -114,6 +117,7 @@ export default function DonationsAndVolunteeringPage() {
         </header>
 
         {/* ================= DONATIONS INTRO BAR ================= */}
+        {/* ============ Edited by Christella Taguicana - 02/17/2026 ============ */}
         <SectionIntroBar
           title="Donations"
           dividerGradient="var(--gradient-orange-red)"
@@ -121,6 +125,7 @@ export default function DonationsAndVolunteeringPage() {
         />
 
         {/* ================= DONATIONS BENTO ================= */}
+        {/* ============ Added by Christella Taguicana - 02/17/2026 ============ */}
         <section
           style={{
             display: 'grid',
@@ -147,7 +152,7 @@ export default function DonationsAndVolunteeringPage() {
               name="GiveDirectly"
               url="https://www.givedirectly.org/"
               variant="yellow"
-              description="GiveDirectly provides direct cash transfers to people living in extreme poverty, allowing families to use funds for urgent needs like food, healthcare, education, or small business investments."
+              description="GiveDirectly provides direct cash transfers to people living in extreme poverty, allowing families to use funds for urgent needs like food, healthcare, education, or small business investments." // Shortened description by Christella Taguicana - 02/17/2026
               isFavorite={favorites.some((fav) => fav.url === 'https://www.givedirectly.org/')}
               onToggleFavorite={() => toggleFavorite('GiveDirectly', 'https://www.givedirectly.org/')}
             />
@@ -155,7 +160,7 @@ export default function DonationsAndVolunteeringPage() {
               name="CARE"
               url="https://www.care.org/"
               variant="cyan"
-              description="CARE is a global humanitarian organization fighting poverty and supporting women and girls through long-term solutions in health, education, and economic opportunity."
+              description="CARE is a global humanitarian organization fighting poverty and supporting women and girls through long-term solutions in health, education, and economic opportunity." // Shortened description by Christella Taguicana - 02/17/2026
               isFavorite={favorites.some((fav) => fav.url === 'https://www.care.org/')}
               onToggleFavorite={() => toggleFavorite('CARE', 'https://www.care.org/')}
             />
@@ -163,14 +168,16 @@ export default function DonationsAndVolunteeringPage() {
               name="PovertyLens"
               url="/PLdonation"
               variant="red"
-              description="PovertyLens educates the public about poverty while supporting humanitarian relief and long-term development initiatives."
+              description="PovertyLens educates the public about poverty while supporting humanitarian relief and long-term development initiatives." // Shortened description by Christella Taguicana - 02/17/2026
               isFavorite={favorites.some((fav) => fav.url === '/PLdonation')}
               onToggleFavorite={() => toggleFavorite('PovertyLens', '/PLdonation')}
             />
           </div>
         </section>
+        {/* ============ End of addition by Christella Taguicana - 02/17/2026 ============ */}
 
         {/* ================= VOLUNTEERING INTRO BAR ================= */}
+        {/* ============ Added by Christella Taguicana - 02/17/2026 ============ */}
         <SectionIntroBar
           title="Volunteering"
           dividerGradient="var(--gradient-orange-red)"
@@ -178,6 +185,7 @@ export default function DonationsAndVolunteeringPage() {
         />
 
         {/* ================= VOLUNTEERING BENTO ================= */}
+        {/* ============ Edited by Christella Taguicana - 02/17/2026 ============ */}
         <section
           style={{
             display: 'grid',
@@ -191,7 +199,7 @@ export default function DonationsAndVolunteeringPage() {
               name="Catchafire"
               url="https://www.catchafire.org/"
               variant="yellow"
-              description="Catchafire connects skilled professionals with nonprofits for remote, skills-based projects—like design, marketing, finance, data, and technology—so organizations can grow their impact efficiently."
+              description="Catchafire connects skilled professionals with nonprofits for remote, skills-based projects—like design, marketing, finance, data, and technology—so organizations can grow their impact efficiently." // Shortened description by Christella Taguicana - 02/17/2026
               isFavorite={favorites.some((fav) => fav.url === 'https://www.catchafire.org/')}
               onToggleFavorite={() => toggleFavorite('Catchafire', 'https://www.catchafire.org/')}
             />
@@ -199,7 +207,7 @@ export default function DonationsAndVolunteeringPage() {
               name="Translators Without Borders"
               url="https://translatorswithoutborder.org/"
               variant="orange"
-              description="Translators Without Borders supports humanitarian organizations by translating critical information so communities can access health, safety, and crisis resources in languages they understand."
+              description="Translators Without Borders supports humanitarian organizations by translating critical information so communities can access health, safety, and crisis resources in languages they understand." // Shortened description by Christella Taguicana - 02/17/2026
               isFavorite={favorites.some((fav) => fav.url === 'https://translatorswithoutborder.org/')}
               onToggleFavorite={() =>
                 toggleFavorite('Translators Without Borders', 'https://translatorswithoutborder.org/')
@@ -209,7 +217,7 @@ export default function DonationsAndVolunteeringPage() {
               name="Humanity for Relief & Development"
               url="https://hrdglobal.org/"
               variant="red"
-              description="HRD works to reduce hunger and poverty through relief and development programs, and offers virtual volunteer roles in outreach, fundraising, communications, and program support."
+              description="HRD works to reduce hunger and poverty through relief and development programs, and offers virtual volunteer roles in outreach, fundraising, communications, and program support." // Shortened description by Christella Taguicana - 02/17/2026
               isFavorite={favorites.some((fav) => fav.url === 'https://hrdglobal.org/')}
               onToggleFavorite={() =>
                 toggleFavorite('Humanity for Relief & Development', 'https://hrdglobal.org/')
@@ -223,7 +231,7 @@ export default function DonationsAndVolunteeringPage() {
             url="https://www.unv.org/"
             variant="cyan"
             imageSrc="/unv-logo-v2.png"
-            description="United Nations Volunteers (UNV) advances peace and development by mobilizing volunteers to support sustainable development initiatives worldwide. Through partnerships with governments, UN agencies, and local organizations, UNV places skilled volunteers in programs focused on poverty reduction, education, gender equality, climate action, and humanitarian response. By strengthening community-led efforts and building long-term institutional capacity, UNV helps create lasting, inclusive change that supports vulnerable populations and promotes equitable global development."
+            description="United Nations Volunteers (UNV) advances peace and development by mobilizing volunteers to support sustainable development initiatives worldwide. Through partnerships with governments, UN agencies, and local organizations, UNV places skilled volunteers in programs focused on poverty reduction, education, gender equality, climate action, and humanitarian response. By strengthening community-led efforts and building long-term institutional capacity, UNV helps create lasting, inclusive change that supports vulnerable populations and promotes equitable global development." // Lengthened description by Christella Taguicana - 02/17/2026
             isFavorite={favorites.some((fav) => fav.url === 'https://www.unv.org/')}
             onToggleFavorite={() => toggleFavorite('United Nations Volunteers', 'https://www.unv.org/')}
           />
@@ -243,9 +251,11 @@ export default function DonationsAndVolunteeringPage() {
       </div>
     </main>
   );
+  {/* ============ End of edit by Christella Taguicana - 02/17/2026 ============ */}
 }
 
 /* ================= SECTION INTRO BAR ================= */
+{/* ============ Edited by Christella Taguicana - 02/17/2026 ============ */}
 function SectionIntroBar({
   title,
   description,
@@ -499,7 +509,9 @@ function FeatureCard({
     </a>
   );
 }
+{/* ============ End of edit by Christella Taguicana - 02/17/2026 ============ */}
 
+{/* ============ Edited by Christella Taguicana - 02/17/2026 ============ */}
 /* ================= SMALL CARD ================= */
 function Card({
   name,
@@ -578,3 +590,4 @@ function Card({
     </a>
   );
 }
+{/* ============ End of edit by Christella Taguicana - 02/17/2026 ============ */}

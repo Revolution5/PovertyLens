@@ -101,21 +101,6 @@ export default function EducationalResources(){
         >
             {/*
                 ============== Edited by Christella Taguicana - 02/17/2026 ==============
-                Dark mode card border override:
-                The globals.css card-* classes use bright accent colors for borders which
-                look neon in dark mode. This <style> block overrides them with muted,
-                lower-opacity versions specifically when dark mode is active, without
-                touching globals.css itself.
-            */}
-            {/*
-                ============== Edited by Christella Taguicana - 02/17/2026 ==============
-                Dark mode overrides for card borders and accent bars.
-                Light mode: no overrides — full vibrant colors come from globals.css.
-                Dark mode: muted to ~25-35% opacity so they don't glow neon.
-
-                NOTE: Uses only the .dark class (set on <html> by the app's toggle),
-                NOT @media (prefers-color-scheme: dark), because the media query reads
-                the OS setting and would incorrectly fire even when the app is in light mode.
             */}
             <style>{`
             .dark .card-cyan   { border-color: rgba(140, 228, 255, 0.22) !important; }
