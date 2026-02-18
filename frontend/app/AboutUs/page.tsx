@@ -30,22 +30,37 @@ export default function AboutUs() {
         {/* ============== End Dark Mode Background ============== */}
             {/* Hero Section */}
             {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Hero Section ============== */}
-            <section 
-                className="relative py-8 px-6"
+            <section
+                className="relative"
                 style={{
-                    background: isDark
-                        ? 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.05), var(--background), rgba(254, 238, 145, 0.05))'
-                        : 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.1), white, rgba(254, 238, 145, 0.1))'
+                    padding: '40px 80px 32px',
                 }}
-            >
-            {/* ============== End Dark Mode Hero Section ============== */}
-                <div className="max-w-5xl mx-auto text-center">
-                    <h1 className="text-7xl mb-6 bg-gradient-to-r from-[#FF5656] via-[#FFA239] to-[#FF5656] bg-clip-text text-transparent font-black">
+                >
+                <div style={{ paddingLeft: 24, paddingRight: 24 }}>
+                    <header style={{ marginBottom: 0 }}>
+                    <h1
+                        className="text-4xl sm:text-5xl font-bold"
+                        style={{
+                        margin: '0 0 16px 0',
+                        color: 'var(--foreground)',
+                        textAlign: 'left',
+                        }}
+                    >
                         About Us
                     </h1>
-                    <div className="w-24 h-1 bg-gradient-to-r from-[#8CE4FF] via-[#FFA239] to-[#FF5656] mx-auto rounded-full"></div>
+
+                    <div
+                        style={{
+                        height: 4,
+                        width: 80,
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--gradient-cyan-yellow)',
+                        margin: '0 0 24px 0',
+                        }}
+                    />
+                    </header>
                 </div>
-            </section>
+                </section>
 
             {/* Mission Section - Text Left, Image Right */}
             <section className="py-8 px-6">

@@ -31,6 +31,23 @@ const variantClass: Record<NonNullable<ResourceProps['variant']>, string> = {
     red:    'card-red', // Added by Christella Taguicana - 02/17/2026
 };
 
+// ============================
+// Added for LIGHT MODE tinted card backgrounds + hover outline (mirrors ActionCard behavior)
+// ============================
+const tintBgLight: Record<NonNullable<ResourceProps['variant']>, string> = {
+    cyan:   '#E5F8FF',
+    yellow: '#FFFCEB',
+    orange: '#FFE8D6',
+    red:    '#FFE5E5',
+};
+
+const accentColorVar: Record<NonNullable<ResourceProps['variant']>, string> = {
+    cyan:   'var(--color-cyan)',
+    yellow: 'var(--color-yellow)',
+    orange: 'var(--color-orange)',
+    red:    'var(--color-red)',
+};
+
 export default function EducationalResources(){
     // ============== Marisol Modified code Begin 2/5/2026: State management for favorites ==============
     // UPDATED: Now stores objects with name AND url
@@ -82,6 +99,36 @@ export default function EducationalResources(){
                 transition: 'background-color var(--transition-base), color var(--transition-base)',
             }}
         >
+            {/*
+                ============== Edited by Christella Taguicana - 02/17/2026 ==============
+                Dark mode card border override:
+                The globals.css card-* classes use bright accent colors for borders which
+                look neon in dark mode. This <style> block overrides them with muted,
+                lower-opacity versions specifically when dark mode is active, without
+                touching globals.css itself.
+            */}
+            {/*
+                ============== Edited by Christella Taguicana - 02/17/2026 ==============
+                Dark mode overrides for card borders and accent bars.
+                Light mode: no overrides — full vibrant colors come from globals.css.
+                Dark mode: muted to ~25-35% opacity so they don't glow neon.
+
+                NOTE: Uses only the .dark class (set on <html> by the app's toggle),
+                NOT @media (prefers-color-scheme: dark), because the media query reads
+                the OS setting and would incorrectly fire even when the app is in light mode.
+            */}
+            <style>{`
+            .dark .card-cyan   { border-color: rgba(140, 228, 255, 0.22) !important; }
+            .dark .card-yellow { border-color: rgba(254, 238, 145, 0.22) !important; }
+            .dark .card-orange { border-color: rgba(255, 162, 57,  0.22) !important; }
+            .dark .card-red    { border-color: rgba(255, 86,  86,  0.22) !important; }
+
+            .dark .accent-bar-cyan   { background: rgba(140, 228, 255, 0.35) !important; }
+            .dark .accent-bar-yellow { background: rgba(245, 213, 71, 0.45) !important; }
+            .dark .accent-bar-orange { background: rgba(255, 162, 57,  0.35) !important; }
+            .dark .accent-bar-red    { background: rgba(255, 86,  86,  0.35) !important; }
+        `}</style>
+
             {/* ---- Header area ---- */}
             <header style={{ marginBottom: 32, paddingLeft: 24 }}>
 
@@ -207,12 +254,32 @@ export default function EducationalResources(){
 function ResourceCard({ name, description, url, variant }: ResourceProps) {
     const borderClass = variant ? variantClass[variant] : '';
 
+    const tintBg = variant ? tintBgLight[variant] : 'var(--background)';
+    const accentBorder = variant ? accentColorVar[variant] : 'var(--color-gray-light)';
+
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        const checkTheme = () => {
+            setIsDark(document.documentElement.classList.contains('dark'));
+        };
+
+        checkTheme();
+
+        const observer = new MutationObserver(checkTheme);
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            // globals.css `.card` handles bg, radius, shadow, and hover lift/shadow
             className={`card ${borderClass}`}
             style={{
                 display: 'flex',
@@ -221,13 +288,29 @@ function ResourceCard({ name, description, url, variant }: ResourceProps) {
                 color: 'var(--foreground)',
                 height: '100%',
                 boxSizing: 'border-box',
-                // Override the white default so it respects dark mode --background
-                backgroundColor: 'var(--background)',
+                backgroundColor: isDark ? 'transparent' : tintBg,
+
+                // Light mode neutral border
+                // Dark mode subtle outline
+                borderColor: isDark ? '' : 'var(--color-gray-light)',
+            }}
+            onMouseEnter={(e) => {
+                // Both modes: hover shows bright accent outline
+                e.currentTarget.style.borderColor = accentBorder;
+            }}
+            onMouseLeave={(e) => {
+                if (isDark) {
+                    // Let your .dark .card-* CSS control muted outline
+                    e.currentTarget.style.borderColor = '';
+                } else {
+                    e.currentTarget.style.borderColor = 'var(--color-gray-light)';
+                }
             }}
         >
             {/* Colored accent bar at top, derived from variant */}
             {variant && (
                 <div
+                    className={`accent-bar-${variant}`}
                     style={{
                         height: 4,
                         borderRadius: 'var(--radius-full)',
@@ -242,7 +325,7 @@ function ResourceCard({ name, description, url, variant }: ResourceProps) {
                     margin: '0 0 10px 0',
                     fontSize: 20,
                     fontWeight: 700,
-                    textAlign: 'center',
+                    textAlign: 'left',
                     color: 'var(--foreground)',
                 }}
             >
