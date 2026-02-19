@@ -51,21 +51,43 @@ export default function FAQ() {
         <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
         {/* ============== End Dark Mode Background ============== */}
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="py-16 lg:py-20">
-                    {/* Header Section */}
-                    <div className="mb-12">
-                        <h1 className="text-4xl sm:text-5xl font-bold mb-3">
-                            <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
-                                Frequently Asked Questions
-                            </span>
-                        </h1>
-                        {/* ============== Marisol Morales Code 1/9/2026 - Dark Mode Text ============== */}
-                        <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
-                            Got questions? We've got answers.
-                        </p>
-                        {/* ============== End Dark Mode Text ============== */}
-                    </div>
+            <main style={{padding: '40px 80px 80px',}}>
+                <div style={{ paddingLeft: 24, paddingRight: 24 }}> 
+                {/* ---- Header ---- Edited by Christella Taguicana - 02/17/2026 */}
+                <header style={{ marginBottom: 32}}>
+                <h1
+                    className="text-4xl sm:text-5xl font-bold"
+                    style={{
+                    margin: '0 0 16px 0',
+                    color: 'var(--foreground)',
+                    }}
+                >
+                    Frequently Asked Questions
+                </h1>
+
+                {/* Decorative divider using brand gradient */}
+                <div
+                    style={{
+                    height: 4,
+                    width: 80,
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--gradient-cyan-yellow)',
+                    margin: '0 0 24px 0',
+                    }}
+                />
+
+                <p
+                    style={{
+                    margin: 0,
+                    fontSize: 20,
+                    lineHeight: 1.7,
+                    color: 'var(--color-gray-dark)',
+                    }}
+                >
+                    Got questions? We&apos;ve got answers.
+                </p>
+                </header>
+                {/* End of edit by Christella Taguicana - 02/17/2026 */}
 
                     {/* Two Column Section - Text Left, Logo Right */}
                     {/* Added by Marisol 2/4/2026 for updated UI and providing contact form */}
