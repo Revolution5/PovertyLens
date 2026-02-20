@@ -859,11 +859,47 @@ export default function StatisticsPage() {
           className="rounded-lg shadow-md p-6"
           style={{ backgroundColor: 'var(--background)' }}
         >
+          {/* Country-specific stories (always shown at top) */}
           <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-            {povertyThreshold.trim() !== "" ? "Story Search Results" : `Stories ${selectedCountry ? `from ${countryNames[selectedCountry] ?? selectedCountry}` : ""}`}
+            {selectedCountry ? `Stories from ${countryNames[selectedCountry] ?? selectedCountry}` : "Stories"}
           </h3>
 
-              {/* //Added/modified by Damon 2/18/2026 */}
+{/* Added/modified by Damon 2/20/2026 */}
+          {!selectedCountry && (
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+              Select a country from the dropdown to view stories from that country.
+            </p>
+          )}
+
+          {selectedCountry && storiesLoading && (
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading stories...</p>
+          )}
+
+          {selectedCountry && storiesError && (
+            <p className="text-sm text-red-600">{storiesError}</p>
+          )}
+
+          {selectedCountry && !storiesLoading && !storiesError && stories.length === 0 && (
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
+          )}
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stories.map((story) => (
+              <StoryCard
+                key={story._id}
+                story={story}
+                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+              />
+            ))}
+          </div>
+
+          {/* Poverty-rate search section (always shown below) */}
+          <hr className="my-6" />
+
+          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+            Story Search Results
+          </h3>
+
           <div className="mb-4">
             <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
               Show stories from countries with poverty rate greater than or equal to:
@@ -905,55 +941,22 @@ export default function StatisticsPage() {
             {thresholdError && <div className="text-sm text-red-600 mt-2">{thresholdError}</div>}
           </div>
 
-          {/* If a threshold is set, show filtered stories; otherwise show per-country stories */}
-          {povertyThreshold.trim() !== "" ? (
-            <>
-              {thresholdLoading && <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Searching stories for matching countries...</p>}
-              {filteredStories.length === 0 && !thresholdLoading && !thresholdError && (
-                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories found for matched countries.</p>
-              )}
-
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredStories.map((story) => (
-                  <StoryCard
-                    key={story._id}
-                    story={story}
-                    userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              {!selectedCountry && (
-                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                  Select a country from the dropdown to view stories from that country.
-                </p>
-              )}
-
-              {selectedCountry && storiesLoading && (
-                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading stories...</p>
-              )}
-
-              {selectedCountry && storiesError && (
-                <p className="text-sm text-red-600">{storiesError}</p>
-              )}
-
-              {selectedCountry && !storiesLoading && !storiesError && stories.length === 0 && (
-                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
-              )}
-
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {stories.map((story) => (
-                  <StoryCard
-                    key={story._id}
-                    story={story}
-                    userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-                  />
-                ))}
-              </div>
-            </>
+{/* Added/modified by Damon 2/20/2026 */}
+          {thresholdLoading && <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Searching stories for matching countries...</p>}
+          {filteredStories.length === 0 && !thresholdLoading && !thresholdError && (
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories found for matched countries.</p>
           )}
+
+{/* Added/modified by Damon 2/20/2026 */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredStories.map((story) => (
+              <StoryCard
+                key={story._id}
+                story={story}
+                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+              />
+            ))}
+          </div>
         </div>
       </main>
     </div>
