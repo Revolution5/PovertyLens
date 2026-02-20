@@ -704,18 +704,42 @@ export default function StatisticsPage() {
           : 'linear-gradient(to bottom right, rgba(140, 228, 255, 0.1), rgba(254, 238, 145, 0.1), rgba(255, 162, 57, 0.1))'
       }}
     >
-      <main className="max-w-[1600px] mx-auto px-6 py-10">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-3">
-            <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">
-              Global Poverty Statistics
-            </span>
+      <main style={{padding: '40px 80px 80px',}}>
+        {/* ---- Header ---- Edited by Christella Taguicana - 02/17/2026 */}
+        <header style={{ marginBottom: 32, paddingLeft: 24 }}>
+          <h1
+            className="text-4xl sm:text-5xl font-bold"
+            style={{
+              margin: '0 0 16px 0',
+              color: 'var(--foreground)',
+            }}
+          >
+            Global Poverty Statistics
           </h1>
-          <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
-            Select a country from the dropdown to explore poverty statistics and stories
+
+          {/* Decorative divider using brand gradient */}
+          <div
+            style={{
+              height: 4,
+              width: 80,
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--gradient-cyan-yellow)',
+              margin: '0 0 24px 0',
+            }}
+          />
+
+          <p
+            style={{
+              margin: 0,
+              fontSize: 20,
+              lineHeight: 1.7,
+              color: 'var(--color-gray-dark)',
+            }}
+          >
+            Select a country from the dropdown to explore poverty statistics and stories.
           </p>
-        </div>
+        </header>
+        {/* ---- End of edit by Christella Taguicana - 02/17/2026 */}
 
         {/* Grid for content display */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
