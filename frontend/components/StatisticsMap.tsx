@@ -9,7 +9,7 @@ type Props = {
 
 // approximate positions on the map svg (percent x/y)
 const POS: Record<string, { x: number; y: number }> = {
-  '50': { x: 82, y: 32 }, // BGD (Bangladesh) - Asia
+  '50': { x: 82, y: 32 }, // BGD (Bangladesh) - Asia 
   '76': { x: 25, y: 56 }, // BRA (Brazil) - South America
   '231': { x: 60, y: 36 }, // ETH (Ethiopia) - East Africa
   '356': { x: 64, y: 32 }, // IND (India)
@@ -81,3 +81,4 @@ export default function StatisticsMap({ selectedGeoId, onCountryClick }: Props) 
     </div>
   )
 }
+//end of initial addition by Reymes Olide, 1/31/26
