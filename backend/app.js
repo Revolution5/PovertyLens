@@ -342,6 +342,78 @@ const ISO3_LIST = [
   "VEN","VGB","VIR","VNM","VUT","WLF","WSM","YEM","ZAF","ZMB","ZWE"
 ];
 
+
+async function sendDailyFactReminder() {
+  try {
+    // Get today's actual fact first
+    const fact = await getTodaysFact();
+    if (!fact) {
+      console.log('No daily fact available to send');
+      return;
+    }
+    
+    const users = await db.collection('users').find({}, { projection: { email: 1 } }).toArray();
+    const notificationsCollection = db.collection('notifications');
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Create message with the actual fact
+    const factMessage = fact.text;
+    const factTitle = fact.title || 'Daily Fact';
+    const message = `${factTitle}: ${factMessage}`;
+    
+    let sentCount = 0;
+    for (const user of users) {
+      const existing = await notificationsCollection.findOne({
+        userId: user.email,
+        dailyFactReminder: true,  // Check by type instead of message
+        createdAt: { $gte: today }
+      });
+      
+      if (!existing) {
+        await notificationsCollection.insertOne({
+          userId: user.email,
+          message: message,  // Now contains the actual fact!
+          createdAt: new Date(),
+          read: false,
+          dailyFactReminder: true
+        });
+        sentCount++;
+      }
+    }
+    
+    console.log(`Daily fact reminders sent to ${sentCount} users with fact: ${message.substring(0, 50)}...`);
+  } catch (err) {
+    console.error('Error sending daily fact reminder:', err);
+  }
+}
+
+const scheduleDailyReminder = () => {
+  const now = new Date();
+  const target = new Date();
+  target.setHours(9, 0, 0, 0); // 9:00 AM
+  
+  if (now > target) {
+    target.setDate(target.getDate() + 1);
+  }
+  
+  const msUntilTarget = target.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    sendDailyFactReminder();
+    setInterval(sendDailyFactReminder, 24 * 60 * 60 * 1000);
+  }, msUntilTarget);
+  
+  console.log(`Daily fact reminder scheduled for ${target.toLocaleString()}`);
+};
+
+setTimeout(() => {
+  if (db) {
+    scheduleDailyReminder();
+  }
+}, 5000);
+
 async function fetchPip({ country, year, povline }){
   let pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&povline=${povline}&fill_gaps=true&welfare_type=all`;
   if (year) pipUrl = `https://api.worldbank.org/pip/v1/pip?country=${country}&year=${year}&povline=${povline}&fill_gaps=true&welfare_type=all`;
