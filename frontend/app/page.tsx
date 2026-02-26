@@ -314,7 +314,6 @@ export default function Home() {
                             Here's your dashboard
                         </p>
                     </div>
-
                     {/* Action Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
                         {actionCards.map((card, index) => (

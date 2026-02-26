@@ -2,8 +2,20 @@
 
 import { useState, useEffect } from 'react';
 
+interface Notification {
+  id: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  notifications: Notification[];
+}
+
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   // Added by Marisol 2/10/2026 for Dark Mode Support
   const [isDark, setIsDark] = useState(false);
@@ -24,21 +36,42 @@ export default function NotificationsPage() {
   }, []);
   // End of Code by Marisol 2/10/2026 for Dark Mode Support
 
+  const fetchNotifications = async () => {
+    const email = localStorage.getItem('userEmail');
+    if (!email) return;
+    
+    try {
+      const res = await fetch(`http://localhost:4000/api/notifications?userId=${email}`);
+      const data: ApiResponse = await res.json();
+      if (data.success) {
+        setNotifications(data.notifications);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
   useEffect(() => {
     const email = localStorage.getItem('userEmail');
     if (!email) return;
     
+    // Initial fetch
     fetch(`http://localhost:4000/api/notifications?userId=${email}`)
       .then(res => res.json())
-      .then(data => {
+      .then((data: ApiResponse) => {
         if (data.success) {
           setNotifications(data.notifications);
         }
         setLoading(false);
       });
+    
+    const intervalId = setInterval(fetchNotifications, 5000);
+    
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
-  const markAsRead = async (id) => {
+  const markAsRead = async (id: string): Promise<void> => {
     try {
       await fetch(`http://localhost:4000/api/notifications/${id}/read`, {
         method: 'POST'

@@ -74,28 +74,162 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
 /* Geographical IDs to Country Code */
+// Updated 2/20/26 - Added more countries Reymes
+// Organized by continent - 2/20/26 Reymes
 const geoIdToCountryCode: Record<string, string> = {
-  "50": "BGD",
-  "76": "BRA",
+  // AFRICA
+  "12": "DZA",
+  "24": "AGO",
+  "204": "BEN",
+  "72": "BWA",
+  "854": "BFA",
+  "108": "BDI",
+  "120": "CMR",
+  "140": "CAF",
+  "148": "TCD",
+  "178": "COG",
+  "180": "COD",
+  "384": "CIV",
+  "818": "EGY",
   "231": "ETH",
-  "356": "IND",
+  "748": "SWZ",
+  "266": "GAB",
+  "270": "GMB",
+  "288": "GHA",
+  "324": "GIN",
   "404": "KEN",
-  "484": "MEX",
+  "426": "LSO",
+  "430": "LBR",
+  "450": "MDG",
+  "454": "MWI",
+  "466": "MLI",
+  "478": "MRT",
+  "504": "MAR",
+  "508": "MOZ",
+  "516": "NAM",
+  "562": "NER",
   "566": "NGA",
+  "646": "RWA",
+  "686": "SEN",
+  "694": "SLE",
+  "710": "ZAF",
+  "729": "SDN",
+  "834": "TZA",
+  "768": "TGO",
+  "788": "TUN",
+  "800": "UGA",
+  "894": "ZMB",
+  "716": "ZWE",
+  
+  // ASIA
+  "50": "BGD",
+  "356": "IND",
+  "392": "JPN",
+  "410": "KOR",
+  
+  // EUROPE
+  "40": "AUT",
+  "56": "BEL",
+  "250": "FRA",
+  "276": "DEU",
+  "380": "ITA",
+  "528": "NLD",
+  "578": "NOR",
+  "724": "ESP",
+  "752": "SWE",
+  "756": "CHE",
+  "826": "GBR",
+  
+  // NORTH AMERICA
+  "124": "CAN",
+  "484": "MEX",
   "840": "USA",
+  
+  // SOUTH AMERICA
+  "76": "BRA",
+  
+  // OCEANIA
+  "36": "AUS",
 };
 // End of addition by Christella - 1/30/2026
 
 /* Country names */
+// Updated 2/20/26 - Added more developed countries
+// Organized by continent - 2/20/26
 const countryNames: Record<string, string> = {
-  BGD: "Bangladesh",
-  BRA: "Brazil",
+  // AFRICA
+  DZA: "Algeria",
+  AGO: "Angola",
+  BEN: "Benin",
+  BWA: "Botswana",
+  BFA: "Burkina Faso",
+  BDI: "Burundi",
+  CMR: "Cameroon",
+  CAF: "Central African Republic",
+  TCD: "Chad",
+  COG: "Congo",
+  COD: "Democratic Republic of the Congo",
+  CIV: "Côte d'Ivoire",
+  EGY: "Egypt",
   ETH: "Ethiopia",
-  IND: "India",
+  SWZ: "Eswatini",
+  GAB: "Gabon",
+  GMB: "Gambia",
+  GHA: "Ghana",
+  GIN: "Guinea",
   KEN: "Kenya",
-  MEX: "Mexico",
+  LSO: "Lesotho",
+  LBR: "Liberia",
+  MDG: "Madagascar",
+  MWI: "Malawi",
+  MLI: "Mali",
+  MRT: "Mauritania",
+  MAR: "Morocco",
+  MOZ: "Mozambique",
+  NAM: "Namibia",
+  NER: "Niger",
   NGA: "Nigeria",
+  RWA: "Rwanda",
+  SEN: "Senegal",
+  SLE: "Sierra Leone",
+  ZAF: "South Africa",
+  SDN: "Sudan",
+  TZA: "Tanzania",
+  TGO: "Togo",
+  TUN: "Tunisia",
+  UGA: "Uganda",
+  ZMB: "Zambia",
+  ZWE: "Zimbabwe",
+  
+  // ASIA
+  BGD: "Bangladesh",
+  IND: "India",
+  JPN: "Japan",
+  KOR: "South Korea",
+  
+  // EUROPE
+  AUT: "Austria",
+  BEL: "Belgium",
+  FRA: "France",
+  DEU: "Germany",
+  ITA: "Italy",
+  NLD: "Netherlands",
+  NOR: "Norway",
+  ESP: "Spain",
+  SWE: "Sweden",
+  CHE: "Switzerland",
+  GBR: "United Kingdom",
+  
+  // NORTH AMERICA
+  CAN: "Canada",
+  MEX: "Mexico",
   USA: "United States",
+  
+  // SOUTH AMERICA
+  BRA: "Brazil",
+  
+  // OCEANIA
+  AUS: "Australia",
 };
 
 // Added by Christella - 1/30/2026
@@ -823,7 +957,9 @@ export default function StatisticsPage() {
                   >
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Headcount</div>
                     <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.headcount ?? "N/A"}
+                      {liveResult.metric.headcount !== null && liveResult.metric.headcount !== undefined
+                        ? `${(liveResult.metric.headcount * 100).toFixed(2)}%` //converted to percentage Reymes
+                        : "N/A"}
                     </div>
                   </div>
                   <div 
@@ -832,7 +968,9 @@ export default function StatisticsPage() {
                   >
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Gap</div>
                     <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.poverty_gap ?? "N/A"}
+                      {liveResult.metric.poverty_gap !== null && liveResult.metric.poverty_gap !== undefined
+                        ? `${(liveResult.metric.poverty_gap * 100).toFixed(2)}%` //converted to percentage Reymes
+                        : "N/A"}
                     </div>
                   </div>
                   <div 
@@ -841,7 +979,9 @@ export default function StatisticsPage() {
                   >
                     <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Severity</div>
                     <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.poverty_severity ?? "N/A"}
+                      {liveResult.metric.poverty_severity !== null && liveResult.metric.poverty_severity !== undefined
+                        ? `${(liveResult.metric.poverty_severity * 100).toFixed(2)}%`  //converted to percentage Reymes
+                        : "N/A"}
                     </div>
                   </div>
                 </div>
