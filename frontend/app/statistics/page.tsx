@@ -399,6 +399,12 @@ export default function StatisticsPage() {
   const [stories, setStories] = useState<Story[]>([]);
   const [storiesLoading, setStoriesLoading] = useState(false);
   const [storiesError, setStoriesError] = useState("");
+  //Added by Damon 2/18/2026
+  const [povertyThreshold, setPovertyThreshold] = useState<string>("");
+  const [thresholdLoading, setThresholdLoading] = useState(false);
+  const [thresholdError, setThresholdError] = useState("");
+  const [filteredStories, setFilteredStories] = useState<Story[]>([]);
+  //
   const [statsByCountry, setStatsByCountry] = useState<Record<string, CachedStat>>({});
   const [mapRows, setMapRows] = useState<MapRow[]>([]);
   const [mapLoading, setMapLoading] = useState(false);
@@ -531,6 +537,103 @@ export default function StatisticsPage() {
       setStoriesLoading(false);
     }
   }, [fetchProfilesForStories]);
+  
+  //Added by Damon 2/18/2026
+  //Fetch stories for multiple ISO3 country codes and merge results
+  const fetchStoriesForCountries = useCallback(async (iso3List: string[]) => {
+    if (!iso3List || iso3List.length === 0) {
+      setFilteredStories([]);
+      return [] as Story[];
+    }
+
+    try {
+      const promises = iso3List.map(async (iso) => {
+        const res = await fetch(`${BACKEND_URL}/api/stories?country=${encodeURIComponent(iso)}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) return [] as Story[];
+        return Array.isArray(data.stories) ? data.stories : [];
+      });
+
+      const results = await Promise.all(promises);
+      const flat = results.flat();
+
+      // dedupe by _id
+      const byId = new Map<string, Story>();
+      flat.forEach((s) => {
+        if (s && s._id) byId.set(s._id, s);
+      });
+
+      const merged = Array.from(byId.values());
+      setFilteredStories(merged);
+      await fetchProfilesForStories(merged);
+      return merged;
+    } catch (err) {
+      setFilteredStories([]);
+      return [] as Story[];
+    }
+  }, [fetchProfilesForStories]);
+
+  const handleThresholdSearch = async () => {
+    setThresholdError("");
+    setThresholdLoading(true);
+    setFilteredStories([]);
+
+    const parsed = parseFloat(povertyThreshold);
+    if (Number.isNaN(parsed)) {
+      setThresholdError("Enter a valid number for the poverty rate.");
+      setThresholdLoading(false);
+      return;
+    }
+
+    // find countries in mapRows with headcount >= parsed
+    // Use national poverty rates for developed countries when available
+    const NATIONAL_POVERTY_RATES: Record<string, number> = {
+      USA: 10.6,
+      CAN: 9.4,
+      GBR: 18.0,
+      DEU: 14.8,
+      FRA: 14.5,
+      JPN: 15.7,
+      AUS: 13.4,
+      ITA: 20.1,
+      ESP: 20.4,
+      KOR: 16.7,
+    };
+
+    // The API may return headcount as a decimal fraction (e.g. 0.10 for 10%),
+    // so normalize to percentage when the value is <= 1. For some developed
+    // countries we prefer the NATIONAL_POVERTY_RATES override.
+    const matches = mapRows
+      .filter((r) => !!r.country)
+      .map((r) => {
+        const iso = r.country?.toUpperCase();
+        const raw = (r.headcount as number) ?? NaN;
+        let rate = Number.NaN;
+        if (iso && NATIONAL_POVERTY_RATES[iso]) {
+          rate = NATIONAL_POVERTY_RATES[iso];
+        } else if (!Number.isNaN(raw)) {
+          rate = raw <= 1 ? raw * 100 : raw;
+        }
+        return { iso, rate };
+      })
+      .filter((x) => x.iso && typeof x.rate === "number" && !Number.isNaN(x.rate) && x.rate >= parsed)
+      .map((x) => x.iso as string);
+
+    if (matches.length === 0) {
+      setThresholdError("No countries found at or above that poverty rate.");
+      setThresholdLoading(false);
+      setFilteredStories([]);
+      return;
+    }
+
+    try {
+      await fetchStoriesForCountries(matches);
+    } catch (err: any) {
+      setThresholdError(err?.message || "Failed to fetch stories for matched countries.");
+    } finally {
+      setThresholdLoading(false);
+    }
+  };
 
   // Added by Christella Taguicana - 02/03/2026
   // Loads dataset used to decide which countries to show markers for
@@ -896,10 +999,12 @@ export default function StatisticsPage() {
           className="rounded-lg shadow-md p-6"
           style={{ backgroundColor: 'var(--background)' }}
         >
+          {/* Country-specific stories (always shown at top) */}
           <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-            Stories {selectedCountry ? `from ${countryNames[selectedCountry] ?? selectedCountry}` : ""}
+            {selectedCountry ? `Stories from ${countryNames[selectedCountry] ?? selectedCountry}` : "Stories"}
           </h3>
 
+{/* Added/modified by Damon 2/20/2026 */}
           {!selectedCountry && (
             <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
               Select a country from the dropdown to view stories from that country.
@@ -914,19 +1019,80 @@ export default function StatisticsPage() {
             <p className="text-sm text-red-600">{storiesError}</p>
           )}
 
-          {selectedCountry &&
-            !storiesLoading &&
-            !storiesError &&
-            stories.length === 0 && (
-              <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
-            )}
+          {selectedCountry && !storiesLoading && !storiesError && stories.length === 0 && (
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
+          )}
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stories.map((story) => (
               <StoryCard
                 key={story._id}
                 story={story}
-                /* passes user profile data to storycard - daniel q. 2/4 */
+                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+              />
+            ))}
+          </div>
+
+          {/* Poverty-rate search section (always shown below) */}
+          <hr className="my-6" />
+
+          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+            Story Search Results
+          </h3>
+
+          <div className="mb-4">
+            <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
+              Show stories from countries with poverty rate greater than or equal to:
+            </label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={povertyThreshold}
+                onChange={(e) => setPovertyThreshold(e.target.value)}
+                placeholder="e.g., 10 (percent)"
+                className="border rounded p-2 w-36"
+                style={{
+                  backgroundColor: 'var(--background)',
+                  borderColor: 'var(--color-gray-light)',
+                  color: 'var(--foreground)'
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={handleThresholdSearch}
+                disabled={thresholdLoading}
+                className="px-3 py-2 rounded bg-[#FFA239] text-white font-semibold"
+              >
+                {thresholdLoading ? 'Searching…' : 'Find stories'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setPovertyThreshold(''); setFilteredStories([]); setThresholdError(''); }}
+                className="px-3 py-2 rounded border"
+              >
+                Clear
+              </button>
+            </div>
+
+            {thresholdError && <div className="text-sm text-red-600 mt-2">{thresholdError}</div>}
+          </div>
+
+{/* Added/modified by Damon 2/20/2026 */}
+          {thresholdLoading && <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Searching stories for matching countries...</p>}
+          {filteredStories.length === 0 && !thresholdLoading && !thresholdError && (
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories found for matched countries.</p>
+          )}
+
+{/* Added/modified by Damon 2/20/2026 */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredStories.map((story) => (
+              <StoryCard
+                key={story._id}
+                story={story}
                 userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
               />
             ))}
