@@ -174,10 +174,10 @@ export default function Home() {
             //if not logged in, fetch daily fact
             (async () => {
                 try {
-                    const res = await fetch('http://localhost:4000/api/daily-fact');
+                    const res = await fetch('http://localhost:4000/api/daily-facts');
                     const data = await res.json();
-                    if (data?.success && data.fact) {
-                        setDailyFact(data.fact);
+                    if (data?.success && Array.isArray(data.facts) && data.facts.length > 0) {
+                        setDailyFact(data.facts[0]);
                     }
                 } catch (e) {
                     console.error('Error fetching daily fact:', e);

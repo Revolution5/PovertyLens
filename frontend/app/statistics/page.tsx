@@ -453,7 +453,7 @@ export default function StatisticsPage() {
 
     try {
       const profileRes = await fetch(
-        `${BACKEND_URL}/api/user-images?email=${encodeURIComponent(email)}`
+        `${BACKEND_URL}/api/profile/user-images?email=${encodeURIComponent(email)}`
       );
       const profileData = await profileRes.json();
 
