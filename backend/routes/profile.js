@@ -221,7 +221,15 @@ router.delete('/delete', async (req, res) => {
         message: 'Password is incorrect' 
       });
     }
-    
+
+    // Added by Christella - 2/27/2026
+    // Anonymize stories before deleting account
+    await db.collection('stories').updateMany(
+      {userEmail: email },
+      {$set: {userEmail: null, displayName: false, displayPhoto: false }}
+    );
+    // End of addition by Christella - 2/27/2026
+
     // Delete user
     await usersCollection.deleteOne({ _id: user._id });
     
