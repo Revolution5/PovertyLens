@@ -1,4 +1,4 @@
-// frontend/app/offline/page.tsx
+// daniel q. 2/28/26 start
 'use client';
 
 import Link from 'next/link';
