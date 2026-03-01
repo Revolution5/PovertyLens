@@ -1415,6 +1415,15 @@ app.get('/api/user-images', async (req, res) => {
 });
 // End of Marisol Morales Code 1/28/26 =====================
 
+// Start of daniel q. code 2/28/26
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'online', 
+    timestamp: new Date().toISOString()
+  });
+});
+// End of daniel q. code 2/28/26
+
 // Start server and connect to MongoDB
 (async () => {
   try {

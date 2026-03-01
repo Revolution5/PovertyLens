@@ -6,6 +6,10 @@ import Navbar from "../components/Navbar";
 import { ThemeProvider } from "../components/ThemeProvider";
 // ============== Marisol Morales code 2/9/2026 End ============== //
 
+// daniel q. 2/28/26 start
+import BackendStatus from "../components/BackendStatus";
+// daniel q. 2/28/26 end
+
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
@@ -30,6 +34,11 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         {/* ============== Marisol Morales Code 2/9/2026 start ============== */}
         {/* ThemeProvider manages theme state and persists it to localStorage */}
+        
+        {/* daniel q. 2/28/26 start */}
+        <BackendStatus />
+        {/* daniel q. 2/28/26 end */}
+
         <ThemeProvider>
           <Navbar />
           {children}
