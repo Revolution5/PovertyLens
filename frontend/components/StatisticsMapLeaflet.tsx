@@ -1,9 +1,13 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet"
+import React, { useEffect, useRef, useState } from "react"
+import { MapContainer, TileLayer, useMap } from "react-leaflet"
 import L from "leaflet"
+import * as GeoJSON from "geojson"
 import "leaflet/dist/leaflet.css"
+// Added by Reymes 3/2/26 - import rate data files for filter support
+import { NATIONAL_POVERTY_RATES } from "../data/nationalRates"
+import { normalizeRate } from "../data/internationalRates"
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
 //Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
@@ -36,7 +40,10 @@ type Props = {
   onCountryClick: (geoId: string) => void
   mapRows: MapRow[]
   showMarkers?: boolean
+  rateType?: "national" | "international"; // Added by Reymes 3/2/26
 }
+
+// National rates now imported from data/nationalRates.ts - Reymes 3/2/26
 // Mapping of geoId to country coordinates and names
 //updated by Reymes 2/13/26
 // Updated 2/20/26 - Added more countries Reymes
@@ -199,6 +206,8 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
 
 function MapFlyTo({ selectedGeoId, onMapReady }: { selectedGeoId: string | null; onMapReady?: (map: L.Map) => void }) {
   const map = useMap()
+  // Added by Reymes 3/2/26 - prevent repeated flyTo on same selected country
+  const lastFlownGeoIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     onMapReady?.(map)
@@ -206,8 +215,12 @@ function MapFlyTo({ selectedGeoId, onMapReady }: { selectedGeoId: string | null;
 
   useEffect(() => {
     if (!selectedGeoId) return
+    // Added by Reymes 3/2/26 - skip flyTo if selection did not change
+    if (lastFlownGeoIdRef.current === selectedGeoId) return
     const c = COORDS[selectedGeoId]
     if (!c) return
+    // Added by Reymes 3/2/26 - persist last flown country to prevent repeated recentering
+    lastFlownGeoIdRef.current = selectedGeoId
     map.flyTo([c.lat, c.lng], 4, { duration: 0.8 })
   }, [selectedGeoId, map])
 
@@ -218,10 +231,9 @@ export default function StatisticsMapLeaflet({
   selectedGeoId,
   onCountryClick,
   mapRows,
-  showMarkers = true,
+  rateType = "national",
 }: Props) {
-  const [hoveredGeoId, setHoveredGeoId] = useState<string | null>(null)
-  const [geojsonData, setGeojsonData] = useState<any>(null)
+  const [geojsonData, setGeojsonData] = useState<{ features: Record<string, unknown>[] } | null>(null)
   const [map, setMap] = useState<L.Map | null>(null)
 
   // Load GeoJSON data
@@ -234,134 +246,45 @@ export default function StatisticsMapLeaflet({
       })
       .catch((err) => console.error("Failed to load GeoJSON:", err))
   }, [])
-  //Added by Reymes 2/13/26 to use national poverty rates for developed countries
-  // National poverty rates for developed countries (using national poverty lines)
-  // Added to account for different poverty standards - international vs national
-  // Updated 2/20/26 - Added more developed countries Reymes
-  const NATIONAL_POVERTY_RATES: Record<string, number> = {
-    "USA": 10.6,    // US Census Bureau 2023
-    "CAN": 9.4,     // Statistics Canada
-    "GBR": 18.0,    // UK relative poverty
-    "DEU": 14.8,    // Germany
-    "FRA": 14.5,    // France
-    "JPN": 15.7,    // Japan
-    "AUS": 13.4,    // Australia
-    "AUT": 13.9,    // Austria
-    "BEL": 15.1,    // Belgium
-    "ITA": 20.1,    // Italy
-    "ESP": 20.4,    // Spain
-    "KOR": 16.7,    // South Korea
-    "NLD": 11.6,    // Netherlands
-    "NOR": 10.4,    // Norway
-    "SWE": 16.1,    // Sweden
-    "CHE": 8.7,     // Switzerland
-  };
-
+  // Updated by Reymes 3/2/26 - use national poverty rates for developed countries
   // Create a map of country ISO3 to poverty rate from mapRows
   const povertyRateMap = React.useMemo(() => {
     const rates: Record<string, number> = {}
-    
-    // Organized by continent - 2/20/26 Reymes
-    const geoIdToIso3: Record<string, string> = {
-      // AFRICA
-      "12": "DZA",
-      "24": "AGO",
-      "204": "BEN",
-      "72": "BWA",
-      "854": "BFA",
-      "108": "BDI",
-      "120": "CMR",
-      "140": "CAF",
-      "148": "TCD",
-      "178": "COG",
-      "180": "COD",
-      "384": "CIV",
-      "818": "EGY",
-      "231": "ETH",
-      "748": "SWZ",
-      "266": "GAB",
-      "270": "GMB",
-      "288": "GHA",
-      "324": "GIN",
-      "404": "KEN",
-      "426": "LSO",
-      "430": "LBR",
-      "450": "MDG",
-      "454": "MWI",
-      "466": "MLI",
-      "478": "MRT",
-      "504": "MAR",
-      "508": "MOZ",
-      "516": "NAM",
-      "562": "NER",
-      "566": "NGA",
-      "646": "RWA",
-      "686": "SEN",
-      "694": "SLE",
-      "710": "ZAF",
-      "729": "SDN",
-      "834": "TZA",
-      "768": "TGO",
-      "788": "TUN",
-      "800": "UGA",
-      "894": "ZMB",
-      "716": "ZWE",
-      
-      // ASIA
-      "50": "BGD",
-      "356": "IND",
-      "392": "JPN",
-      "410": "KOR",
-      
-      // EUROPE
-      "40": "AUT",
-      "56": "BEL",
-      "250": "FRA",
-      "276": "DEU",
-      "380": "ITA",
-      "528": "NLD",
-      "578": "NOR",
-      "724": "ESP",
-      "752": "SWE",
-      "756": "CHE",
-      "826": "GBR",
-      
-      // NORTH AMERICA
-      "124": "CAN",
-      "484": "MEX",
-      "840": "USA",
-      
-      // SOUTH AMERICA
-      "76": "BRA",
-      
-      // OCEANIA
-      "36": "AUS",
-    }
 
+    const rowsByIso: Record<string, MapRow> = {}
     if (Array.isArray(mapRows) && mapRows.length > 0) {
       mapRows.forEach((row) => {
-        if (row.country && row.headcount !== null && row.headcount > 0) {
-          // Find the geoId for this ISO3 country code
-          const geoId = Object.entries(geoIdToIso3).find(
-            ([, iso3]) => iso3 === row.country.toUpperCase()
-          )?.[0]
-          if (geoId) {
-            const iso3 = row.country.toUpperCase();
-            // Use national poverty rate if available, otherwise use World Bank international line
-            //Reymes 2/13/26
-            if (NATIONAL_POVERTY_RATES[iso3]) {
-              rates[geoId] = NATIONAL_POVERTY_RATES[iso3];
-            } else {
-              // Convert decimal to percentage (API returns 0.0096 as 0.96%)
-              rates[geoId] = row.headcount * 100;
-            }
-          }
-        }
+        if (!row?.country) return
+        rowsByIso[row.country.toUpperCase()] = row
       })
     }
 
+    Object.entries(COUNTRY_CODE_MAP).forEach(([geoId, mapping]) => {
+      const iso3 = mapping.iso3
+      const row = rowsByIso[iso3]
+      const raw = row?.headcount
+
+      // Added by Reymes 3/2/26 - apply filter logic: national shows national rates, international shows API only
+      if (rateType === "national") {
+        // National filter: strict national-only mode (no international fallback)
+        const nationalData = NATIONAL_POVERTY_RATES[iso3]
+        if (nationalData && typeof nationalData.rate === "number") {
+          rates[geoId] = nationalData.rate
+        }
+      } else {
+        // International filter: only use API data, skip national rate overrides
+        if (typeof raw === "number" && Number.isFinite(raw)) {
+          const normalized = normalizeRate(raw)
+          if (normalized !== null) {
+            rates[geoId] = normalized
+            return
+          }
+        }
+      }
+    })
+
     return rates
-  }, [mapRows])
+  }, [mapRows, rateType])
 
   // Add countries to map
   useEffect(() => {
@@ -375,10 +298,10 @@ export default function StatisticsMapLeaflet({
 
     const layers: L.GeoJSON[] = []
     let matchedCount = 0
-    let unmatchedCountries: string[] = [] // For logging unmatched countries - Reymes
+    const unmatchedCountries: string[] = [] // For logging unmatched countries - Reymes
 
-    geojsonData.features.forEach((feature: any) => {
-      const countryName = feature.properties?.name
+    geojsonData.features.forEach((feature: Record<string, unknown>) => {
+      const countryName = (feature.properties as Record<string, unknown>)?.name as string
       if (!countryName) return
 
       let matchingGeoId: string | null = null
@@ -411,8 +334,8 @@ export default function StatisticsMapLeaflet({
         console.log(`${countryName} (geoId: ${matchingGeoId}): NO DATA AVAILABLE (purple)`) // Log tracked countries with no data - Reymes
       }
 
-      const layer = L.geoJSON(feature, {
-        style: (feature) => ({
+      const layer = L.geoJSON(feature as unknown as GeoJSON.Feature, {
+        style: () => ({
           fillColor: baseColor,
           color: matchingGeoId ? "#333" : "#999",  // Lighter border for untracked countries Reymes
           weight: matchingGeoId ? 1 : 0.5,
@@ -421,24 +344,33 @@ export default function StatisticsMapLeaflet({
         }),
       })
 
-      layer.eachLayer((subLayer: any) => {
+      layer.eachLayer((subLayer: L.Layer) => {
         // Only add tooltip and click handler if this is a tracked country
         if (matchingGeoId) {
-          const tooltipContent = (povertyRate !== null && povertyRate !== undefined) 
-            ? `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem;">Poverty Rate: ${povertyRate.toFixed(2)}%</div>`
-            : `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem; color: #9370DB;">No data available</div>`;
-          subLayer.bindTooltip(tooltipContent)
+          // Added by Reymes 3/2/26 - include national poverty line in tooltip when available
+          let tooltipContent: string;
+          if (povertyRate !== null && povertyRate !== undefined) {
+            const countryIso = COUNTRY_CODE_MAP[matchingGeoId]?.iso3;
+            const nationalData = countryIso ? NATIONAL_POVERTY_RATES[countryIso] : null;
+            let povLineInfo = "";
+            // Added by Reymes 3/2/26 - only show national poverty line when in national filter mode
+            if (rateType === "national" && nationalData && typeof nationalData === "object" && "povLine" in nationalData) {
+              povLineInfo = `<div style="font-size: 0.7rem; color: #555;">Line: ${nationalData.povLine.toLocaleString()} ${nationalData.currency}/yr</div>`;
+            }
+            tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem;">Poverty Rate: ${povertyRate.toFixed(2)}%</div>${povLineInfo}`;
+          } else {
+            tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem; color: #9370DB;">No data available</div>`;
+          }
+          (subLayer as L.Path).bindTooltip(tooltipContent)
           subLayer.on("click", () => {
             console.log("Clicked:", matchingGeoId)
             onCountryClick(matchingGeoId!)
           })
           subLayer.on("mouseover", () => {
-            setHoveredGeoId(matchingGeoId)
-            subLayer.setStyle({ fillColor: "#FFD700", weight: 2 })
+            (subLayer as L.Path).setStyle({ fillColor: "#FFD700", weight: 2 })
           })
           subLayer.on("mouseout", () => {
-            setHoveredGeoId(null)
-            subLayer.setStyle({ fillColor: baseColor, weight: 1 })
+            (subLayer as L.Path).setStyle({ fillColor: baseColor, weight: 1 })
           })
         }
       })
@@ -455,10 +387,10 @@ export default function StatisticsMapLeaflet({
     return () => {
       layers.forEach((layer) => map.removeLayer(layer))
     }
-  }, [geojsonData, map, povertyRateMap, onCountryClick, setHoveredGeoId])
+  }, [geojsonData, map, povertyRateMap, onCountryClick, rateType])
 
   return (
-    <div className="w-full h-[360px] rounded-lg overflow-hidden">
+    <div className="relative w-full h-[360px] rounded-lg overflow-hidden">
       <MapContainer
         center={[20, 0]}
         zoom={2}
@@ -466,7 +398,8 @@ export default function StatisticsMapLeaflet({
         minZoom={2}
         maxZoom={6}
         maxBounds={[[-85, -180], [85, 180]]}
-        maxBoundsViscosity={1}
+        // Added by Reymes 3/2/26 - soften bounds lock to reduce stuck-on-USA feel
+        maxBoundsViscosity={0.5}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
@@ -476,6 +409,21 @@ export default function StatisticsMapLeaflet({
 
         <MapFlyTo selectedGeoId={selectedGeoId} onMapReady={setMap} />
       </MapContainer>
+
+      {/* Added by Reymes 3/2/26 - bottom-left map legend */}
+      <div
+        className="absolute bottom-3 left-3 z-[1000] rounded-md px-3 py-2 text-xs shadow-md"
+        style={{ backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#222" }}
+      >
+        <div className="font-semibold mb-1">Poverty rate key</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#8B0000" }} />&gt; 40%</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC143C" }} />30% - 40%</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FF6347" }} />20% - 30%</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFA500" }} />10% - 20%</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFD700" }} />5% - 10%</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#90EE90" }} />0% - 5%</div>
+        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#9370DB" }} />Tracked, missing data</div>
+      </div>
     </div>
   )
 }

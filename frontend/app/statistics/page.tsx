@@ -3,6 +3,9 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
 import StatisticsMapClient from "../../components/StatisticsMapClient";
+import MapFilters, { RateType } from "../../components/mapfilters"; // Added by Reymes 3/2/26
+// Added by Reymes 3/2/26 - import rate data files for filter support
+import { NATIONAL_POVERTY_RATES, getNationalPovertyLine } from "../../data/nationalRates";
 
 // Added by Christella Taguicana - 02/03/2026
 /* Typees relative to Statistics */
@@ -34,6 +37,8 @@ type LiveResponse = {
   year?: number | null;
   povline?: number;
   fetchedAt?: string;
+  // Added by Reymes 3/2/26 - national poverty line for selected countries
+  nationalPovertyLine?: { amount: number; currency: string } | null;
   metric?: {
     headcount?: number | null;
     poverty_gap?: number | null;
@@ -232,6 +237,8 @@ const countryNames: Record<string, string> = {
   AUS: "Australia",
 };
 
+// Added by Reymes 3/2/26 - national poverty rates imported from data/nationalRates.ts
+
 // Added by Christella - 1/30/2026
 function StoryCard({ 
   // Added by Daniel
@@ -414,6 +421,9 @@ export default function StatisticsPage() {
   const [countriesError, setCountriesError] = useState<string | null>(null);
   // End of addition by Christella - 1/30/2026
   
+  // Added by Reymes 3/2/26 - toggle between national and international poverty rates on map
+  const [rateType, setRateType] = useState<RateType>("national");
+  
   /* user profile cache - daniel q. 2/4 */
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
 
@@ -586,19 +596,7 @@ export default function StatisticsPage() {
     }
 
     // find countries in mapRows with headcount >= parsed
-    // Use national poverty rates for developed countries when available
-    const NATIONAL_POVERTY_RATES: Record<string, number> = {
-      USA: 10.6,
-      CAN: 9.4,
-      GBR: 18.0,
-      DEU: 14.8,
-      FRA: 14.5,
-      JPN: 15.7,
-      AUS: 13.4,
-      ITA: 20.1,
-      ESP: 20.4,
-      KOR: 16.7,
-    };
+    // Updated by Reymes 3/2/26 - use national poverty rates for developed countries when available
 
     // The API may return headcount as a decimal fraction (e.g. 0.10 for 10%),
     // so normalize to percentage when the value is <= 1. For some developed
@@ -609,8 +607,9 @@ export default function StatisticsPage() {
         const iso = r.country?.toUpperCase();
         const raw = (r.headcount as number) ?? NaN;
         let rate = Number.NaN;
+        // Added by Reymes 3/2/26 - apply national rates first for developed countries
         if (iso && NATIONAL_POVERTY_RATES[iso]) {
-          rate = NATIONAL_POVERTY_RATES[iso];
+          rate = NATIONAL_POVERTY_RATES[iso]?.rate ?? null;
         } else if (!Number.isNaN(raw)) {
           rate = raw <= 1 ? raw * 100 : raw;
         }
@@ -654,7 +653,32 @@ export default function StatisticsPage() {
         throw new Error(data.message || "Failed to load map data");
       }
 
-      setMapRows(Array.isArray(data.rows) ? data.rows : []);
+      // Added by Reymes 3/2/26 - keep mapRows pure API-only, apply filters at render time
+      const incomingRows: MapRow[] = Array.isArray(data.rows) ? data.rows : [];
+      const byIso = new Map<string, MapRow>();
+
+      incomingRows.forEach((row) => {
+        if (!row?.country) return;
+        const iso = row.country.toUpperCase();
+        byIso.set(iso, row);
+      });
+
+      // Added by Reymes 3/2/26 - inject placeholder rows for countries missing API data
+      // (national rates will be applied only when filter is set to "national")
+      Object.entries(NATIONAL_POVERTY_RATES).forEach(([iso]) => {
+        if (!byIso.has(iso)) {
+          byIso.set(iso, {
+            country: iso,
+            headcount: null,
+            year: 2022,
+            povline: 2.15,
+            source: "missing",
+            fetchedAt: new Date().toISOString(),
+          });
+        }
+      });
+
+      setMapRows(Array.from(byIso.values()));
     } catch (e: any) {
       setMapRows([]);
       setMapError(e?.message || "Server error");
@@ -784,6 +808,30 @@ export default function StatisticsPage() {
     setStories([]);
     fetchStories(iso3);
 
+    // Added by Reymes 3/2/26 - strict national-only behavior for national filter
+    if (rateType === "national") {
+      const fallbackData = NATIONAL_POVERTY_RATES[iso3.toUpperCase()];
+      if (fallbackData) {
+        const povLineData = getNationalPovertyLine(iso3);
+        setLiveResult({
+          success: true,
+          source: `National poverty line (${fallbackData.description})`,
+          country: iso3,
+          year: fallbackData.year,
+          povline: fallbackData.povLine,
+          nationalPovertyLine: povLineData,
+          metric: {
+            headcount: fallbackData.rate / 100,
+            poverty_gap: null,
+            poverty_severity: null,
+          },
+        });
+      } else {
+        setError("No national poverty-line data is available for this country yet.");
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const cached = statsByCountry[iso3];
@@ -883,12 +931,17 @@ export default function StatisticsPage() {
             style={{ backgroundColor: 'var(--background)' }}
           >
             <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Map</h2>
+            {/* Added by Reymes 3/2/26 - rate type toggle */}
+            <div className="mb-4">
+              <MapFilters value={rateType} onChange={setRateType} />
+            </div>
             <div className="mb-4 relative z-0">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
                 onCountryClick={handleCountryClick}
                 mapRows={mapRows}
                 showMarkers={false}
+                rateType={rateType}
               />
               <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                 The map shows a baselayer only. Pick a country from the panel to the right.
@@ -949,6 +1002,19 @@ export default function StatisticsPage() {
                     ? ` • Updated: ${new Date(liveResult.fetchedAt).toLocaleString()}`
                     : ""}
                 </div>
+
+                {/* Added by Reymes 3/2/26 - show national poverty line when available */}
+                {liveResult.nationalPovertyLine && (
+                  <div 
+                    className="p-3 rounded mt-2 mb-3"
+                    style={{ backgroundColor: isDark ? 'rgba(135, 206, 235, 0.1)' : 'rgb(230, 244, 255)' }}
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>National Poverty Line</div>
+                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
+                      {liveResult.nationalPovertyLine.amount.toLocaleString()} {liveResult.nationalPovertyLine.currency}/year
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-3 pt-2">
                   <div 
