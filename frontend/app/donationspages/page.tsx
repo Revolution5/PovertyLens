@@ -443,9 +443,11 @@ function FeatureCard({
 
   return (
     <a
+      // Edited by Christella - 2/27/2026
       href={url}
-      target="_blank"
-      rel="noopener noreferrer"
+      target={url.startsWith('/') ? '_self' : '_blank'}
+      rel={url.startsWith('/') ? undefined : 'noopener noreferrer'}
+      // End of edit by Christella - 2/27/2026
       className={`card card-${variant}`}
       style={{
         backgroundColor: isDark ? 'transparent' : tintBg,
@@ -549,9 +551,11 @@ function Card({
 
   return (
     <a
+      // Edited by Christella - 2/27/2026
       href={url}
-      target="_blank"
-      rel="noopener noreferrer"
+      target={url.startsWith('/') ? '_self' : '_blank'}
+      rel={url.startsWith('/') ? undefined : 'noopener noreferrer'}
+      // End of edit by Christella - 2/27/202
       className={`card card-${variant}`}
       style={{
         backgroundColor: isDark ? 'transparent' : tintBg,
