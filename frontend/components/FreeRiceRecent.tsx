@@ -7,7 +7,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:400
 
 type Donation = { _id?: string; email?: string | null; username?: string | null; grains: number; createdAt: string }
 
-export default function FreeRiceRecent() {
+export default function FreeRiceRecent({ refreshKey  = 0} : { refreshKey?: number }) // Changed by Marisol 2/16 -refreshKey prop to trigger re-fetch when it changes, used for auto-refresh after new donation
+{
   const [recent, setRecent] = useState<Donation[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -65,7 +66,7 @@ export default function FreeRiceRecent() {
 
   useEffect(() => {
     fetchRecent()
-  }, [])
+  }, [refreshKey]) // Changed by Marisol 2/16 to re-fetch recent donations whenever refreshKey changes, which happens after a new donation is logged in FreeRiceLeaderboardClient
 
   return (
     <div 
