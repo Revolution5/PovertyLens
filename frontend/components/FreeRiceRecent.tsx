@@ -5,7 +5,9 @@ import React, { useEffect, useState } from 'react'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'
 
-type Donation = { _id?: string; email?: string | null; username?: string | null; grains: number; createdAt: string }
+type Donation = { _id?: string; email?: string | null; username?: string | null; grains: number; createdAt: string
+  profileImage?: string | null; // Added by Marisol 3/3/2026 - profile image URL for recent donations, included in the /leaderboard endpoint response
+ }
 
 export default function FreeRiceRecent({ refreshKey  = 0} : { refreshKey?: number }) // Changed by Marisol 2/16 -refreshKey prop to trigger re-fetch when it changes, used for auto-refresh after new donation
 {
@@ -82,7 +84,24 @@ export default function FreeRiceRecent({ refreshKey  = 0} : { refreshKey?: numbe
           {recent.length === 0 && <li style={{ color: 'var(--color-gray)' }}>No recent activity</li>}
           {recent.map((r) => (
             <li key={(r as any)._id} className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#FEEE91] flex items-center justify-center text-sm font-semibold text-white">{(r.username || r.email || 'A').charAt(0).toUpperCase()}</div>
+              {/*Start of Marisol's Code 3/3/2026 - added profile image to recent donations */} 
+              <div className="w-10 h-10 rounded-full bg-[#FEEE91] flex items-center justify-center text-sm font-semibold text-white overflow-hidden flex-shrink-0">
+                {r.profileImage ? (
+                  <img
+                    src={`${BACKEND_URL}${r.profileImage}`}
+                    alt={r.username || r.email || 'User'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to letter if image fails to load
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement!.innerText = (r.username || r.email || 'A').charAt(0).toUpperCase();
+                    }}
+                  />
+                ) : (
+                  (r.username || r.email || 'A').charAt(0).toUpperCase()
+                )}
+              </div>
+               {/*End of Marisol's Code 3/3/2026 - added profile image to recent donations */} 
               <div>
                 <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{r.username || r.email || 'Anonymous'}</div>
                 <div className="text-sm" style={{ color: 'var(--color-gray)' }}>donated <strong>{r.grains}</strong> grains – {new Date(r.createdAt).toLocaleString()}</div>
