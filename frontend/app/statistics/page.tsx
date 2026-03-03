@@ -339,9 +339,9 @@ function StoryCard({
                 By {userProfile!.username}
               </div>
             ) : (
-              // SHOW "ANONYMOUS" WHEN displayName = false
+              // SHOW "PovertyLens User" when displayName = false or user account is deleted - edit by Christella - 03/03/2026
               <div className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
-                Anonymous
+                PovertyLens User
               </div>
             )}
           </div>
@@ -411,6 +411,10 @@ export default function StatisticsPage() {
   const [thresholdLoading, setThresholdLoading] = useState(false);
   const [thresholdError, setThresholdError] = useState("");
   const [filteredStories, setFilteredStories] = useState<Story[]>([]);
+  // Pagination state - Added by Christella - 03/03/2026
+  const [storiesPage, setStoriesPage] = useState(1);
+  const [filteredPage, setFilteredPage] = useState(1);
+  const STORIES_PER_PAGE = 9;
   //
   const [statsByCountry, setStatsByCountry] = useState<Record<string, CachedStat>>({});
   const [mapRows, setMapRows] = useState<MapRow[]>([]);
@@ -537,6 +541,7 @@ export default function StatisticsPage() {
 
       const storiesList = Array.isArray(data.stories) ? data.stories : [];
       setStories(storiesList);
+      setStoriesPage(1); // Reset to page 1 on new country selection - Added by Christella - 03/03/2026
 
       await fetchProfilesForStories(storiesList);
 
@@ -575,6 +580,7 @@ export default function StatisticsPage() {
 
       const merged = Array.from(byId.values());
       setFilteredStories(merged);
+      setFilteredPage(1); // Reset to page 1 on new search - Added by Christella - 03/03/2026
       await fetchProfilesForStories(merged);
       return merged;
     } catch (err) {
@@ -1089,15 +1095,58 @@ export default function StatisticsPage() {
             <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
           )}
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stories.map((story) => (
-              <StoryCard
-                key={story._id}
-                story={story}
-                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-              />
-            ))}
-          </div>
+          {/* Paginated country stories - Added by Christella - 03/03/2026 */}
+          {(() => {
+            const totalPages = Math.ceil(stories.length / STORIES_PER_PAGE);
+            const paginated = stories.slice((storiesPage - 1) * STORIES_PER_PAGE, storiesPage * STORIES_PER_PAGE);
+            return (
+              <>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginated.map((story) => (
+                    <StoryCard
+                      key={story._id}
+                      story={story}
+                      userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+                    />
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <button
+                      onClick={() => setStoriesPage(p => Math.max(1, p - 1))}
+                      disabled={storiesPage === 1}
+                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
+                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setStoriesPage(page)}
+                        className="px-4 py-2 rounded-lg border text-sm font-medium"
+                        style={{
+                          borderColor: storiesPage === page ? '#FFA239' : 'var(--color-gray-light)',
+                          backgroundColor: storiesPage === page ? '#FFA239' : 'var(--background)',
+                          color: storiesPage === page ? 'white' : 'var(--foreground)'
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setStoriesPage(p => Math.min(totalPages, p + 1))}
+                      disabled={storiesPage === totalPages}
+                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
+                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {/* Poverty-rate search section (always shown below) */}
           <hr className="my-6" />
@@ -1154,15 +1203,58 @@ export default function StatisticsPage() {
           )}
 
 {/* Added/modified by Damon 2/20/2026 */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredStories.map((story) => (
-              <StoryCard
-                key={story._id}
-                story={story}
-                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-              />
-            ))}
-          </div>
+          {/* Paginated filtered stories - Added by Christella - 03/03/2026 */}
+          {(() => {
+            const totalPages = Math.ceil(filteredStories.length / STORIES_PER_PAGE);
+            const paginated = filteredStories.slice((filteredPage - 1) * STORIES_PER_PAGE, filteredPage * STORIES_PER_PAGE);
+            return (
+              <>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginated.map((story) => (
+                    <StoryCard
+                      key={story._id}
+                      story={story}
+                      userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+                    />
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <button
+                      onClick={() => setFilteredPage(p => Math.max(1, p - 1))}
+                      disabled={filteredPage === 1}
+                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
+                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setFilteredPage(page)}
+                        className="px-4 py-2 rounded-lg border text-sm font-medium"
+                        style={{
+                          borderColor: filteredPage === page ? '#FFA239' : 'var(--color-gray-light)',
+                          backgroundColor: filteredPage === page ? '#FFA239' : 'var(--background)',
+                          color: filteredPage === page ? 'white' : 'var(--foreground)'
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setFilteredPage(p => Math.min(totalPages, p + 1))}
+                      disabled={filteredPage === totalPages}
+                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
+                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       </main>
     </div>
