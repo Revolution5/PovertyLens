@@ -101,7 +101,7 @@ export default function ImageUpload({
 
     try {
       // Send POST request to upload endpoint
-      const response = await fetch('http://localhost:4000/api/upload-image', {
+      const response = await fetch('http://localhost:4000/api/profile/upload-image', { // changed by Marisol 3/3/2026 - new endpoint for uploading profile/banner images
         method: 'POST',
         body: formData,
       });
@@ -137,7 +137,7 @@ export default function ImageUpload({
 
     try {
       // Send request to remove image from server
-      const response = await fetch('http://localhost:4000/api/remove-image', {
+      const response = await fetch('http://localhost:4000/api/profile/remove-image', { // Changed by Marisol 3/3/2026 - new endpoint for removing profile/banner images
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
