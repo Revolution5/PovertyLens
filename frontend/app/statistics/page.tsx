@@ -973,105 +973,163 @@ useEffect(() => {
 
           {/* Added by Christella - 01/30/2026 */}
           {/* Statistics panel (right) */}
-          <div 
-            className="rounded-lg shadow-md p-6"
+          <div
+            className="rounded-2xl shadow-md p-6 flex flex-col gap-5"
             style={{ backgroundColor: 'var(--background)' }}
           >
-            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Statistics</h2>
-            <div className="mb-3">
+            {/* Panel heading */}
+            <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Statistics</h2>
+
+            {/* Country selector */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-gray)' }}>
+                Select Country
+              </label>
               {countriesLoading ? (
-                <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading countries…</div>
-              ) : countriesError ? (
-                <div className="text-sm text-red-600">Could not load countries: {countriesError}</div>
-              ) : (
-                <select
-                  value={selectedCountry ?? ""}
-                  onChange={(e) => handleSelectCountry(e.target.value || null)}
-                  className="w-full border rounded p-2 mb-4"
-                  style={{
-                    backgroundColor: 'var(--background)',
-                    borderColor: 'var(--color-gray-light)',
-                    color: 'var(--foreground)'
-                  }}
+                <div
+                  className="w-full rounded-xl border px-4 py-3 text-sm"
+                  style={{ borderColor: 'var(--color-gray-light)', color: 'var(--color-gray)', backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
                 >
-                  <option value="">— Select a country —</option>
-                  {countriesToShow.map((c) => (
-                    <option key={c.iso3} value={c.iso3}>
-                      {c.name ?? c.iso3} ({c.iso3})
-                    </option>
-                  ))}
-                </select>
+                  Loading countries…
+                </div>
+              ) : countriesError ? (
+                <div className="text-sm rounded-xl border px-4 py-3" style={{ borderColor: 'rgba(255,86,86,0.4)', color: 'var(--color-red)', backgroundColor: isDark ? 'rgba(255,86,86,0.07)' : 'rgba(255,86,86,0.05)' }}>
+                  Could not load countries: {countriesError}
+                </div>
+              ) : (
+                // Reymes 3/3/26 - simplified dropdown to neutral border/background for improved readability
+                <div className="relative">
+                  <select
+                    value={selectedCountry ?? ""}
+                    onChange={(e) => handleSelectCountry(e.target.value || null)}
+                    className="w-full appearance-none rounded-lg border px-3 py-2.5 pr-9 text-sm transition-all cursor-pointer focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--background)',
+                      borderColor: 'var(--color-gray-light)',
+                      color: 'var(--foreground)',
+                    }}
+                  >
+                    <option value="">— Select a country —</option>
+                    {countriesToShow.map((c) => (
+                      <option key={c.iso3} value={c.iso3}>
+                        {c.name ?? c.iso3} ({c.iso3})
+                      </option>
+                    ))}
+                  </select>
+                  {/* Chevron icon */}
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 5L7 9L11 5" stroke="var(--color-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                </div>
               )}
             </div>
 
+            {/* Loading state */}
             {loading && (
-              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading statistics...</div>
+              <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-gray)' }}>
+                <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                </svg>
+                Loading statistics…
+              </div>
             )}
 
-            {error && <div className="text-red-600 text-sm">{error}</div>}
+            {/* Error state */}
+            {error && (
+              <div
+                className="text-sm rounded-xl px-4 py-3 border"
+                style={{ color: 'var(--color-red)', borderColor: 'rgba(255,86,86,0.35)', backgroundColor: isDark ? 'rgba(255,86,86,0.07)' : 'rgba(255,86,86,0.05)' }}
+              >
+                {error}
+              </div>
+            )}
 
+            {/* Results */}
             {liveResult?.metric && (
-              <>
-                <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                  {liveResult.source ? `Source: ${liveResult.source}` : ""}
-                  {liveResult.fetchedAt
-                    ? ` • Updated: ${new Date(liveResult.fetchedAt).toLocaleString()}`
-                    : ""}
-                </div>
-
-                {/* Added by Reymes 3/2/26 - show national poverty line when available */}
-                {liveResult.nationalPovertyLine && (
-                  <div 
-                    className="p-3 rounded mt-2 mb-3"
-                    style={{ backgroundColor: isDark ? 'rgba(135, 206, 235, 0.1)' : 'rgb(230, 244, 255)' }}
+              <div className="flex flex-col gap-4">
+                {/* Source / date meta */}
+                {(liveResult.source || liveResult.fetchedAt) && (
+                  <div
+                    className="flex flex-wrap gap-x-3 gap-y-1 text-xs px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', color: 'var(--color-gray)' }}
                   >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>National Poverty Line</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.nationalPovertyLine.amount.toLocaleString()} {liveResult.nationalPovertyLine.currency}/year
+                    {liveResult.source && <span>Source: {liveResult.source}</span>}
+                    {liveResult.fetchedAt && (
+                      <span>Updated: {new Date(liveResult.fetchedAt).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                )}
+
+                {/* National poverty line badge - Added by Reymes 3/2/26 */}
+                {/* Reymes 3/3/26 - changed to neutral card style (removed yellow tint) to match stat cards */}
+                {liveResult.nationalPovertyLine && (
+                  <div
+                    className="flex flex-col gap-1 px-4 py-3 rounded-lg border"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgb(249,250,251)',
+                      borderColor: 'var(--color-gray-light)',
+                    }}
+                  >
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                      National Poverty Line
+                    </div>
+                    <div className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
+                      {liveResult.nationalPovertyLine.amount.toLocaleString()}{' '}
+                      <span className="text-sm font-normal" style={{ color: 'var(--color-gray)' }}>
+                        {liveResult.nationalPovertyLine.currency}/yr
+                      </span>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div 
-                    className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
-                  >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Headcount</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.headcount !== null && liveResult.metric.headcount !== undefined
-                        ? `${(liveResult.metric.headcount * 100).toFixed(2)}%` //converted to percentage Reymes
-                        : "N/A"}
+                {/* Stat cards */}
+                {/* Reymes 3/3/26 - refactored to single mapped array; removed color-tinted backgrounds in favor of neutral cards */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[{
+                    label: 'Headcount',
+                    value: liveResult.metric.headcount,
+                  }, {
+                    label: 'Pov. Gap',
+                    value: liveResult.metric.poverty_gap,
+                  }, {
+                    label: 'Severity',
+                    value: liveResult.metric.poverty_severity,
+                  }].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex flex-col gap-1 p-3 rounded-lg border"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgb(249,250,251)',
+                        borderColor: 'var(--color-gray-light)',
+                      }}
+                    >
+                      <div className="text-xs" style={{ color: 'var(--color-gray)' }}>{label}</div>
+                      <div className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                        {value !== null && value !== undefined
+                          ? `${(value * 100).toFixed(2)}%`
+                          : <span style={{ color: 'var(--color-gray)' }}>N/A</span>}
+                      </div>
                     </div>
-                  </div>
-                  <div 
-                    className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
-                  >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Gap</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.poverty_gap !== null && liveResult.metric.poverty_gap !== undefined
-                        ? `${(liveResult.metric.poverty_gap * 100).toFixed(2)}%` //converted to percentage Reymes
-                        : "N/A"}
-                    </div>
-                  </div>
-                  <div 
-                    className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
-                  >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Severity</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.poverty_severity !== null && liveResult.metric.poverty_severity !== undefined
-                        ? `${(liveResult.metric.poverty_severity * 100).toFixed(2)}%`  //converted to percentage Reymes
-                        : "N/A"}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </>
+              </div>
             )}
 
-            {!loading && selectedCountry && !liveResult?.metric && !error && (
-              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Select a country to load statistics.</div>
+            {/* Empty / prompt state */}
+            {!loading && !liveResult?.metric && !error && (
+              <div
+                className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed"
+                style={{ borderColor: 'var(--color-gray-light)', color: 'var(--color-gray)' }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.4 }}>
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span className="text-sm text-center">Select a country above to view its poverty statistics.</span>
+              </div>
             )}
           </div>
         </div>
