@@ -875,6 +875,16 @@ export default function StatisticsPage() {
     }
   };
 
+  // Added by Marisol - 3/3/2026 (needed to fix bug.)
+  // Re-fetch stats when rateType changes and a country is already selected
+useEffect(() => {
+    if (selectedCountry) {
+      handleSelectCountry(selectedCountry);
+      }
+  }, [rateType]);
+  // End of addition by Marisol - 3/3/2026
+
+
   // Added by Christella - 1/30/2026
   const handleCountryClick = async (geoId: string) => {
     const iso3 = geoIdToCountryCode[geoId];
