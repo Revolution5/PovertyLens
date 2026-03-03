@@ -76,10 +76,21 @@ router.get('/leaderboard', async (req, res) => {
     ]).toArray();
 
     const top = topAgg.map(t => ({ email: t._id.email, username: t._id.username, totalGrains: t.totalGrains }));
+// Changed by Marisol 3/3/2026 - added recent donations with profile images to the leaderboard endpoint
+    const recentRaw = await db.collection('freericeDonations').find({}).sort({ createdAt: -1 }).limit(10).toArray();
 
-    const recent = await db.collection('freericeDonations').find({}).sort({ createdAt: -1 }).limit(10).toArray();
+    const recent = await Promise.all(
+      recentRaw.map(async (donation) => {
+        const user = await db.collection('users').findOne(
+          donation.email ? { email: donation.email } : { username: donation.username },
+          { projection: { profileImage: 1 } }
+        );
+        return { ...donation, profileImage: user?.profileImage || null };
+      })
+    );
 
     res.json({ success: true, top, recent, session });
+// End of Marisol's changes 3/3/2026 - added recent donations with profile images to the leaderboard endpoint
   } catch (err) {
     console.error('Error in /api/freerice/leaderboard:', err);
     res.status(500).json({ success: false, message: 'Server error while building leaderboard' });
