@@ -215,7 +215,8 @@ router.delete('/delete', async (req, res) => {
     }
     
     // Verify password
-    if (user.password !== password) {
+    //Password hashing/encryption added by Damon 3/2/2026
+    if (await bcrypt.compare(password, user.password) == false) {
       return res.status(400).json({ 
         success: false,
         message: 'Password is incorrect' 
