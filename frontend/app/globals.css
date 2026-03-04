@@ -85,6 +85,68 @@
 }
 /* ============== Marisol Morales Code 2/9/2026 - ADDED FOR DARK MODE FEATURE - END ============== */
 
+/*High Contrast Mode Compatibility added by Damon 3/4/2026 */
+@media (prefers-contrast: high) {
+  :root {
+    /* High contrast light mode */
+    --background: white !important;
+    --foreground: black !important;
+    --color-gray-light: #f0f0f0 !important;
+    --color-gray: #333333 !important;
+    --color-gray-dark: #000000 !important;
+    
+    /* Disable gradients in high contrast mode */
+    --gradient-light: none;
+    --gradient-cyan-yellow: none;
+    --gradient-orange-red: none;
+  }
+  
+  .dark {
+    /* High contrast dark mode */
+    --background: black !important;
+    --foreground: white !important;
+    --color-gray-light: #333333 !important;
+    --color-gray: #cccccc !important;
+    --color-gray-dark: #ffffff !important;
+  }
+  
+  /* Ensure cards have solid backgrounds with borders */
+  .card {
+    background: var(--background) !important;
+    border: 2px solid var(--foreground) !important;
+  }
+  
+  /* Use solid colors instead of gradients */
+  .bg-gradient-light,
+  .bg-gradient-primary,
+  .bg-gradient-accent,
+  [class*="bg-gradient-to-"] {
+    background: var(--foreground) !important;
+  }
+  
+  /* Fix text gradients in high contrast */
+  [class*="bg-clip-text"] {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: var(--foreground) !important;
+  }
+  
+  /* Ensure focus outlines are visible */
+  *:focus-visible {
+    outline: 2px solid var(--foreground) !important;
+    outline-offset: 2px;
+  }
+  
+  /* Adjust selection colors for high contrast */
+  ::selection,
+  ::-moz-selection {
+    background-color: var(--foreground) !important;
+    color: var(--background) !important;
+  }
+}
+/* ============== End High Contrast Mode Compatibility ============== */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
