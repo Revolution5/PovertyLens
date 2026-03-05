@@ -85,67 +85,70 @@
 }
 /* ============== Marisol Morales Code 2/9/2026 - ADDED FOR DARK MODE FEATURE - END ============== */
 
-/*High Contrast Mode Compatibility added by Damon 3/4/2026 */
-@media (prefers-contrast: high) {
-  :root {
-    /* High contrast light mode */
-    --background: white !important;
-    --foreground: black !important;
-    --color-gray-light: #f0f0f0 !important;
-    --color-gray: #333333 !important;
-    --color-gray-dark: #000000 !important;
-    
-    /* Disable gradients in high contrast mode */
-    --gradient-light: none;
-    --gradient-cyan-yellow: none;
-    --gradient-orange-red: none;
-  }
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Mode Variables ============== */
+/* High contrast mode overrides for both light and dark themes */
+.high-contrast {
+  /* Main Background Colors - Pure black/white */
+  --background: #ffffff;
+  --foreground: #000000;
   
-  .dark {
-    /* High contrast dark mode */
-    --background: black !important;
-    --foreground: white !important;
-    --color-gray-light: #333333 !important;
-    --color-gray: #cccccc !important;
-    --color-gray-dark: #ffffff !important;
-  }
+  /* High contrast brand colors */
+  --color-cyan: #0000ff;
+  --color-yellow: #ffff00;
+  --color-orange: #ff8000;
+  --color-red: #ff0000;
   
-  /* Ensure cards have solid backgrounds with borders */
-  .card {
-    background: var(--background) !important;
-    border: 2px solid var(--foreground) !important;
-  }
+  /* High contrast neutrals */
+  --color-gray-light: #ffffff;
+  --color-gray: #808080;
+  --color-gray-dark: #000000;
   
-  /* Use solid colors instead of gradients */
-  .bg-gradient-light,
-  .bg-gradient-primary,
-  .bg-gradient-accent,
-  [class*="bg-gradient-to-"] {
-    background: var(--foreground) !important;
-  }
+  /* High contrast accents */
+  --color-primary: #0000ff;
+  --color-primary-hover: #000080;
+  --color-secondary: #ff8000;
+  --color-secondary-hover: #ff0000;
+  --color-accent: #ff0000;
   
-  /* Fix text gradients in high contrast */
-  [class*="bg-clip-text"] {
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    background-clip: unset !important;
-    color: var(--foreground) !important;
-  }
+  /* Remove gradients in high contrast mode */
+  --gradient-light: #ffffff;
+  --gradient-cyan-yellow: #0000ff;
+  --gradient-orange-red: #ff0000;
   
-  /* Ensure focus outlines are visible */
-  *:focus-visible {
-    outline: 2px solid var(--foreground) !important;
-    outline-offset: 2px;
-  }
-  
-  /* Adjust selection colors for high contrast */
-  ::selection,
-  ::-moz-selection {
-    background-color: var(--foreground) !important;
-    color: var(--background) !important;
-  }
+  /* Stronger shadows for high contrast */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.8);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.8);
 }
-/* ============== End High Contrast Mode Compatibility ============== */
+
+/* High contrast mode for dark theme */
+.dark.high-contrast {
+  --background: #000000;
+  --foreground: #ffffff;
+  
+  /* Keep high contrast colors but ensure they work on black background */
+  --color-cyan: #00ffff;
+  --color-yellow: #ffff00;
+  --color-orange: #ff8000;
+  --color-red: #ff0000;
+  
+  --color-gray-light: #000000;
+  --color-gray: #808080;
+  --color-gray-dark: #ffffff;
+  
+  --color-primary: #00ffff;
+  --color-primary-hover: #00ffff;
+  --color-secondary: #ff8000;
+  --color-secondary-hover: #ff0000;
+  --color-accent: #ff0000;
+  
+  --gradient-light: #000000;
+  --gradient-cyan-yellow: #00ffff;
+  --gradient-orange-red: #ff0000;
+}
+/* ============== END HIGH CONTRAST MODE ============== */
 
 @theme inline {
   --color-background: var(--background);
@@ -166,10 +169,107 @@ body {
   /* ============== Marisol Morales Code 2/9/2026 -END ADDED TRANSITION ============== */
 }
 
-/* Smooth scrolling for the entire page */
-html {
-  scroll-behavior: smooth;
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Text Styles ============== */
+/* Ensure all heading and text elements use high contrast foreground colors */
+.high-contrast h1,
+.high-contrast h2,
+.high-contrast h3,
+.high-contrast h4,
+.high-contrast h5,
+.high-contrast h6,
+.high-contrast p,
+.high-contrast span,
+.high-contrast label,
+.high-contrast button,
+.high-contrast a,
+.high-contrast li,
+.high-contrast div,
+.high-contrast section,
+.high-contrast article {
+  color: #000000 !important;
 }
+
+.dark.high-contrast h1,
+.dark.high-contrast h2,
+.dark.high-contrast h3,
+.dark.high-contrast h4,
+.dark.high-contrast h5,
+.dark.high-contrast h6,
+.dark.high-contrast p,
+.dark.high-contrast span,
+.dark.high-contrast label,
+.dark.high-contrast button,
+.dark.high-contrast a,
+.dark.high-contrast li,
+.dark.high-contrast div,
+.dark.high-contrast section,
+.dark.high-contrast article {
+  color: #ffffff !important;
+}
+/* ============== END HIGH CONTRAST TEXT STYLES ============== */
+
+/* Exception for map legend text in high contrast mode */
+.high-contrast .map-legend,
+.high-contrast .map-legend * {
+  color: #222222 !important;
+}
+
+.dark.high-contrast .map-legend,
+.dark.high-contrast .map-legend * {
+  color: #222222 !important;
+}
+
+/* ============== END MAP LEGEND EXCEPTIONS ============== */
+
+/* High contrast label styling */
+.high-contrast-label {
+  color: #666666;
+  transition: color var(--transition-base);
+}
+
+.dark .high-contrast-label {
+  color: #a0a0a0;
+}
+
+.high-contrast .high-contrast-label {
+  color: #000000 !important;
+}
+
+.dark.high-contrast .high-contrast-label {
+  color: #ffffff !important;
+}
+
+/* ============== END HIGH CONTRAST LABEL STYLES ============== */
+
+/* ============== HIGH CONTRAST FORM ELEMENTS ============== */
+/* Ensure form inputs and textareas have high contrast text */
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+.high-contrast input::placeholder,
+.high-contrast textarea::placeholder {
+  color: #666666 !important;
+}
+
+.dark.high-contrast input,
+.dark.high-contrast textarea,
+.dark.high-contrast select {
+  color: #ffffff !important;
+  background-color: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+.dark.high-contrast input::placeholder,
+.dark.high-contrast textarea::placeholder {
+  color: #aaaaaa !important;
+}
+/* ============== END HIGH CONTRAST FORM ELEMENTS ============== */
 
 /* Selection colors */
 ::selection {
@@ -182,10 +282,57 @@ html {
   color: var(--foreground);
 }
 
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Selection Styles ============== */
+.high-contrast ::selection {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.high-contrast ::-moz-selection {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.dark.high-contrast ::selection {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.dark.high-contrast ::-moz-selection {
+  background-color: #ffffff;
+  color: #000000;
+}
+/* ============== END HIGH CONTRAST SELECTION STYLES ============== */
+
 /* Focus styles for accessibility */
 *:focus-visible {
   outline: 2px solid var(--color-orange);
   outline-offset: 2px;
+}
+
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Focus Styles ============== */
+.high-contrast *:focus-visible {
+  outline: 3px solid #000000;
+  outline-offset: 2px;
+}
+
+.dark.high-contrast *:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+/* ============== END HIGH CONTRAST FOCUS STYLES ============== */
+
+/* High contrast button hover states */
+.high-contrast button:hover:not([aria-label="Toggle high contrast mode"]) {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark.high-contrast button:hover:not([aria-label="Toggle high contrast mode"]) {
+  background-color: #ffffff !important;
+  color: #000000 !important;
 }
 
 /* Utility to hide scrollbars while keeping content scrollable */
@@ -217,6 +364,37 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary-hover);
 }
+
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Scrollbar Styles ============== */
+.high-contrast ::-webkit-scrollbar-track {
+  background: #ffffff;
+  border: 1px solid #000000;
+}
+
+.high-contrast ::-webkit-scrollbar-thumb {
+  background: #000000;
+  border: 1px solid #ffffff;
+}
+
+.high-contrast ::-webkit-scrollbar-thumb:hover {
+  background: #000000;
+}
+
+.dark.high-contrast ::-webkit-scrollbar-track {
+  background: #000000;
+  border: 1px solid #ffffff;
+}
+
+.dark.high-contrast ::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 1px solid #000000;
+}
+
+.dark.high-contrast ::-webkit-scrollbar-thumb:hover {
+  background: #ffffff;
+}
+/* ============== END HIGH CONTRAST SCROLLBAR STYLES ============== */
 
 /* Utility classes for quick access to brand colors */
 .bg-gradient-light {
@@ -262,6 +440,34 @@ button, a, input, select, textarea {
   transition: all var(--transition-base);
 }
 
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== Toggle Switch Outline Styles ============== */
+button[aria-label="Toggle high contrast mode"] {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
+
+.dark button[aria-label="Toggle high contrast mode"] {
+  outline: 2px solid #ededed;
+  outline-offset: 2px;
+}
+
+.high-contrast button[aria-label="Toggle high contrast mode"] {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.dark.high-contrast button[aria-label="Toggle high contrast mode"] {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  background-color: #ffffff !important;
+}
+
+.dark.high-contrast button[aria-label="Toggle high contrast mode"] > span {
+  background-color: #000000 !important;
+}
+/* ============== END TOGGLE SWITCH OUTLINE STYLES ============== */
+
 /* Card component utility */
 .card {
   background: white;
@@ -277,6 +483,32 @@ button, a, input, select, textarea {
   background: #1a1a1a;
 }
 /* ============== END DARK MODE CARD STYLES ============== */
+
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Card Styles ============== */
+.high-contrast .card {
+  background: #ffffff;
+  border: 2px solid #000000;
+}
+
+.dark.high-contrast .card {
+  background: #000000;
+  border: 2px solid #ffffff;
+}
+
+/* High contrast styles for dashboard cards (home page) */
+.high-contrast .dashboard-card {
+  border: 2px solid #000000;
+  outline: 2px solid #000000;
+  outline-offset: -4px;
+}
+
+.dark.high-contrast .dashboard-card {
+  border: 2px solid #ffffff;
+  outline: 2px solid #ffffff;
+  outline-offset: -4px;
+}
+/* ============== END HIGH CONTRAST CARD STYLES ============== */
 
 .card:hover {
   box-shadow: var(--shadow-xl);
@@ -298,6 +530,57 @@ button, a, input, select, textarea {
 .card-red {
   border-color: var(--color-red);
 }
+
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast Border Colors ============== */
+.high-contrast .card-cyan,
+.high-contrast .card-yellow,
+.high-contrast .card-orange,
+.high-contrast .card-red {
+  border-color: #000000 !important;
+}
+
+.dark.high-contrast .card-cyan,
+.dark.high-contrast .card-yellow,
+.dark.high-contrast .card-orange,
+.dark.high-contrast .card-red {
+  border-color: #ffffff !important;
+}
+
+/* Override all border colors in high contrast mode */
+.high-contrast * {
+  --border-color: #000000;
+}
+
+.high-contrast {
+  border-color: #000000 !important;
+}
+
+.high-contrast [class*="border-"] {
+  border-color: #000000 !important;
+}
+
+.dark.high-contrast * {
+  --border-color: #ffffff;
+}
+
+.dark.high-contrast {
+  border-color: #ffffff !important;
+}
+
+.dark.high-contrast [class*="border-"] {
+  border-color: #ffffff !important;
+}
+
+/* Outline styles for high contrast */
+.high-contrast *:not(:focus-visible) {
+  outline-color: #000000 !important;
+}
+
+.dark.high-contrast *:not(:focus-visible) {
+  outline-color: #ffffff !important;
+}
+/* ============== END HIGH CONTRAST BORDER COLORS ============== */
 
 /* Prevent flash before GSAP animation */
 .dashboard-header {
@@ -374,3 +657,16 @@ input[type="text"]:focus {
 svg {
   flex-shrink: 0;
 }
+
+/* High contrast mode added by Damon 3/4/2026 */
+/* ============== High Contrast SVG/Icon Styles ============== */
+.high-contrast svg {
+  stroke: #000000 !important;
+  color: #000000 !important;
+}
+
+.dark.high-contrast svg {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+/* ============== END HIGH CONTRAST SVG/ICON STYLES ============== */
