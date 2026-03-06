@@ -34,7 +34,7 @@ const tourSteps: TourStep[] = [
     target: '[data-tour="play-freeRice"]',
     title: 'Combat Hunger with FreeRice',
     description: 'Play FreeRice to help combat hunger around the world! For every correct answer, FreeRice donates 10 grains of rice to those in need. It\'s a fun and educational way to make a real difference in the fight against global hunger. We encourage you to give it a try and see how much you can contribute! We also have a leaderboard to track your progress and see how you stack up against other users. Let\'s work together to make a positive impact on the world!',
-    position: 'bottom'
+    position: 'right'
   },
   {
     target: '[data-tour="donate-now"]',
@@ -130,7 +130,7 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
             break;
           case 'left':
             tooltipTop = rect.top + rect.height / 2; // center-aligned vertically
-            tooltipLeft = rect.left - tooltipWidth - 8; // [Your Name] 3/6/26 - reduced from 20 to 8 to sit closer to the card
+            tooltipLeft = rect.left - tooltipWidth - 20; 
             break;
         }
 
