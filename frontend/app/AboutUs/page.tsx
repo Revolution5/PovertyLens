@@ -31,11 +31,12 @@ export default function AboutUs() {
             {/* Hero Section */}
             {/* ============== Marisol Morales Code 1/11/2026 - Dark Mode Hero Section ============== */}
             <section
-                className="relative"
+                className="relative" // Edited by Christella - 02/17/2026
                 style={{
-                    padding: '40px 80px 32px',
+                    padding: '40px 80px 32px', // Edited by Christella - 02/17/2026
                 }}
                 >
+                {/* Christella Taguicana Edit - fixed header formatting - 02/17/2026*/}
                 <div style={{ paddingLeft: 24, paddingRight: 24 }}>
                     <header style={{ marginBottom: 0 }}>
                     <h1
@@ -46,9 +47,10 @@ export default function AboutUs() {
                         textAlign: 'left',
                         }}
                     >
+                    {/* End of Christella Taguicana Edit - fixed header formatting - 02/17/2026*/}
                         About Us
                     </h1>
-
+                    {/* Christella Taguicana Edit - fixed header formatting - 02/17/2026*/}
                     <div
                         style={{
                         height: 4,
@@ -59,6 +61,8 @@ export default function AboutUs() {
                         }}
                     />
                     </header>
+                    {/* End of Christella Taguicana Edit - fixed header formatting - 02/17/2026*/}
+
                 </div>
                 </section>
 
