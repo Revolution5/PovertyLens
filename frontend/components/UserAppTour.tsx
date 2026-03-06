@@ -3,6 +3,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { describe } from 'node:test';
 
 interface TourStep {
   target: string;
@@ -41,6 +42,12 @@ const tourSteps: TourStep[] = [
     title: 'Want to Make a Difference?',
     description: 'Consider making a donation to various organizations that are working to fight poverty and hunger around the world. Your support can help provide essential resources and support to those in need. Every contribution, no matter how small, can make a significant impact in the lives of those affected by poverty. ',
     position: 'left'
+  },
+  {
+    target: '[data-tour="pledge-wall"]',
+    title: 'Take the Pledge',
+    description: 'Take the pledge to help fight poverty and hunger around the world. Your commitment can make a real difference in the lives of those affected by these issues. ',
+    position: 'top'
   },
   {
     target: '[data-tour="bottom-cards"]',
