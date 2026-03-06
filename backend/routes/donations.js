@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../database');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Added by Christella - 03/03/2026
 
 // Log a donation (no payments yet - just saves to MongoDB)
 router.post('/', async (req, res) => {
@@ -83,5 +84,28 @@ router.get('/', async (req, res) => {
   }
 });
 // End of addition by Christella - 02/04/2026
+
+// Addition by Christella - 03/03/2026
+router.post('/create-payment-intent', async (req, res) => {
+  try {
+    const {amount, name, email, isMonthly} = req.body;
+    
+    const parsedAmount = Math.round(Number(amount) * 100);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid amount' });
+    }
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: parsedAmount,
+      currency: 'usd',
+      metadata: { name, email, isMonthly: String(isMonthly) },
+    });
+
+    // Checks status of payment completion
+    res.json({success: true, clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.error('Stripe error:', err);
+    res.status(500).json({success: false, message: 'Payment Setup Failed'});
+  }
+})
 
 module.exports = router;

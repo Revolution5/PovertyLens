@@ -6,7 +6,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FileText, BookOpen, Gamepad2, Heart, Compass } from 'lucide-react';
+import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart
 
 // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
@@ -127,6 +127,8 @@ export default function Home() {
     const [favoritedResources, setFavoritedResources] = useState<Array<{name: string, url: string}>>([]);
     // ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
 
+    const [storyCount, setStoryCount] = useState<number>(0); // Added by Christella to show user how many stories they uplodated - 03/05/2026
+
     // ============== FreeRice Total Grains State - Added by Marisol 2/3/2026 ==============
     const [totalGrains, setTotalGrains] = useState<number>(0);
     const [loadingGrains, setLoadingGrains] = useState(true);
@@ -175,6 +177,17 @@ export default function Home() {
             }
             // ============== Marisol Modified code for fav resources 2/5/2026 End ==============
             
+            // ==== Christella modified code for story count display - 03/05/2026 ====
+            // Fetch story count
+            fetch(`http://localhost:4000/api/stories?userEmail=${encodeURIComponent(userEmail)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.stories)) {
+                    setStoryCount(data.stories.length);
+                    }
+                })
+                .catch(err => console.error('Error fetching story count:', err));
+            // ==== End of addition by Christella - 03/05/2026 ====
             // ============== Fetch FreeRice Total Grains - Added by Marisol 2/3/2026 ==============
             fetchUserTotalGrains(userEmail);
             // ============== End Fetch FreeRice Total Grains ==============
@@ -360,6 +373,19 @@ export default function Home() {
                                 tourId={card.tourId} // Added by Marisol 2/25/2026 - passes tourId so each card gets its data-tour attribute for UserAppTour
                             />
                         ))}
+
+                        {/* Pledge Wall - spans full width - added by Christella - 03/06/2026 */}
+                        <div className="md:col-span-2">
+                            <ActionCard
+                                title="Pledge Wall"
+                                description="Make a public commitment to take action against poverty and see what others are pledging."
+                                icon={HandHeart}
+                                bgColor="#E5F8FF"
+                                href="/pledgewalluser"
+                            />
+                        </div>
+                        {/* End of Pledge Wall - spans full width addition by Christella - 03/06/2026 */}
+
                     </div>
 
                     {/* Quick Stats Section */}
@@ -383,7 +409,7 @@ export default function Home() {
                                         className="text-3xl font-semibold"
                                         style={{ color: 'var(--foreground)' }}
                                     >
-                                        24
+                                        {storyCount}
                                     </p>
                                 </div>
                                 <div className="w-12 h-12 rounded-full bg-[#8CE4FF]/20 flex items-center justify-center">
