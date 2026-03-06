@@ -6,7 +6,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FileText, BookOpen, Gamepad2, Heart, Compass } from 'lucide-react';
+import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart
 
 // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
@@ -304,7 +304,7 @@ export default function Home() {
             icon: Heart,
             bgColor: "#FFE5E5",
             href: "/donationspages"
-        }
+        },
     ];
 
     if (isLoggedIn) {
@@ -339,6 +339,19 @@ export default function Home() {
                                 href={card.href}
                             />
                         ))}
+
+                        {/* Pledge Wall - spans full width - added by Christella - 03/06/2026 */}
+                        <div className="md:col-span-2">
+                            <ActionCard
+                                title="Pledge Wall"
+                                description="Make a public commitment to take action against poverty and see what others are pledging."
+                                icon={HandHeart}
+                                bgColor="#E5F8FF"
+                                href="/pledgewalluser"
+                            />
+                        </div>
+                        {/* End of Pledge Wall - spans full width addition by Christella - 03/06/2026 */}
+
                     </div>
 
                     {/* Quick Stats Section */}
