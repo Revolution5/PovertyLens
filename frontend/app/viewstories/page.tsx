@@ -203,16 +203,20 @@ export default function ViewStoriesPage() {
     };
 
     // Handles archiving the story and ensures that it is updated in the database
-    const handleArchive = async () => {
-        if (!selectedStory) return;
+    // Modified by Christella - 03/05/2026 - now accepts storyId directly to avoid
+    // reading stale selectedIndex state when called from StoryCard
+    const handleArchive = async (storyId?: string) => {
+        // Modified by Christella - 03/05/2026 - find target story by ID instead of relying on selectedIndex
+        const targetStory = storyId ? stories.find(s => s._id === storyId) : selectedStory;
+        if (!targetStory) return;
 
-        const newArchived = !selectedStory.archived;
+        const newArchived = !targetStory.archived; // Modified by Christella - 03/05/2026
 
         const confirmed = window.confirm(newArchived ?
             'Are you sure you want to archive this story?\nYou will still be able to access it later on.' : 'Are you sure you want to unarchive this story?');
         if (!confirmed) return;
         try {
-            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}/archive`, {
+            const res = await fetch(`${BACKEND_URL}/api/stories/${targetStory._id}/archive`, { // Modified by Christella - 03/05/2026
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ archived: newArchived }),
@@ -224,8 +228,11 @@ export default function ViewStoriesPage() {
                 return;
             }
 
-            const updated = [...stories];
-            updated[selectedIndex] = { ...selectedStory, archived: newArchived };
+            // Modified by Christella - 03/05/2026 - use map instead of index splice so the
+            // correct story is always updated regardless of selectedIndex value
+            const updated = stories.map(s =>
+                s._id === targetStory._id ? { ...s, archived: newArchived } : s
+            );
             setStories(updated);
             setEditing(false);
             setMessage(newArchived ? 'Story archived successfully.' : 'Story unarchived successfully.');
@@ -244,7 +251,8 @@ export default function ViewStoriesPage() {
         if (!confirmed) return;
 
         try {
-            const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}`, {
+            // Modified by Christella - 03/05/2026 - use targetStory._id instead of selectedStory._id
+            const res = await fetch(`${BACKEND_URL}/api/stories/${targetStory._id}`, {
                 method: 'DELETE',
             });
             const data = await res.json();
@@ -559,10 +567,9 @@ export default function ViewStoriesPage() {
                                                             setSelectedIndex(actualIndex);
                                                             startEdit();
                                                         }}
-                                                        onArchive={() => {
-                                                            setSelectedIndex(actualIndex);
-                                                            handleArchive();
-                                                        }}
+                                                        // Modified by Christella - 03/05/2026 - pass story ID directly
+                                                        // so handleArchive doesn't read stale selectedIndex state
+                                                        onArchive={() => handleArchive(story._id)}
                                                         onDelete={() => {
                                                             handleDelete(story._id);
                                                         }}
