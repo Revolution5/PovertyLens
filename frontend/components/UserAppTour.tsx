@@ -258,9 +258,7 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
           // Transform offsets the tooltip so it is centered or edge-aligned relative to its anchor point
           transform: step.position === 'bottom' || step.position === 'top'
             ? 'translateX(-50%)'          // center horizontally over/under element
-            : step.position === 'right'
-            ? 'translateY(-50%)'          // center vertically beside element (right)
-            : 'translate(-100%, -50%)'    // center vertically beside element (left)
+            : 'translateY(-50%)'          // center vertically beside element (both left and right)
         }}
       >
         {/* Close button */}
