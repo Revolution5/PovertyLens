@@ -6,48 +6,61 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
+ /* Modified for High contrast mode added by Damon 3/4/2026 */
+type Contrast = 'normal' | 'high';
 
 interface ThemeContextType {
   theme: Theme;
+   /* Modified for High contrast mode added by Damon 3/4/2026 */
+  contrast: Contrast;
   toggleTheme: () => void;
+   /* Modified for High contrast mode added by Damon 3/4/2026 */
+  toggleContrast: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
+   /* Modified for High contrast mode added by Damon 3/4/2026 */
+  const [contrast, setContrast] = useState<Contrast>('normal');
 
-  // Load theme from localStorage on mount
+ 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
+     /* Modified for High contrast mode added by Damon 3/4/2026 */
+    const savedContrast = localStorage.getItem('contrast') as Contrast;
+    
     if (savedTheme) {
       setTheme(savedTheme);
-      document.documentElement.classList.add(savedTheme);
     } else {
-      // Optional: detect system preference
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = prefersDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      document.documentElement.classList.add(initialTheme);
+     /* Modified for High contrast mode added by Damon 3/4/2026 */
+      setTheme(prefersDark ? 'dark' : 'light');
+    }
+    
+    if (savedContrast) {
+      setContrast(savedContrast);
     }
   }, []);
 
-  // Apply theme to document when it changes
   useEffect(() => {
     const root = document.documentElement;
     
-    // Remove both classes first
-    root.classList.remove('light', 'dark');
+    // Remove all theme and contrast classes
+    /* Modified for High contrast mode added by Damon 3/4/2026 */
+    root.classList.remove('light', 'dark', 'normal-contrast', 'high-contrast');
     
-    // Add the current theme class
-    root.classList.add(theme);
+    // Add the current theme and contrast classes
+    root.classList.add(theme, `${contrast}-contrast`);
     
     // Save to localStorage
     localStorage.setItem('theme', theme);
+    localStorage.setItem('contrast', contrast);
     
-    // Debug log to verify theme is changing
-    console.log('Theme changed to:', theme);
-  }, [theme]);
+    /* Modified for High contrast mode added by Damon 3/4/2026 */
+    console.log('Theme changed to:', theme, 'Contrast:', contrast);
+  }, [theme, contrast]);
 
   const toggleTheme = () => {
     setTheme(prev => {
@@ -57,8 +70,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+   /* Modified for High contrast mode added by Damon 3/4/2026 */
+  const toggleContrast = () => {
+    setContrast(prev => {
+      const newContrast = prev === 'normal' ? 'high' : 'normal';
+      console.log('Toggling contrast from', prev, 'to', newContrast);
+      return newContrast;
+    });
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+     /* Modified for High contrast mode added by Damon 3/4/2026 */
+    <ThemeContext.Provider value={{ theme, contrast, toggleTheme, toggleContrast }}>
       {children}
     </ThemeContext.Provider>
   );

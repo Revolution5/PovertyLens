@@ -6,6 +6,8 @@ import StatisticsMapClient from "../../components/StatisticsMapClient";
 import MapFilters, { RateType } from "../../components/mapfilters"; // Added by Reymes 3/2/26
 // Added by Reymes 3/2/26 - import rate data files for filter support
 import { NATIONAL_POVERTY_RATES, getNationalPovertyLine } from "../../data/nationalRates";
+//Added by Damon 3/6/2026
+import PovertyStorySearch from "../../components/PovertyStorySearch";
 
 // Added by Christella Taguicana - 02/03/2026
 /* Typees relative to Statistics */
@@ -1139,8 +1141,25 @@ useEffect(() => {
           className="rounded-lg shadow-md p-6"
           style={{ backgroundColor: 'var(--background)' }}
         >
-          {/* Country-specific stories (always shown at top) */}
-          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+        {/* Added by Damon 3/6/2026 */}
+          {/* Poverty-rate search section - extracted to separate component */}
+          <PovertyStorySearch
+            povertyThreshold={povertyThreshold}
+            setPovertyThreshold={setPovertyThreshold}
+            thresholdLoading={thresholdLoading}
+            thresholdError={thresholdError}
+            filteredStories={filteredStories}
+            filteredPage={filteredPage}
+            setFilteredPage={setFilteredPage}
+            handleThresholdSearch={handleThresholdSearch}
+            userProfilesCache={userProfilesCache}
+            setFilteredStories={setFilteredStories}
+            setThresholdError={setThresholdError}
+            StoryCard={StoryCard}
+          />
+
+          {/* Country-specific stories (always shown below search) */}
+          <h3 className="text-xl font-semibold mb-3 mt-6" style={{ color: 'var(--foreground)' }}>
             {selectedCountry ? `Stories from ${countryNames[selectedCountry] ?? selectedCountry}` : "Stories"}
           </h3>
 
@@ -1205,114 +1224,6 @@ useEffect(() => {
                     <button
                       onClick={() => setStoriesPage(p => Math.min(totalPages, p + 1))}
                       disabled={storiesPage === totalPages}
-                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
-                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-
-          {/* Poverty-rate search section (always shown below) */}
-          <hr className="my-6" />
-
-          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-            Story Search Results
-          </h3>
-
-          <div className="mb-4">
-            <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
-              Show stories from countries with poverty rate greater than or equal to:
-            </label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={povertyThreshold}
-                onChange={(e) => setPovertyThreshold(e.target.value)}
-                placeholder="e.g., 10 (percent)"
-                className="border rounded p-2 w-36"
-                style={{
-                  backgroundColor: 'var(--background)',
-                  borderColor: 'var(--color-gray-light)',
-                  color: 'var(--foreground)'
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={handleThresholdSearch}
-                disabled={thresholdLoading}
-                className="px-3 py-2 rounded bg-[#FFA239] text-white font-semibold"
-              >
-                {thresholdLoading ? 'Searching…' : 'Find stories'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setPovertyThreshold(''); setFilteredStories([]); setThresholdError(''); }}
-                className="px-3 py-2 rounded border"
-              >
-                Clear
-              </button>
-            </div>
-
-            {thresholdError && <div className="text-sm text-red-600 mt-2">{thresholdError}</div>}
-          </div>
-
-{/* Added/modified by Damon 2/20/2026 */}
-          {thresholdLoading && <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Searching stories for matching countries...</p>}
-          {filteredStories.length === 0 && !thresholdLoading && !thresholdError && (
-            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories found for matched countries.</p>
-          )}
-
-{/* Added/modified by Damon 2/20/2026 */}
-          {/* Paginated filtered stories - Added by Christella - 03/03/2026 */}
-          {(() => {
-            const totalPages = Math.ceil(filteredStories.length / STORIES_PER_PAGE);
-            const paginated = filteredStories.slice((filteredPage - 1) * STORIES_PER_PAGE, filteredPage * STORIES_PER_PAGE);
-            return (
-              <>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {paginated.map((story) => (
-                    <StoryCard
-                      key={story._id}
-                      story={story}
-                      userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-                    />
-                  ))}
-                </div>
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-6">
-                    <button
-                      onClick={() => setFilteredPage(p => Math.max(1, p - 1))}
-                      disabled={filteredPage === 1}
-                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
-                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
-                    >
-                      Previous
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        onClick={() => setFilteredPage(page)}
-                        className="px-4 py-2 rounded-lg border text-sm font-medium"
-                        style={{
-                          borderColor: filteredPage === page ? '#FFA239' : 'var(--color-gray-light)',
-                          backgroundColor: filteredPage === page ? '#FFA239' : 'var(--background)',
-                          color: filteredPage === page ? 'white' : 'var(--foreground)'
-                        }}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setFilteredPage(p => Math.min(totalPages, p + 1))}
-                      disabled={filteredPage === totalPages}
                       className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
                       style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
                     >
