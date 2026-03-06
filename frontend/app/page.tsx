@@ -6,15 +6,19 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FileText, BookOpen, Gamepad2, Heart, Compass } from 'lucide-react';
+import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart
 
 // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
 // ============== Marisol Modified code for Fav Resources 2/5/2026 End ==============
 
 // ============== App Tour Component - Added by Marisol 2/9/2026 ==============
-import { AppTour } from '@/components/AppTour';
+import { AppTour } from '@/components/AppTour'; // Tour for non-logged-in users on the public landing page
 // ============== End App Tour Import ==============
+
+// ============== User App Tour Component - Added by Marisol 2/25/2026 ==============
+import { UserAppTour } from '@/components/UserAppTour'; // Separate tour specifically for logged-in users on the dashboard - kept separate from AppTour intentionally
+// ============== End User App Tour Import ==============
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000' // Added by Marisol for easier backend URL management 2/3/2025
 
@@ -25,9 +29,10 @@ interface ActionCardProps {
   icon: any;
   bgColor: string;
   href: string;
+  tourId?: string; // Added by Marisol 2/25/2026 - optional prop for data-tour attribute, used by UserAppTour to highlight this card
 }
 
-function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCardProps) {
+function ActionCard({ title, description, icon: Icon, bgColor, href, tourId }: ActionCardProps) {
   // Derive a darker accent color from the light background
   const accentColor = bgColor === "#E5F8FF" ? "#8CE4FF" 
     : bgColor === "#FFFCEB" ? "#F5D547"
@@ -62,7 +67,7 @@ function ActionCard({ title, description, icon: Icon, bgColor, href }: ActionCar
     <Link
       href={href}
       className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left w-full block"
-
+      data-tour={tourId} // Added by Marisol 2/25/2026 - applies the data-tour attribute so UserAppTour can locate and highlight this card
       style={{ 
         backgroundColor: isDark ? darkBgColor : bgColor, //  ============== Marisol Morales Code 1/9/2026 - Dark Mode Support ============== //
         borderWidth: '1px',
@@ -130,8 +135,12 @@ export default function Home() {
     // ============== End FreeRice Total Grains State ==============
 
     // ============== App Tour State - Added by Marisol 2/9/2026 ==============
-    const [isTourOpen, setIsTourOpen] = useState(false);
+    const [isTourOpen, setIsTourOpen] = useState(false); // controls the public AppTour
     // ============== End App Tour State ==============
+
+    // ============== User App Tour State - Added by Marisol 2/25/2026 ==============
+    const [isUserTourOpen, setIsUserTourOpen] = useState(false); // controls the logged-in UserAppTour - kept separate from isTourOpen intentionally
+    // ============== End User App Tour State ==============
 
     // Check if user is logged in when page loads
     useEffect(() => {
@@ -282,28 +291,32 @@ export default function Home() {
             description: "Share your experience or insights about poverty and help build awareness in the community",
             icon: FileText,
             bgColor: "#E5F8FF",
-            href: "/uploadstory"
+            href: "/uploadstory",
+            tourId: "upload-story" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 2
         },
         {
             title: "View Stories",
             description: "Browse your contributions and explore stories shared by others in the community",
             icon: BookOpen,
             bgColor: "#FFFCEB",
-            href: "/viewstories"
+            href: "/viewstories",
+            tourId: "view-stories" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 3
         },
         {
             title: "Play FreeRice",
             description: "Answer trivia & donate rice to help fight hunger. Every correct answer makes a difference!",
             icon: Gamepad2,
             bgColor: "#FFE8D6",
-            href: "/freerice"
+            href: "/freerice",
+            tourId: "play-freeRice" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 4
         },
         {
             title: "Donate Now",
             description: "Discover and contribute to verified causes working to alleviate poverty worldwide",
             icon: Heart,
             bgColor: "#FFE5E5",
-            href: "/donationspages"
+            href: "/donationspages",
+            tourId: "donate-now" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 5
         }
     ];
 
@@ -313,19 +326,39 @@ export default function Home() {
             <div className="min-h-screen" style={{ background: 'var(--background)' }}>
                 <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     {/* Welcome Section */}
-                    <div className="mb-12 dashboard-header">
-                        <h1 
-                            className="text-4xl sm:text-5xl font-bold mb-3"
-                            style={{ color: 'var(--foreground)' }}
-                        >
-                            Welcome back, <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">{username}</span>
-                        </h1>
-                        <p 
-                            className="text-lg"
-                            style={{ color: 'var(--color-gray)' }}
-                        >
-                            Here's your dashboard
-                        </p>
+                    {/* ============== data-tour added by Marisol 2/25/2026 - targets step 1 of UserAppTour ============== */}
+                    <div className="mb-12 dashboard-header" data-tour="welcome-back">
+                        {/* flex row added by Marisol 2/25/2026 - keeps heading and tour button side by side */}
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <h1 
+                                    className="text-4xl sm:text-5xl font-bold mb-3"
+                                    style={{ color: 'var(--foreground)' }}
+                                >
+                                    Welcome back, <span className="bg-gradient-to-r from-[#FFA239] to-[#FF5656] bg-clip-text text-transparent">{username}</span>
+                                </h1>
+                                <p 
+                                    className="text-lg"
+                                    style={{ color: 'var(--color-gray)' }}
+                                >
+                                    Here's your dashboard
+                                </p>
+                            </div>
+                            {/* ============== User App Tour Button - Added by Marisol 2/25/2026 ============== */}
+                            {/* Separate from the public AppTour button - this one only appears for logged-in users */}
+                            <button
+                                onClick={() => setIsUserTourOpen(true)} // opens UserAppTour, not AppTour
+                                className="group px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-3"
+                                style={{
+                                    background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
+                                    color: 'white'
+                                }}
+                            >
+                                <Compass className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
+                                <span>Take the Tour</span>
+                            </button>
+                            {/* ============== End User App Tour Button ============== */}
+                        </div>
                     </div>
                     {/* Action Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
@@ -337,12 +370,27 @@ export default function Home() {
                                 icon={card.icon}
                                 bgColor={card.bgColor}
                                 href={card.href}
+                                tourId={card.tourId} // Added by Marisol 2/25/2026 - passes tourId so each card gets its data-tour attribute for UserAppTour
                             />
                         ))}
+
+                        {/* Pledge Wall - spans full width - added by Christella - 03/06/2026 */}
+                        <div className="md:col-span-2">
+                            <ActionCard
+                                title="Pledge Wall"
+                                description="Make a public commitment to take action against poverty and see what others are pledging."
+                                icon={HandHeart}
+                                bgColor="#E5F8FF"
+                                href="/pledgewalluser"
+                                tourId="pledge-wall" // Added by Marisol 3/5/2026 - matches data-tour target in UserAppTour step 7
+                            />
+                        </div>
+                        {/* End of Pledge Wall - spans full width addition by Christella - 03/06/2026 */}
+
                     </div>
 
                     {/* Quick Stats Section */}
-                    <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6" data-tour="bottom-cards"> {/* ============== data-tour added by Marisol 2/25/2026 - targets step 6 of UserAppTour ============== */}
                         <div 
                             className="rounded-xl p-6 shadow-sm transition-colors"
                             style={{
@@ -465,6 +513,11 @@ export default function Home() {
                         {/* ============== Marisol Modified for fav resources code 2/5/2026 End ==============*/}
                     </div>
                 </main>
+
+                {/* ============== User App Tour Component - Added by Marisol 2/25/2026 ============== */}
+                {/* Kept completely separate from <AppTour> which is only rendered in the non-logged-in return below */}
+                <UserAppTour isOpen={isUserTourOpen} onClose={() => setIsUserTourOpen(false)} />
+                {/* ============== End User App Tour Component ============== */}
             </div>
         )
     }

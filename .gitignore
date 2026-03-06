@@ -19,6 +19,7 @@ frontend/build/
 frontend/dist/
 frontend/.next/
 frontend/out/
+frontend/.env.local
 
 # --- Global / OS / Editor ---
 .vscode/
