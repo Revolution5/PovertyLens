@@ -40,7 +40,7 @@ const tourSteps: TourStep[] = [
     target: '[data-tour="donate-now"]',
     title: 'Want to Make a Difference?',
     description: 'Consider making a donation to various organizations that are working to fight poverty and hunger around the world. Your support can help provide essential resources and support to those in need. Every contribution, no matter how small, can make a significant impact in the lives of those affected by poverty. ',
-    position: 'bottom'
+    position: 'left'
   },
   {
     target: '[data-tour="bottom-cards"]',
@@ -130,7 +130,7 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
             break;
           case 'left':
             tooltipTop = rect.top + rect.height / 2; // center-aligned vertically
-            tooltipLeft = rect.left - tooltipWidth - 8; // marisol morales 3/6/26 - reduced from 20 to 8 to sit closer to the card
+            tooltipLeft = rect.left - tooltipWidth - 8; // [Your Name] 3/6/26 - reduced from 20 to 8 to sit closer to the card
             break;
         }
 
@@ -148,11 +148,11 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
             tooltipLeft = rect.left - tooltipWidth - 20;
           }
         } else if (step.position === 'left') {
-          // marisol morales 3/6/26 - If tooltip would be cut off on the left, flip to right side of the card
+          // [Your Name] 3/6/26 - If tooltip would be cut off on the left, flip to right side of the card
           if (tooltipLeft < margin) {
             tooltipLeft = rect.right + 20;
           }
-          // marisol morales 3/6/26 - Clamp so it never goes beyond the right edge on any screen width
+          // [Your Name] 3/6/26 - Clamp so it never goes beyond the right edge on any screen width
           if (tooltipLeft + tooltipWidth > viewportWidth - margin) {
             tooltipLeft = viewportWidth - tooltipWidth - margin;
           }
