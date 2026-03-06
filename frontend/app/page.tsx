@@ -382,6 +382,7 @@ export default function Home() {
                                 icon={HandHeart}
                                 bgColor="#E5F8FF"
                                 href="/pledgewalluser"
+                                tourId="pledge-wall" // Added by Marisol 3/5/2026 - matches data-tour target in UserAppTour step 7
                             />
                         </div>
                         {/* End of Pledge Wall - spans full width addition by Christella - 03/06/2026 */}

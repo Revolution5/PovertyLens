@@ -155,11 +155,11 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
             tooltipLeft = rect.left - tooltipWidth - 20;
           }
         } else if (step.position === 'left') {
-          // [Your Name] 3/6/26 - If tooltip would be cut off on the left, flip to right side of the card
+          
           if (tooltipLeft < margin) {
             tooltipLeft = rect.right + 20;
           }
-          // [Your Name] 3/6/26 - Clamp so it never goes beyond the right edge on any screen width
+      
           if (tooltipLeft + tooltipWidth > viewportWidth - margin) {
             tooltipLeft = viewportWidth - tooltipWidth - margin;
           }
@@ -215,6 +215,7 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
     if (currentStep < tourSteps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      setCurrentStep(0); // Changed by Marisol 3-5
       onClose();
     }
   };
@@ -234,7 +235,7 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
       <div
         className="fixed inset-0 z-[9998]"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-        onClick={onClose}
+        onClick={() => { setCurrentStep(0); onClose(); }} // Changed by Marisol 3-5
       />
 
       {/* Highlight cutout - sits above the overlay, outlines the target element with an orange ring */}
@@ -270,7 +271,7 @@ export function UserAppTour({ isOpen, onClose }: UserAppTourProps) {
       >
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={() => { setCurrentStep(0); onClose(); }} // Changed by Marisol 3-5
           className="absolute top-3 right-3 transition-colors hover:scale-110"
           style={{ color: 'var(--color-gray)' }}
         >

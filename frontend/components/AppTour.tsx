@@ -187,6 +187,7 @@ export function AppTour({ isOpen, onClose }: AppTourProps) {
     if (currentStep < tourSteps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
+      setCurrentStep(0); // Changed by Marisol 3-5
       onClose();
     }
   };
@@ -205,7 +206,7 @@ export function AppTour({ isOpen, onClose }: AppTourProps) {
       <div 
         className="fixed inset-0 z-[9998]" 
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} 
-        onClick={onClose}
+        onClick={() => { setCurrentStep(0); onClose(); }} // Changed by Marisol 3-5
       />
       
       {/* Highlight cutout */}
@@ -241,7 +242,7 @@ export function AppTour({ isOpen, onClose }: AppTourProps) {
         }}
       >
         <button
-          onClick={onClose}
+          onClick={() => { setCurrentStep(0); onClose(); }} // Changed by Marisol 3-5
           className="absolute top-3 right-3 transition-colors hover:scale-110"
           style={{ color: 'var(--color-gray)' }}
         >
