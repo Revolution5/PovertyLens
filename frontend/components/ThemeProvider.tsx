@@ -6,41 +6,37 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
- /* Modified for High contrast mode added by Damon 3/4/2026 */
-type Contrast = 'normal' | 'high';
+type Contrast = 'normal' | 'high'; //Modified for High contrast mode added by Damon 3/4/2026
 
 interface ThemeContextType {
   theme: Theme;
-   /* Modified for High contrast mode added by Damon 3/4/2026 */
-  contrast: Contrast;
+  contrast: Contrast; //Modified for High contrast mode added by Damon 3/4/2026
   toggleTheme: () => void;
-   /* Modified for High contrast mode added by Damon 3/4/2026 */
-  toggleContrast: () => void;
+  toggleContrast: () => void; //Modified for High contrast mode added by Damon 3/4/2026
+
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
-   /* Modified for High contrast mode added by Damon 3/4/2026 */
-  const [contrast, setContrast] = useState<Contrast>('normal');
+  const [contrast, setContrast] = useState<Contrast>('normal'); //Modified for High contrast mode added by Damon 3/4/2026
 
- 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
-     /* Modified for High contrast mode added by Damon 3/4/2026 */
-    const savedContrast = localStorage.getItem('contrast') as Contrast;
+    const savedContrast = localStorage.getItem('contrast') as Contrast; //Modified for High contrast mode added by Damon 3/4/2026
     
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-     /* Modified for High contrast mode added by Damon 3/4/2026 */
+     //START Modified for High contrast mode added by Damon 3/4/2026
       setTheme(prefersDark ? 'dark' : 'light');
     }
     
     if (savedContrast) {
       setContrast(savedContrast);
+      //END Modified for High contrast mode added by Damon 3/4/2026
     }
   }, []);
 
@@ -48,15 +44,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     
     // Remove all theme and contrast classes
-    /* Modified for High contrast mode added by Damon 3/4/2026 */
-    root.classList.remove('light', 'dark', 'normal-contrast', 'high-contrast');
+    root.classList.remove('light', 'dark', 'normal-contrast', 'high-contrast'); //Modified for High contrast mode added by Damon 3/4/2026
     
     // Add the current theme and contrast classes
-    root.classList.add(theme, `${contrast}-contrast`);
+    root.classList.add(theme, `${contrast}-contrast`); //Modified for High contrast mode added by Damon 3/4/2026
     
     // Save to localStorage
     localStorage.setItem('theme', theme);
-    localStorage.setItem('contrast', contrast);
+    localStorage.setItem('contrast', contrast); //Modified for High contrast mode added by Damon 3/4/2026
     
     /* Modified for High contrast mode added by Damon 3/4/2026 */
     console.log('Theme changed to:', theme, 'Contrast:', contrast);
@@ -70,7 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-   /* Modified for High contrast mode added by Damon 3/4/2026 */
+   //START Modified for High contrast mode added by Damon 3/4/2026
   const toggleContrast = () => {
     setContrast(prev => {
       const newContrast = prev === 'normal' ? 'high' : 'normal';
@@ -78,10 +73,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return newContrast;
     });
   };
+  //END Modified for High contrast mode added by Damon 3/4/2026
 
   return (
-     /* Modified for High contrast mode added by Damon 3/4/2026 */
-    <ThemeContext.Provider value={{ theme, contrast, toggleTheme, toggleContrast }}>
+    <ThemeContext.Provider value={{ theme, contrast, toggleTheme, toggleContrast }}> {/* Modified for High contrast mode added by Damon 3/4/2026 */}
       {children}
     </ThemeContext.Provider>
   );
