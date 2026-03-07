@@ -5,9 +5,6 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ChevronDown, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
-// ============== Marisol Morales Code 1/9/2026 - Import ThemeToggle for dark mode ============== //
-import { ThemeToggle } from './ThemeToggle';
-// ============== End Import ============== //
 
 export default function Navbar() {
     // Hooks initialization
@@ -111,9 +108,6 @@ export default function Navbar() {
                                 height={150}
                                 className="object-contain"/>
                         </Link>
-                        {/* ============== Marisol Morales Code 1/9/2026 - Theme Toggle Next to Logo ============== */}
-                        <ThemeToggle />
-                        {/* ============== End Theme Toggle ============== */}
                     </div>
 
                     {/* Desktop Navigation Links - Absolutely Centered */}
@@ -420,13 +414,6 @@ export default function Navbar() {
                                 About Us
                             </Link>
 
-                            {/* ============== Marisol Morales Code 2/9/2026 - Mobile Theme Toggle ============== */}
-                            {/* Theme Toggle for Mobile */}
-                            <div className="px-2 py-2 flex items-center justify-between">
-                                <span className="font-medium text-sm text-gray-700 dark:text-gray-200">Theme</span>
-                                <ThemeToggle />
-                            </div>
-                            {/* ============== End Mobile Theme Toggle ============== */}
 
                             {/* Mobile Search */}
                             <form onSubmit={handleSearch} className="relative px-2 md:hidden">
