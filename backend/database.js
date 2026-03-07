@@ -44,6 +44,15 @@ async function connectDB() {
     console.warn('Could not create index for donation:', err.message || err);
   }
   // End of addition by Christella - 02/04/2026
+
+  // Added by Marisol - 03/05/2026
+  try {
+    await db.collection('activityLogs').createIndex({ email: 1, timestamp: -1 });
+    console.log('Index created on activityLogs collection');
+  } catch (err) {
+    console.warn('Could not create index for activityLogs:', err.message || err);
+  }
+  // End of addition by Marisol - 03/05/2026
 }
 
 function getDb() {

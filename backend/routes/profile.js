@@ -14,6 +14,7 @@ const fs = require('fs').promises // Import fs module for file system operations
 // End of Marisol Morales Code 1/28/26
 
 const { getDb } = require('../database');
+const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 
 // Added by Marisol Morales 1/28/26 
 // Configure multer storage to save uploaded files
@@ -172,6 +173,11 @@ router.put('/update', async (req, res) => {
         { $set: updateData }
       );
       
+      // Added by Marisol - 03/05/2026
+      if (updateData.password) await logActivity(email, 'Changed password', '', req);
+      if (updateData.username) await logActivity(email, 'Updated username', `Changed to @${updateData.username}`, req);
+      // End of addition by Marisol - 03/05/2026
+
       console.log(`Profile updated for: ${user.email}`);
     }
     
@@ -235,6 +241,7 @@ router.delete('/delete', async (req, res) => {
     await usersCollection.deleteOne({ _id: user._id });
     
     console.log(`Account deleted: ${email}`);
+    await logActivity(email, 'Deleted account', '', req); // Added by Marisol - 03/05/2026
     
     res.json({ 
       success: true,
@@ -315,6 +322,7 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
     );
 
     console.log(`Image uploaded for ${email}: ${imageUrl}`);
+    await logActivity(email, 'Updated profile image', type === 'profile' ? 'Profile picture changed' : 'Banner image changed', req); // Added by Marisol - 03/05/2026
 
     // Send success response with the image URL
     res.json({
@@ -389,6 +397,7 @@ router.post('/remove-image', async (req, res) => {
     );
 
     console.log(`Image removed for ${email}`);
+    await logActivity(email, 'Removed profile image', type === 'profile' ? 'Profile picture removed' : 'Banner image removed', req); // Added by Marisol - 03/05/2026
 
     res.json({
       success: true,
