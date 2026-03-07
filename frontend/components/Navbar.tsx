@@ -70,6 +70,7 @@ export default function Navbar() {
 
         localStorage.removeItem('userEmail');
         localStorage.removeItem('username');
+        localStorage.setItem('contrast', 'normal');         // Reset high contrast mode to normal on logout - Added by Damon 3/7/2026
         setIsLoggedIn(false);
         setUserMenuOpen(false);
         // Force a full page reload to reset all state
@@ -125,7 +126,7 @@ export default function Navbar() {
                                 className="object-contain"/>
                         </Link>
                         {/* Added by marisol morales - 3/7/2026 - show theme toggle next to logo when logged out */}
-                        {!isLoggedIn && <ThemeToggle />}
+                        {!isLoggedIn && <ThemeToggle showContrast={false} />}
                         {/* End addition */}
                     </div>
 
