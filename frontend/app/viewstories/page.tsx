@@ -171,6 +171,7 @@ export default function ViewStoriesPage() {
                     storyText: editText,
                     displayName: editDisplayName,
                     displayPhoto: editDisplayPhoto,
+                    userEmail: typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null, // Added by Marisol - 03/05/2026
                 }),
             });
 

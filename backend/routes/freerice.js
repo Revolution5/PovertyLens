@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../database');
+const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 
 // Log manual donation
 router.post('/donate', async (req, res) => {
@@ -47,6 +48,7 @@ router.post('/donate', async (req, res) => {
     };
 
     await db.collection('freericeDonations').insertOne(donation);
+    await logActivity(email, 'Logged rice donation', `${grains} grains donated`, req); // Added by Marisol - 03/05/2026
 
     res.status(201).json({ success: true, message: 'Donation logged', donation });
   } catch (err) {

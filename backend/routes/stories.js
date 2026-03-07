@@ -5,6 +5,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb, ObjectId } = require('../database');
 const { createNotification } = require('../helpers/notificationshelper');
+const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 
 // Added by Christella - 12/10/2025
 // Create a story
@@ -44,6 +45,7 @@ router.post('/', async(req, res) => {
 
     if (userEmail) {
       createNotification(userEmail, `Your story "${title || 'Untitled'}" was published successfully!`);
+      await logActivity(userEmail, 'Posted story', title || 'Untitled story', req); // Added by Marisol - 03/05/2026
     }
 
     res.status(201).json({
@@ -142,6 +144,11 @@ router.put('/:id', async (req, res) => {
       });
     }
 
+    // Added by Marisol - 03/05/2026
+    const { userEmail: editEmail } = req.body;
+    if (editEmail) await logActivity(editEmail, 'Edited story', title || 'Untitled story', req);
+    // End of addition by Marisol - 03/05/2026
+
     res.json({
       success: true,
       message: 'Edits saved successfully!',
@@ -181,6 +188,11 @@ router.patch('/:id/archive', async (req, res) => {
         message: 'Story not found',
       });
     }
+    // Added by Marisol - 03/05/2026
+    const { userEmail: archiveEmail } = req.body;
+    if (archiveEmail) await logActivity(archiveEmail, archived ? 'Archived story' : 'Unarchived story', '', req);
+    // End of addition by Marisol - 03/05/2026
+
     res.json({
       success: true,
       message: archived ? 'Story archived.' : 'Story unarchived.',
@@ -198,6 +210,7 @@ router.patch('/:id/archive', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const {id} = req.params;
+    const { userEmail: deleteEmail } = req.body || {}; // Added by Marisol - 03/05/2026
 
     const db = getDb();
     const storiesCollection = db.collection('stories');
@@ -212,6 +225,11 @@ router.delete('/:id', async (req, res) => {
         message: "Story not found",
       });
     }
+
+    // Added by Marisol - 03/05/2026
+    if (deleteEmail) await logActivity(deleteEmail, 'Deleted story', '', req);
+    // End of addition by Marisol - 03/05/2026
+
     res.json({
       success: true,
       message: 'Successfully deleted story.',

@@ -51,7 +51,22 @@ export default function Navbar() {
     }, [resourcesOpen, userMenuOpen]);
 
     // Handle logout function
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        // Added by Marisol - 03/05/2026 - log the logout before clearing localStorage
+        const email = localStorage.getItem('userEmail');
+        if (email) {
+            try {
+                await fetch('http://localhost:4000/api/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+            } catch (err) {
+                console.error('Error logging logout:', err);
+            }
+        }
+        // End of addition by Marisol - 03/05/2026
+
         localStorage.removeItem('userEmail');
         localStorage.removeItem('username');
         setIsLoggedIn(false);
@@ -286,6 +301,23 @@ export default function Navbar() {
                                             >
                                                 Account Settings
                                             </Link>
+                                            {/*Added by Marisol to keep track of user activity - Start */}
+                                            <Link 
+                                                href="/accountActivity" 
+                                                className="block px-4 py-2.5 text-sm transition-all duration-200"
+                                                style={{ color: 'var(--foreground)' }}
+                                                onMouseEnter={(e) => {
+                                                    const isDark = document.documentElement.classList.contains('dark');
+                                                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                }}
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                Account Activity 
+                                            </Link>
+                                            {/*Added by Marisol to keep track of user activity - End */}
                                             <hr style={{ borderColor: 'var(--color-gray-light)' }} className="my-2" />
                                             <button
                                                 onClick={handleLogout}

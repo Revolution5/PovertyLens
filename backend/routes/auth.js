@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 
 const { getDb } = require('../database');
 const { createNotification } = require('../helpers/notificationshelper');
+const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 
 // Sign up
 router.post('/signup', async (req, res) => {
@@ -55,6 +56,7 @@ router.post('/signup', async (req, res) => {
     console.log(`New user created: ${email} (${username})`);
 
     createNotification(email, `Welcome to PovertyLens, ${username}!`);
+    await logActivity(email, 'Created account', `Signed up as @${username}`, req); // Added by Marisol - 03/05/2026
 
     res.status(201).json({ 
       success: true,
@@ -103,6 +105,7 @@ router.post('/login', async (req, res) => {
     //Compare hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      await logActivity(email, 'Failed login attempt', '', req); // Added by Marisol - 03/05/2026
       return res.status(400).json({ 
         success: false,
         message: 'Invalid password' 
@@ -110,6 +113,7 @@ router.post('/login', async (req, res) => {
     }
     
     console.log(`User logged in: ${email}`);
+    await logActivity(email, 'Signed in', '', req); // Added by Marisol - 03/05/2026
     res.json({ 
       success: true,
       message: 'Login successful',
@@ -172,6 +176,21 @@ router.get('/user-by-email', async (req, res) => {
       success: false, 
       message: 'Server error' 
     });
+  }
+});
+
+// Logout - Added by Marisol 03/05/2026
+// Frontend handles clearing localStorage, this endpoint just logs the activity
+router.post('/logout', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (email) {
+      await logActivity(email, 'Signed out', '', req);
+    }
+    res.json({ success: true, message: 'Logged out' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ success: false, message: 'Server error during logout' });
   }
 });
 
