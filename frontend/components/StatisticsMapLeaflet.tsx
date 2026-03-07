@@ -412,8 +412,7 @@ export default function StatisticsMapLeaflet({
 
       {/* Added by Reymes 3/2/26 - bottom-left map legend */}
       <div
-        /* Modified for High contrast mode added by Damon 3/4/2026 */
-        className="absolute bottom-3 left-3 z-[1000] rounded-md px-3 py-2 text-xs shadow-md map-legend"
+        className="absolute bottom-3 left-3 z-[1000] rounded-md px-3 py-2 text-xs shadow-md map-legend" //Modified for High contrast mode added by Damon 3/4/2026
         style={{ backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#222" }}
       >
         <div className="font-semibold mb-1">Poverty rate key</div>

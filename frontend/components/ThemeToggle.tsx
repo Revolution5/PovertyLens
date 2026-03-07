@@ -6,8 +6,7 @@ import { Sun, Moon } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 export function ThemeToggle() {
-   /* Modified for High contrast mode added by Damon 3/4/2026 */
-  const { theme, contrast, toggleTheme, toggleContrast } = useTheme();
+  const { theme, contrast, toggleTheme, toggleContrast } = useTheme(); //Modified for High contrast mode added by Damon 3/4/2026
   
   return (
     <div className="flex items-center gap-2">
@@ -23,7 +22,7 @@ export function ThemeToggle() {
           <Moon className="w-5 h-5 text-gray-600" />
         )}
       </button>
-       {/* Modified for High contrast mode added by Damon 3/4/2026 */}
+       {/* START Modified for High contrast mode added by Damon 3/4/2026 */}
       {/* High contrast toggle switch */}
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300 high-contrast-label">High Contrast</span>
@@ -46,5 +45,6 @@ export function ThemeToggle() {
         </button>
       </div>
     </div>
+    {/* END Modified for High contrast mode added by Damon 3/4/2026 */}
   );
 }
