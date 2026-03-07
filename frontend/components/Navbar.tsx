@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ChevronDown, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import { ThemeToggle } from './ThemeToggle'; // Added by marisol morales - 3/7/2026 - restore theme toggle for logged-out users
 
 export default function Navbar() {
     // Hooks initialization
@@ -123,6 +124,9 @@ export default function Navbar() {
                                 height={150}
                                 className="object-contain"/>
                         </Link>
+                        {/* Added by marisol morales - 3/7/2026 - show theme toggle next to logo when logged out */}
+                        {!isLoggedIn && <ThemeToggle />}
+                        {/* End addition */}
                     </div>
 
                     {/* Desktop Navigation Links - Absolutely Centered */}
