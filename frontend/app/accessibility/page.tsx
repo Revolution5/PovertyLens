@@ -20,7 +20,7 @@ export default function AccessibilityPage() {
       <header style={{ borderBottom: '1px solid var(--color-gray-light)' }}>
         <div className="container mx-auto px-6 py-4">
           <Link
-            href="/"
+            href="/profile"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -36,7 +36,7 @@ export default function AccessibilityPage() {
             }}
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Home
+            Back to Settings
           </Link>
         </div>
       </header>
@@ -44,7 +44,7 @@ export default function AccessibilityPage() {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12 max-w-4xl">
         <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+          <h1 className="text-3xl mb-1 font-bold" style={{ color: 'var(--foreground)' }}>
             Accessibility Settings
           </h1>
           <p style={{ color: 'var(--color-gray)', fontSize: '1.125rem' }}>
