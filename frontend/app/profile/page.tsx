@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28
+import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle, Eye } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28 // Added Eye for Accessibility - Modified by Marisol 3/5/2026
 import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import for profile images 1/28/26
 
 export default function ProfilePage() {
@@ -599,6 +599,63 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* ============== Accessibility Section - Added by Marisol 3/5/2026 ============== */}
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FEEE91] to-[#FF5656] flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Accessibility
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Customize your viewing experience
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+
+              <div className="space-y-4">
+                <Link href="/accessibility">
+                  <div 
+                    className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
+                    style={{
+                      backgroundColor: isDark ? 'transparent' : 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{
+                        backgroundColor: 'var(--color-gray-light)'
+                      }}>
+                        <Eye className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
+                      </div>
+                      <div>
+                        <p className="font-medium" style={{ color: 'var(--foreground)' }}>Accessibility Settings</p>
+                        <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                          Adjust theme and contrast
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+          {/* ============== End Accessibility Section - marisol morales ============== */}
 
           {/* Delete Account */}
           <div className="rounded-xl border-2 border-red-200 overflow-hidden shadow-sm" style={{
