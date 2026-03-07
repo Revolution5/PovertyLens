@@ -1,4 +1,5 @@
 // Edited by Christella - 1/30/2026
+//Editted by Marisol 3/4/2026 - Add in Continent filter for when selecting country for easier search. 
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
@@ -239,6 +240,31 @@ const countryNames: Record<string, string> = {
   AUS: "Australia",
 };
 
+// Start of Added by Marisol 3/4/2026 — continent filter map
+const CONTINENT_ISO3: Record<string, string[]> = {
+  Africa: [
+    "DZA","AGO","BEN","BWA","BFA","BDI","CMR","CAF","TCD","COG","COD","CIV",
+    "EGY","ETH","SWZ","GAB","GMB","GHA","GIN","KEN","LSO","LBR","MDG","MWI",
+    "MLI","MRT","MAR","MOZ","NAM","NER","NGA","RWA","SEN","SLE","ZAF","SDN",
+    "TZA","TGO","TUN","UGA","ZMB","ZWE",
+  ],
+  Asia: [
+    "BGD","IND","JPN","KOR","CHN","IDN","PAK","PHL","VNM","THA","MMR","KHM",
+    "LAO","NPL","LKA","KAZ","UZB","AZE","GEO","ARM","IRQ","IRN","SAU","ARE",
+    "TUR","ISR","JOR","LBN","YEM","SYR","OMN","KWT","QAT","BHR","AFG","MNG",
+  ],
+  Europe: [
+    "AUT","BEL","FRA","DEU","ITA","NLD","NOR","ESP","SWE","CHE","GBR","POL",
+    "PRT","GRC","HUN","CZE","ROU","BGR","HRV","SRB","SVK","SVN","FIN","DNK",
+    "IRL","LUX","EST","LVA","LTU","ALB","MKD","BIH","MNE","MDA","BLR","UKR",
+    "RUS",
+  ],
+  "North America": ["CAN","MEX","USA","GTM","BLZ","HND","SLV","NIC","CRI","PAN"],
+  "South America": ["BRA","ARG","CHL","COL","PER","VEN","ECU","BOL","PRY","URY","GUY","SUR"],
+  Oceania: ["AUS","NZL","PNG","FJI","SLB","VUT","WSM","TON","KIR","FSM"],
+};
+// End of Added by Marisol 3/4/2026 — continent filter map
+
 // Added by Reymes 3/2/26 - national poverty rates imported from data/nationalRates.ts
 
 // Added by Christella - 1/30/2026
@@ -402,6 +428,7 @@ function StoryCard({
 // Added by Christella - 1/30/2026
 export default function StatisticsPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedContinent, setSelectedContinent] = useState<string | null>(null); // Added by Marisol 3/4/2026 - continent filter state
   const [liveResult, setLiveResult] = useState<LiveResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -753,14 +780,28 @@ export default function StatisticsPage() {
       const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
       // If all names are just ISO codes, fall back to derived list
       if (allNamesAreIso) {
-        return derivedCountriesFromMapRows;
+        // Modified by marisol morales 3/4 - added continent filter
+        const base = derivedCountriesFromMapRows;
+        if (!selectedContinent) return base;
+        const allowed = new Set(CONTINENT_ISO3[selectedContinent] ?? []);
+        return base.filter((c) => allowed.has(c.iso3));
+        // End modification
       }
-      return countriesList;
+      // Modified by marisol morales 3/4 - added continent filter
+      const base = countriesList;
+      if (!selectedContinent) return base;
+      const allowed = new Set(CONTINENT_ISO3[selectedContinent] ?? []);
+      return base.filter((c) => allowed.has(c.iso3));
+      // End modification
     }
     // No countries list, use derived
-    return derivedCountriesFromMapRows;
-  }, [countriesList, derivedCountriesFromMapRows]);
-
+    // Modified by marisol morales 3/4 - added continent filter
+    const base = derivedCountriesFromMapRows;
+    if (!selectedContinent) return base;
+    const allowed = new Set(CONTINENT_ISO3[selectedContinent] ?? []);
+    return base.filter((c) => allowed.has(c.iso3));
+    // End modification
+  }, [countriesList, derivedCountriesFromMapRows, selectedContinent]); // Modified by marisol morales 3/4 - added selectedContinent dependency
   useEffect(() => {
     fetchMapData();
     fetchCountriesFromBackend();
@@ -981,6 +1022,41 @@ useEffect(() => {
           >
             {/* Panel heading */}
             <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Statistics</h2>
+
+            {/* Start of Added by Marisol 3/4/2026 - Continent filter - moved inside Statistics card by Marisol 3/7/2026 */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-gray)' }}>
+                Filter by Continent
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedContinent ?? ""}
+                  onChange={(e) => {
+                    setSelectedContinent(e.target.value || null);
+                    setSelectedCountry(null);
+                    setLiveResult(null);
+                    setStories([]);
+                  }}
+                  className="w-full appearance-none rounded-lg border px-3 py-2.5 pr-9 text-sm transition-all cursor-pointer focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)',
+                  }}
+                >
+                  <option value="">— All continents —</option>
+                  {Object.keys(CONTINENT_ISO3).map((continent) => (
+                    <option key={continent} value={continent}>{continent}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 5L7 9L11 5" stroke="var(--color-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            {/* End of Added by Marisol 3/4/2026 - Continent filter */}
 
             {/* Country selector */}
             <div>
