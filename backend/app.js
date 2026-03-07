@@ -127,7 +127,6 @@ async function createNotification(userId, message) {
       userId,
       message,
       createdAt: new Date(),
-      read: false
     };
     
     await notificationsCollection.insertOne(newNotification);
@@ -203,41 +202,36 @@ app.get('/api/notifications', async (req, res) => {
   }
 });
 
-app.post('/api/notifications/read', async (req, res) => {
+app.delete('/api/notifications/clear', async (req, res) => {
   try {
     const { userId } = req.body;
     
     if (!userId) {
-      return res.status(400).json({ error: 'User ID required' });
+      return res.status(400).json({ 
+        success: false, 
+        error: 'User ID required' 
+      });
     }
     
     const notificationsCollection = db.collection('notifications');
     
-    await notificationsCollection.updateMany(
-      { userId, read: false },
-      { $set: { read: true } }
-    );
+    // Delete all notifications for this user
+    const result = await notificationsCollection.deleteMany({ userId });
     
-    res.json({ success: true });
+    console.log(`Cleared ${result.deletedCount} notifications for user: ${userId}`);
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully cleared ${result.deletedCount} notifications`,
+      deletedCount: result.deletedCount 
+    });
     
   } catch (error) {
-    console.error('Error marking notifications as read:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Mark a single notification as read by id
-app.post('/api/notifications/:id/read', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ success: false, message: 'id required' });
-
-    const notificationsCollection = db.collection('notifications');
-    await notificationsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { read: true } });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error marking notification as read:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('Error clearing notifications:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Server error while clearing notifications' 
+    });
   }
 });
 
