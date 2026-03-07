@@ -243,11 +243,16 @@ function StoryCard({
 }) // End of addition by Daniel
   {
   const [expanded, setExpanded] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const maxChars = 220;
   // Start of Marisol Code for dark mode support - 2/8/2026
   // Track if dark mode is active
   const [isDark, setIsDark] = useState(false);
-
+  useEffect(() => {
+    const savedStories = JSON.parse(localStorage.getItem('savedStories') || '[]');
+    const saved = savedStories.some((s: any) => s._id === story._id);
+    setIsSaved(saved);
+  }, [story._id]);
   useEffect(() => {
     // Check initial dark mode state
     setIsDark(document.documentElement.classList.contains('dark'));
@@ -266,7 +271,37 @@ function StoryCard({
     // Cleanup observer on unmount
     return () => observer.disconnect();
   }, []);
-// End of Marisol Code for dark mode support - 2/8/2026
+  // End of Marisol Code for dark mode support - 2/8/2026
+
+  // - added daniel q. 3/7/26 start
+  const handleSaveOffline = () => {
+    try {
+      const savedStories = JSON.parse(localStorage.getItem('savedStories') || '[]');
+      
+      const alreadySaved = savedStories.some((s: any) => s._id === story._id);
+      
+      if (alreadySaved) {
+        const updated = savedStories.filter((s: any) => s._id !== story._id);
+        localStorage.setItem('savedStories', JSON.stringify(updated));
+        setIsSaved(false);
+      } else {
+        const storyToSave = {
+          ...story,
+          savedAt: new Date().toISOString(),
+          savedUserName: userProfile?.username || 'Anonymous',
+          savedUserEmail: userProfile?.email || null
+        };
+        
+        const updated = [...savedStories, storyToSave];
+        localStorage.setItem('savedStories', JSON.stringify(updated));
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error('Error saving story offline:', error);
+    }
+  };
+    // - added daniel q. 3/7/26 end
+
   const text = story.storyText || "";
   const needsTruncate = text.length > maxChars;
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
@@ -384,11 +419,207 @@ function StoryCard({
             </svg>
             <span>Photo: {story.displayPhoto ? "Shown" : "Hidden"}</span>
           </div>
+          {/* save button - daniel q. 3/7/26 start */}
+          <button
+            onClick={handleSaveOffline}
+            className="ml-auto flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: isSaved ? '#4CAF50' : (isDark ? 'rgba(255, 255, 255, 0.1)' : '#f0f0f0'),
+              color: isSaved ? 'white' : (isDark ? 'var(--foreground)' : '#333'),
+            }}
+            title={isSaved ? "Remove from offline cache" : "Save to read offline"}
+          >
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill={isSaved ? "white" : "none"} 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>{isSaved ? 'Saved' : 'Save'}</span>
+          </button>
+          {/* save button - daniel q. 3/7/26 end */}
         </div>
       </div>
     </div>
   );
 }
+
+// added daniel .q. 3/7/26 - start
+function SavedStoriesSection({ 
+  userProfilesCache,
+  isDark 
+}: { 
+  userProfilesCache: Record<string, UserProfile>;
+  isDark: boolean;
+}) {
+  const [savedStories, setSavedStories] = useState<any[]>([]);
+  const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
+
+  // Load saved stories on mount and when localStorage changes
+  useEffect(() => {
+    const loadSaved = () => {
+      const saved = JSON.parse(localStorage.getItem('savedStories') || '[]');
+      setSavedStories(saved);
+    };
+    
+    loadSaved();
+    
+    // Listen for storage changes (in case another tab modifies saved stories)
+    window.addEventListener('storage', loadSaved);
+    return () => window.removeEventListener('storage', loadSaved);
+  }, []);
+
+  const removeFromSaved = (storyId: string) => {
+    const saved = JSON.parse(localStorage.getItem('savedStories') || '[]');
+    const updated = saved.filter((s: any) => s._id !== storyId);
+    localStorage.setItem('savedStories', JSON.stringify(updated));
+    setSavedStories(updated);
+  };
+
+  const clearAllSaved = () => {
+    if (confirm('Remove all saved stories from offline cache?')) {
+      localStorage.removeItem('savedStories');
+      setSavedStories([]);
+    }
+  };
+
+  const toggleExpand = (storyId: string) => {
+    setExpandedStates(prev => ({
+      ...prev,
+      [storyId]: !prev[storyId]
+    }));
+  };
+
+  if (savedStories.length === 0) {
+    return (
+      <div 
+        className="rounded-lg p-8 text-center"
+        style={{ 
+          backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f9f9f9',
+          color: 'var(--color-gray)'
+        }}
+      >
+        <p>No stories saved offline yet.</p>
+        <p className="text-sm mt-2">Click the "Save" button on any story to read it offline.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+          {savedStories.length} {savedStories.length === 1 ? 'story' : 'stories'} saved offline
+        </p>
+        <button
+          onClick={clearAllSaved}
+          className="text-xs px-3 py-1 rounded border"
+          style={{
+            borderColor: 'var(--color-gray-light)',
+            color: 'var(--color-gray)'
+          }}
+        >
+          Clear All
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {savedStories.map((story) => {
+          const maxChars = 220;
+          const text = story.storyText || "";
+          const needsTruncate = text.length > maxChars;
+          const isExpanded = expandedStates[story._id] || false;
+          const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
+          
+          // Create a profile for the story author
+          const storyProfile = story.savedUserEmail && userProfilesCache[story.savedUserEmail] 
+            ? userProfilesCache[story.savedUserEmail]
+            : { 
+                username: story.savedUserName || 'Anonymous',
+                email: story.savedUserEmail,
+                profileImage: null,
+                bannerImage: null
+              };
+
+          return (
+            <div 
+              key={story._id}
+              className="rounded-xl border shadow-sm p-4 relative"
+              style={{
+                backgroundColor: 'var(--background)',
+                borderColor: 'var(--color-gray-light)'
+              }}
+            >
+              {/* Offline badge */}
+              <div className="absolute top-2 right-2">
+                <span className="text-xs px-2 py-1 rounded-full bg-[#FFA239] text-white">
+                  Offline
+                </span>
+              </div>
+
+              {/* Story header */}
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
+                  <span className="text-white font-semibold text-xs">
+                    {storyProfile.username.substring(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold truncate" style={{ color: 'var(--foreground)' }}>
+                    {story.title?.trim() ? story.title : "Untitled Story"}
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                    By {storyProfile.username}
+                  </div>
+                </div>
+              </div>
+
+              {/* Story content */}
+              <div className="mt-2 text-sm whitespace-pre-wrap break-words" style={{ color: 'var(--foreground)' }}>
+                {isExpanded ? text : preview}
+              </div>
+
+              {needsTruncate && (
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(story._id)}
+                  className="mt-2 text-sm font-semibold text-[#FFA239] hover:underline"
+                >
+                  {isExpanded ? "Show less" : "Read more"}
+                </button>
+              )}
+
+              {/* Footer with save date and remove button */}
+              <div 
+                className="mt-3 pt-3 border-t text-xs flex justify-between items-center"
+                style={{
+                  borderColor: 'var(--color-gray-light)',
+                  color: 'var(--color-gray)'
+                }}
+              >
+                <span>
+                  Saved: {new Date(story.savedAt).toLocaleDateString()}
+                </span>
+                <button
+                  onClick={() => removeFromSaved(story._id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// added daniel .q. 3/7/26 - end
 
 // Added by Christella - 1/30/2026
 export default function StatisticsPage() {
@@ -994,7 +1225,7 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        {/* now shows profile picture and names - daniel q. 2/4 */}
+        {/* now shows profile picture and names - daniel q. 2/4/26 */}
         <div 
           className="rounded-lg shadow-md p-6"
           style={{ backgroundColor: 'var(--background)' }}
@@ -1098,6 +1329,18 @@ export default function StatisticsPage() {
             ))}
           </div>
         </div>
+        {/* added daniel q. 3/7/26 start */}
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+            Your Saved Stories (Offline)
+          </h3>
+          
+          <SavedStoriesSection 
+            userProfilesCache={userProfilesCache}
+            isDark={isDark}
+          />
+        </div>
+        {/* added daniel q. 3/7/26 end */}
       </main>
     </div>
   );

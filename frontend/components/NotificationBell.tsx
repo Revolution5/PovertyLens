@@ -43,14 +43,18 @@ export default function NotificationBell() {
     if (!userEmail) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/notifications?userId=${userEmail}`);
+      const response = await fetch(`http://localhost:4000/api/notifications?userId=${userEmail}`).catch(() => null);
+      if (!response) {
+        setNotifications([]);
+        return;
+      }
       const data = await response.json();
       setNotifications(data.notifications || []);
       
       const unread = data.notifications.filter((n: Notification) => !n.read).length;
       setUnreadCount(unread);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
+      setNotifications([]);
     }
   };
 

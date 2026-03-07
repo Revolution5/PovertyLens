@@ -37,7 +37,11 @@ export default function FreeRiceRecent() {
     setLoading(true)
     setMessage(null)
     try {
-      const res = await fetch(`${BACKEND_URL}/api/freerice/leaderboard`)
+      const res = await fetch(`${BACKEND_URL}/api/freerice/leaderboard`).catch(() => null);
+      if (!res) {
+        setMessage('Could not connect to backend server')
+        return
+      }
       if (!res.ok) {
         const text = await res.text().catch(() => '')
         setMessage(text || `Error fetching recent (status ${res.status})`)

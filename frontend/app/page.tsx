@@ -174,7 +174,12 @@ export default function Home() {
             //if not logged in, fetch daily fact
             (async () => {
                 try {
-                    const res = await fetch('http://localhost:4000/api/daily-fact');
+                    const res = await fetch('http://localhost:4000/api/daily-fact').catch(() => null);
+                    if (!res) {
+                        setLoadingFact(false);
+                        return;
+                    }
+                    
                     const data = await res.json();
                     if (data?.success && data.fact) {
                         setDailyFact(data.fact);
@@ -192,8 +197,13 @@ export default function Home() {
     async function fetchUserTotalGrains(email: string) {
         setLoadingGrains(true);
         try {
-            const res = await fetch(`${BACKEND_URL}/api/freerice/user-total?email=${encodeURIComponent(email)}`);
-            
+            const res = await fetch(`${BACKEND_URL}/api/freerice/user-total?email=${encodeURIComponent(email)}`).catch(() => null);
+            if (!res) {
+                setTotalGrains(0);
+                setLoadingGrains(false);
+                return;
+            }
+
             if (!res.ok) {
                 console.error('Failed to fetch FreeRice data:', res.status);
                 setLoadingGrains(false);

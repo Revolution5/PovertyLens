@@ -9,7 +9,7 @@ const BackendStatus: React.FC = () => {
     return (
       <div style={{
         position: 'fixed',
-        top: 0,
+        bottom: 0,
         left: 0,
         right: 0,
         background: '#3498db',
@@ -30,7 +30,7 @@ const BackendStatus: React.FC = () => {
   return (
     <div style={{
       position: 'fixed',
-      top: 0,
+      bottom: 0,
       left: 0,
       right: 0,
       background: '#e74c3c',

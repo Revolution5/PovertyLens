@@ -64,7 +64,10 @@ export default function ProfilePage() {
   // Marisol function for fetching images from Server
   const fetchUserImages = async (email: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/user-images?email=${encodeURIComponent(email)}`);
+      const response = await fetch(`http://localhost:4000/api/user-images?email=${encodeURIComponent(email)}`).catch(() => null);
+      if (!response) {
+        return;
+      }
       const data = await response.json();
       
       if (data.success) {
