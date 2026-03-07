@@ -45,6 +45,6 @@ export function ThemeToggle() {
         </button>
       </div>
     </div>
-    {/* END Modified for High contrast mode added by Damon 3/4/2026 */}
+    /* END Modified for High contrast mode added by Damon 3/4/2026 */
   );
 }
