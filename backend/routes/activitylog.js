@@ -1,25 +1,39 @@
-// created by Marisol morales 2-28 for logging user account activity such as logins, password changes, and security events
+// Activity Log Route - Added by Marisol 3/5/2026
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { getDb } = require('../database');
 
-// Helper: parse device from User-Agent header
+// Helper: parse device from User-Agent header — returns "Browser on OS" e.g. "Chrome on Windows"
 function parseDevice(req) {
   const ua = req.headers['user-agent'] || '';
-  if (ua.includes('iPhone') || ua.includes('Android')) return 'Mobile';
-  if (ua.includes('Chrome')) return 'Chrome';
-  if (ua.includes('Safari')) return 'Safari';
-  if (ua.includes('Firefox')) return 'Firefox';
-  return 'Unknown Device';
+
+  // Detect OS
+  let os = 'Unknown OS';
+  if (ua.includes('Windows'))       os = 'Windows';
+  else if (ua.includes('Mac OS X')) os = 'macOS';
+  else if (ua.includes('Android'))  os = 'Android';
+  else if (ua.includes('iPhone'))   os = 'iPhone';
+  else if (ua.includes('iPad'))     os = 'iPad';
+  else if (ua.includes('Linux'))    os = 'Linux';
+
+  // Detect browser
+  let browser = 'Unknown Browser';
+  if (ua.includes('Edg/'))          browser = 'Edge';
+  else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera';
+  else if (ua.includes('Chrome'))   browser = 'Chrome';
+  else if (ua.includes('Firefox'))  browser = 'Firefox';
+  else if (ua.includes('Safari'))   browser = 'Safari';
+
+  return `${browser} on ${os}`;
 }
 
 // Helper: get location from IP
 async function getLocationFromIP(ip) {
   try {
     const cleanIP = ip.replace(/^::ffff:/, '');
-    if (cleanIP === '127.0.0.1' || cleanIP === 'localhost' || cleanIP.startsWith('192.168.')) {
-      return { city: 'Local', country: 'Development', ip: cleanIP };
+    if (cleanIP === '127.0.0.1' || cleanIP === '::1' || cleanIP === 'localhost' || cleanIP.startsWith('192.168.')) {
+      return { city: 'Local Development', country: '', ip: cleanIP };
     }
     const response = await fetch(`https://ipapi.co/${cleanIP}/json/`);
     const data = await response.json();

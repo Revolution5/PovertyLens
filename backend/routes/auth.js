@@ -179,4 +179,19 @@ router.get('/user-by-email', async (req, res) => {
   }
 });
 
+// Logout - Added by Marisol 03/05/2026
+// Frontend handles clearing localStorage, this endpoint just logs the activity
+router.post('/logout', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (email) {
+      await logActivity(email, 'Signed out', '', req);
+    }
+    res.json({ success: true, message: 'Logged out' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ success: false, message: 'Server error during logout' });
+  }
+});
+
 module.exports = router;

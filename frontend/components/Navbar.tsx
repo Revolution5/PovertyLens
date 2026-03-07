@@ -51,7 +51,22 @@ export default function Navbar() {
     }, [resourcesOpen, userMenuOpen]);
 
     // Handle logout function
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        // Added by Marisol - 03/05/2026 - log the logout before clearing localStorage
+        const email = localStorage.getItem('userEmail');
+        if (email) {
+            try {
+                await fetch('http://localhost:4000/api/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+            } catch (err) {
+                console.error('Error logging logout:', err);
+            }
+        }
+        // End of addition by Marisol - 03/05/2026
+
         localStorage.removeItem('userEmail');
         localStorage.removeItem('username');
         setIsLoggedIn(false);
