@@ -7,7 +7,7 @@ import * as GeoJSON from "geojson"
 import "leaflet/dist/leaflet.css"
 // Added by Reymes 3/2/26 - import rate data files for filter support
 import { NATIONAL_POVERTY_RATES } from "../data/nationalRates"
-import { normalizeRate } from "../data/internationalRates"
+import { normalizeRate, INTERNATIONAL_FALLBACK_RATES } from "../data/internationalRates"
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
 //Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
@@ -57,7 +57,7 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "854": { lat: 12.2383, lng: -1.5616, name: "Burkina Faso" },
   "108": { lat: -3.3731, lng: 29.9189, name: "Burundi" },
   "120": { lat: 7.3697, lng: 12.3547, name: "Cameroon" },
-  "132": { lat: 16.5388, lng: -23.0418, name: "Cape Verde" }, // Added by Marisol Morales - 3/2/2026
+  "132": { lat: 16.5388, lng: -23.0418, name: "Cabo Verde" }, // Added by Marisol Morales - 3/2/2026
   "140": { lat: 6.6111, lng: 20.9394, name: "Central African Republic" },
   "148": { lat: 15.4542, lng: 18.7322, name: "Chad" },
   "174": { lat: -11.6455, lng: 43.3333, name: "Comoros" }, // Added by Marisol Morales - 3/2/2026
@@ -97,12 +97,15 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "710": { lat: -30.5595, lng: 22.9375, name: "South Africa" },
   "728": { lat: 6.8770, lng: 31.3070, name: "South Sudan" }, // Added by Marisol Morales - 3/2/2026
   "729": { lat: 12.8628, lng: 30.2176, name: "Sudan" },
-  "834": { lat: -6.3690, lng: 34.8888, name: "Tanzania" },
+  "834": { lat: -6.3690, lng: 34.8888, name: "Tanzania" }, // United Republic of Tanzania
   "768": { lat: 8.6195, lng: 0.8248, name: "Togo" },
   "788": { lat: 33.8869, lng: 9.5375, name: "Tunisia" },
   "800": { lat: 1.3733, lng: 32.2903, name: "Uganda" },
   "894": { lat: -13.1339, lng: 27.8493, name: "Zambia" },
-  "716": { lat: -19.0154, lng: 29.1549, name: "Zimbabwe" },
+  "690": { lat: -4.6796,  lng: 55.4920,   name: "Seychelles" },
+  "716": { lat: -19.0154, lng: 29.1549,   name: "Zimbabwe" },
+  "732": { lat: 24.2155,  lng: -12.8858,  name: "Western Sahara" }, // Added by Reymes 3/7/26
+  "SOL": { lat: 9.6000,   lng: 46.2000,   name: "Somaliland" },     // Added by Reymes 3/7/26
 
   // ASIA
   "4": { lat: 33.9391, lng: 67.7100, name: "Afghanistan" }, // Added by Marisol Morales - 3/2/2026
@@ -150,7 +153,9 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "784": { lat: 23.4241, lng: 53.8478, name: "United Arab Emirates" }, // Added by Marisol Morales - 3/2/2026
   "860": { lat: 41.3775, lng: 64.5853, name: "Uzbekistan" }, // Added by Marisol Morales - 3/2/2026
   "704": { lat: 14.0583, lng: 108.2772, name: "Vietnam" }, // Added by Marisol Morales - 3/2/2026
-  "887": { lat: 15.5527, lng: 48.5164, name: "Yemen" }, // Added by Marisol Morales - 3/2/2026
+  "48":  { lat: 25.9304,  lng: 50.6378,   name: "Bahrain" },
+  "158": { lat: 23.6978,  lng: 120.9605,  name: "Taiwan" },
+  "887": { lat: 15.5527,  lng: 48.5164,   name: "Yemen" }, // Added by Marisol Morales - 3/2/2026
 
   // EUROPE
   "8": { lat: 41.1533, lng: 20.1683, name: "Albania" }, // Added by Marisol Morales - 3/2/2026
@@ -162,7 +167,7 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "100": { lat: 42.7339, lng: 25.4858, name: "Bulgaria" }, // Added by Marisol Morales - 3/2/2026
   "191": { lat: 45.1000, lng: 15.2000, name: "Croatia" }, // Added by Marisol Morales - 3/2/2026
   "196": { lat: 35.1264, lng: 33.4299, name: "Cyprus" }, // Added by Marisol Morales - 3/2/2026
-  "203": { lat: 49.8175, lng: 15.4730, name: "Czech Republic" }, // Added by Marisol Morales - 3/2/2026
+  "203": { lat: 49.8175, lng: 15.4730, name: "Czechia" }, // Added by Marisol Morales - 3/2/2026
   "208": { lat: 56.2639, lng: 9.5018, name: "Denmark" }, // Added by Marisol Morales - 3/2/2026
   "233": { lat: 58.5953, lng: 25.0136, name: "Estonia" }, // Added by Marisol Morales - 3/2/2026
   "246": { lat: 61.9241, lng: 25.7482, name: "Finland" }, // Added by Marisol Morales - 3/2/2026
@@ -195,7 +200,12 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "752": { lat: 60.1282, lng: 18.6435, name: "Sweden" },
   "756": { lat: 46.8182, lng: 8.2275, name: "Switzerland" },
   "804": { lat: 48.3794, lng: 31.1656, name: "Ukraine" }, // Added by Marisol Morales - 3/2/2026
-  "826": { lat: 55.3781, lng: -3.4360, name: "United Kingdom" },
+  "674": { lat: 43.9336,  lng: 12.4578,   name: "San Marino" },
+  "826": { lat: 55.3781,  lng: -3.4360,   name: "United Kingdom" },
+  "XKX": { lat: 42.6026,  lng: 20.9030,   name: "Kosovo" },
+  "304": { lat: 71.7069,  lng: -42.6043,  name: "Greenland" },      // Added by Reymes 3/7/26
+  "336": { lat: 41.9029,  lng: 12.4534,   name: "Vatican" },        // Added by Reymes 3/7/26
+  "NCY": { lat: 35.2517,  lng: 33.4299,   name: "Northern Cyprus" },// Added by Reymes 3/7/26
 
   // NORTH AMERICA & CARIBBEAN
   "44": { lat: 25.0343, lng: -77.3963, name: "Bahamas" }, // Added by Marisol Morales - 3/2/2026
@@ -214,7 +224,14 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "591": { lat: 8.5380, lng: -80.7821, name: "Panama" }, // Added by Marisol Morales - 3/2/2026
   "630": { lat: 18.2208, lng: -66.5901, name: "Puerto Rico" }, // Added by Marisol Morales - 3/2/2026
   "780": { lat: 10.6918, lng: -61.2225, name: "Trinidad and Tobago" }, // Added by Marisol Morales - 3/2/2026
-  "840": { lat: 37.0902, lng: -95.7129, name: "United States" },
+  "28":  { lat: 17.0608,  lng: -61.7964,  name: "Antigua and Barbuda" },
+  "52":  { lat: 13.1939,  lng: -59.5432,  name: "Barbados" },
+  "212": { lat: 15.4150,  lng: -61.3710,  name: "Dominica" },
+  "308": { lat: 12.1165,  lng: -61.6790,  name: "Grenada" },
+  "659": { lat: 17.3578,  lng: -62.7830,  name: "Saint Kitts and Nevis" },
+  "662": { lat: 13.9094,  lng: -60.9789,  name: "Saint Lucia" },
+  "670": { lat: 12.9843,  lng: -61.2872,  name: "Saint Vincent and the Grenadines" },
+  "840": { lat: 37.0902,  lng: -95.7129,  name: "United States" },
 
   // SOUTH AMERICA
   "32": { lat: -38.4161, lng: -63.6167, name: "Argentina" }, // Added by Marisol Morales - 3/2/2026
@@ -236,7 +253,15 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "598": { lat: -6.3150, lng: 143.9555, name: "Papua New Guinea" }, // Added by Marisol Morales - 3/2/2026
   "090": { lat: -9.6457, lng: 160.1562, name: "Solomon Islands" }, // Added by Marisol Morales - 3/2/2026
   "548": { lat: -15.3767, lng: 166.9592, name: "Vanuatu" }, // Added by Marisol Morales - 3/2/2026
-  "554": { lat: -40.9006, lng: 174.8860, name: "New Zealand" }, // Added by Marisol Morales - 3/2/2026
+  "296": { lat: 1.8700,   lng: 175.5000,  name: "Kiribati" },
+  "520": { lat: -0.5228,  lng: 166.9315,  name: "Nauru" },
+  "554": { lat: -40.9006, lng: 174.8860,  name: "New Zealand" }, // Added by Marisol Morales - 3/2/2026
+  "583": { lat: 7.4256,   lng: 150.5508,  name: "Micronesia" },
+  "584": { lat: 7.1315,   lng: 171.1845,  name: "Marshall Islands" },
+  "585": { lat: 7.5150,   lng: 134.5825,  name: "Palau" },
+  "776": { lat: -21.1790, lng: -175.1982, name: "Tonga" },
+  "798": { lat: -7.1095,  lng: 177.6493,  name: "Tuvalu" },
+  "882": { lat: -13.7590, lng: -172.1046, name: "Samoa" },
 }
 
 // Mapping of country names to ISO3 codes and GeoJSON country names 
@@ -252,7 +277,7 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "854": { iso3: "BFA", name: "Burkina Faso", geojsonName: "Burkina Faso" },
   "108": { iso3: "BDI", name: "Burundi", geojsonName: "Burundi" },
   "120": { iso3: "CMR", name: "Cameroon", geojsonName: "Cameroon" },
-  "132": { iso3: "CPV", name: "Cape Verde", geojsonName: "Cape Verde" }, // Added by Marisol Morales - 3/2/2026
+  "132": { iso3: "CPV", name: "Cabo Verde", geojsonName: "Cabo Verde" }, // Added by Marisol Morales - 3/2/2026
   "140": { iso3: "CAF", name: "Central African Republic", geojsonName: "Central African Republic" },
   "148": { iso3: "TCD", name: "Chad", geojsonName: "Chad" },
   "174": { iso3: "COM", name: "Comoros", geojsonName: "Comoros" }, // Added by Marisol Morales - 3/2/2026
@@ -264,12 +289,12 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "226": { iso3: "GNQ", name: "Equatorial Guinea", geojsonName: "Equatorial Guinea" }, // Added by Marisol Morales - 3/2/2026
   "232": { iso3: "ERI", name: "Eritrea", geojsonName: "Eritrea" }, // Added by Marisol Morales - 3/2/2026
   "231": { iso3: "ETH", name: "Ethiopia", geojsonName: "Ethiopia" },
-  "748": { iso3: "SWZ", name: "Eswatini", geojsonName: "Swaziland" },
+  "748": { iso3: "SWZ", name: "Eswatini", geojsonName: "eSwatini" },
   "266": { iso3: "GAB", name: "Gabon", geojsonName: "Gabon" },
   "270": { iso3: "GMB", name: "Gambia", geojsonName: "Gambia" },
   "288": { iso3: "GHA", name: "Ghana", geojsonName: "Ghana" },
   "324": { iso3: "GIN", name: "Guinea", geojsonName: "Guinea" },
-  "624": { iso3: "GNB", name: "Guinea-Bissau", geojsonName: "Guinea Bissau" }, // Added by Marisol Morales - 3/2/2026
+  "624": { iso3: "GNB", name: "Guinea-Bissau", geojsonName: "Guinea-Bissau" }, // Added by Marisol Morales - 3/2/2026
   "404": { iso3: "KEN", name: "Kenya", geojsonName: "Kenya" },
   "426": { iso3: "LSO", name: "Lesotho", geojsonName: "Lesotho" },
   "430": { iso3: "LBR", name: "Liberia", geojsonName: "Liberia" },
@@ -285,19 +310,22 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "562": { iso3: "NER", name: "Niger", geojsonName: "Niger" },
   "566": { iso3: "NGA", name: "Nigeria", geojsonName: "Nigeria" },
   "646": { iso3: "RWA", name: "Rwanda", geojsonName: "Rwanda" },
-  "678": { iso3: "STP", name: "São Tomé and Príncipe", geojsonName: "Sao Tome and Principe" }, // Added by Marisol Morales - 3/2/2026
+  "678": { iso3: "STP", name: "São Tomé and Príncipe", geojsonName: "São Tomé and Principe" }, // Added by Marisol Morales - 3/2/2026
   "686": { iso3: "SEN", name: "Senegal", geojsonName: "Senegal" },
   "694": { iso3: "SLE", name: "Sierra Leone", geojsonName: "Sierra Leone" },
   "706": { iso3: "SOM", name: "Somalia", geojsonName: "Somalia" }, // Added by Marisol Morales - 3/2/2026
   "710": { iso3: "ZAF", name: "South Africa", geojsonName: "South Africa" },
   "728": { iso3: "SSD", name: "South Sudan", geojsonName: "South Sudan" }, // Added by Marisol Morales - 3/2/2026
   "729": { iso3: "SDN", name: "Sudan", geojsonName: "Sudan" },
-  "834": { iso3: "TZA", name: "Tanzania", geojsonName: "Tanzania" },
+  "834": { iso3: "TZA", name: "Tanzania", geojsonName: "United Republic of Tanzania" },
   "768": { iso3: "TGO", name: "Togo", geojsonName: "Togo" },
   "788": { iso3: "TUN", name: "Tunisia", geojsonName: "Tunisia" },
   "800": { iso3: "UGA", name: "Uganda", geojsonName: "Uganda" },
   "894": { iso3: "ZMB", name: "Zambia", geojsonName: "Zambia" },
+  "690": { iso3: "SYC", name: "Seychelles", geojsonName: "Seychelles" },
   "716": { iso3: "ZWE", name: "Zimbabwe", geojsonName: "Zimbabwe" },
+  "732": { iso3: "ESH", name: "Western Sahara", geojsonName: "Western Sahara" }, // Added by Reymes 3/7/26
+  "SOL": { iso3: "SOL", name: "Somaliland", geojsonName: "Somaliland" },         // Added by Reymes 3/7/26
 
   // ASIA
   "4": { iso3: "AFG", name: "Afghanistan", geojsonName: "Afghanistan" }, // Added by Marisol Morales - 3/2/2026
@@ -329,7 +357,7 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "524": { iso3: "NPL", name: "Nepal", geojsonName: "Nepal" }, // Added by Marisol Morales - 3/2/2026
   "512": { iso3: "OMN", name: "Oman", geojsonName: "Oman" }, // Added by Marisol Morales - 3/2/2026
   "586": { iso3: "PAK", name: "Pakistan", geojsonName: "Pakistan" }, // Added by Marisol Morales - 3/2/2026
-  "275": { iso3: "PSE", name: "Palestine", geojsonName: "West Bank" }, // Added by Marisol Morales - 3/2/2026
+  "275": { iso3: "PSE", name: "Palestine", geojsonName: "Palestine" }, // Added by Marisol Morales - 3/2/2026
   "608": { iso3: "PHL", name: "Philippines", geojsonName: "Philippines" }, // Added by Marisol Morales - 3/2/2026
   "634": { iso3: "QAT", name: "Qatar", geojsonName: "Qatar" }, // Added by Marisol Morales - 3/2/2026
   "682": { iso3: "SAU", name: "Saudi Arabia", geojsonName: "Saudi Arabia" }, // Added by Marisol Morales - 3/2/2026
@@ -344,6 +372,9 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "784": { iso3: "ARE", name: "United Arab Emirates", geojsonName: "United Arab Emirates" }, // Added by Marisol Morales - 3/2/2026
   "860": { iso3: "UZB", name: "Uzbekistan", geojsonName: "Uzbekistan" }, // Added by Marisol Morales - 3/2/2026
   "704": { iso3: "VNM", name: "Vietnam", geojsonName: "Vietnam" }, // Added by Marisol Morales - 3/2/2026
+  "48":  { iso3: "BHR", name: "Bahrain", geojsonName: "Bahrain" },
+  "158": { iso3: "TWN", name: "Taiwan", geojsonName: "Taiwan" },
+  "462": { iso3: "MDV", name: "Maldives", geojsonName: "Maldives" },
   "887": { iso3: "YEM", name: "Yemen", geojsonName: "Yemen" }, // Added by Marisol Morales - 3/2/2026
 
   // EUROPE
@@ -356,7 +387,8 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "100": { iso3: "BGR", name: "Bulgaria", geojsonName: "Bulgaria" }, // Added by Marisol Morales - 3/2/2026
   "191": { iso3: "HRV", name: "Croatia", geojsonName: "Croatia" }, // Added by Marisol Morales - 3/2/2026
   "196": { iso3: "CYP", name: "Cyprus", geojsonName: "Cyprus" }, // Added by Marisol Morales - 3/2/2026
-  "203": { iso3: "CZE", name: "Czech Republic", geojsonName: "Czech Republic" }, // Added by Marisol Morales - 3/2/2026
+  "NCY": { iso3: "NCY", name: "Northern Cyprus", geojsonName: "Northern Cyprus" }, // Added by Reymes 3/7/26
+  "203": { iso3: "CZE", name: "Czechia", geojsonName: "Czechia" }, // Added by Marisol Morales - 3/2/2026
   "208": { iso3: "DNK", name: "Denmark", geojsonName: "Denmark" }, // Added by Marisol Morales - 3/2/2026
   "233": { iso3: "EST", name: "Estonia", geojsonName: "Estonia" }, // Added by Marisol Morales - 3/2/2026
   "246": { iso3: "FIN", name: "Finland", geojsonName: "Finland" }, // Added by Marisol Morales - 3/2/2026
@@ -370,7 +402,7 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "428": { iso3: "LVA", name: "Latvia", geojsonName: "Latvia" }, // Added by Marisol Morales - 3/2/2026
   "440": { iso3: "LTU", name: "Lithuania", geojsonName: "Lithuania" }, // Added by Marisol Morales - 3/2/2026
   "442": { iso3: "LUX", name: "Luxembourg", geojsonName: "Luxembourg" }, // Added by Marisol Morales - 3/2/2026
-  "807": { iso3: "MKD", name: "North Macedonia", geojsonName: "Macedonia" }, // Added by Marisol Morales - 3/2/2026
+  "807": { iso3: "MKD", name: "North Macedonia", geojsonName: "North Macedonia" }, // Added by Marisol Morales - 3/2/2026
   "470": { iso3: "MLT", name: "Malta", geojsonName: "Malta" }, // Added by Marisol Morales - 3/2/2026
   "498": { iso3: "MDA", name: "Moldova", geojsonName: "Moldova" }, // Added by Marisol Morales - 3/2/2026
   "499": { iso3: "MNE", name: "Montenegro", geojsonName: "Montenegro" }, // Added by Marisol Morales - 3/2/2026
@@ -380,14 +412,20 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "620": { iso3: "PRT", name: "Portugal", geojsonName: "Portugal" }, // Added by Marisol Morales - 3/2/2026
   "642": { iso3: "ROU", name: "Romania", geojsonName: "Romania" }, // Added by Marisol Morales - 3/2/2026
   "643": { iso3: "RUS", name: "Russia", geojsonName: "Russia" }, // Added by Marisol Morales - 3/2/2026
-  "688": { iso3: "SRB", name: "Serbia", geojsonName: "Serbia" }, // Added by Marisol Morales - 3/2/2026
+  "688": { iso3: "SRB", name: "Serbia", geojsonName: "Republic of Serbia" }, // Added by Marisol Morales - 3/2/2026
   "703": { iso3: "SVK", name: "Slovakia", geojsonName: "Slovakia" }, // Added by Marisol Morales - 3/2/2026
   "705": { iso3: "SVN", name: "Slovenia", geojsonName: "Slovenia" }, // Added by Marisol Morales - 3/2/2026
   "724": { iso3: "ESP", name: "Spain", geojsonName: "Spain" },
   "752": { iso3: "SWE", name: "Sweden", geojsonName: "Sweden" },
   "756": { iso3: "CHE", name: "Switzerland", geojsonName: "Switzerland" },
   "804": { iso3: "UKR", name: "Ukraine", geojsonName: "Ukraine" }, // Added by Marisol Morales - 3/2/2026
+  "438": { iso3: "LIE", name: "Liechtenstein", geojsonName: "Liechtenstein" },
+  "492": { iso3: "MCO", name: "Monaco", geojsonName: "Monaco" },
+  "674": { iso3: "SMR", name: "San Marino", geojsonName: "San Marino" },
   "826": { iso3: "GBR", name: "United Kingdom", geojsonName: "United Kingdom" },
+  "XKX": { iso3: "XKX", name: "Kosovo", geojsonName: "Kosovo" },
+  "304": { iso3: "GRL", name: "Greenland", geojsonName: "Greenland" },         // Added by Reymes 3/7/26
+  "336": { iso3: "VAT", name: "Vatican", geojsonName: "Vatican" },             // Added by Reymes 3/7/26
 
   // NORTH AMERICA & CARIBBEAN
   "44": { iso3: "BHS", name: "Bahamas", geojsonName: "The Bahamas" }, // Added by Marisol Morales - 3/2/2026
@@ -404,7 +442,15 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "484": { iso3: "MEX", name: "Mexico", geojsonName: "Mexico" },
   "558": { iso3: "NIC", name: "Nicaragua", geojsonName: "Nicaragua" }, // Added by Marisol Morales - 3/2/2026
   "591": { iso3: "PAN", name: "Panama", geojsonName: "Panama" }, // Added by Marisol Morales - 3/2/2026
+  "630": { iso3: "PRI", name: "Puerto Rico", geojsonName: "Puerto Rico" },     // Added by Reymes 3/7/26
   "780": { iso3: "TTO", name: "Trinidad and Tobago", geojsonName: "Trinidad and Tobago" }, // Added by Marisol Morales - 3/2/2026
+  "28":  { iso3: "ATG", name: "Antigua and Barbuda", geojsonName: "Antigua and Barbuda" },
+  "52":  { iso3: "BRB", name: "Barbados", geojsonName: "Barbados" },
+  "212": { iso3: "DMA", name: "Dominica", geojsonName: "Dominica" },
+  "308": { iso3: "GRD", name: "Grenada", geojsonName: "Grenada" },
+  "659": { iso3: "KNA", name: "Saint Kitts and Nevis", geojsonName: "Saint Kitts and Nevis" },
+  "662": { iso3: "LCA", name: "Saint Lucia", geojsonName: "Saint Lucia" },
+  "670": { iso3: "VCT", name: "Saint Vincent and the Grenadines", geojsonName: "Saint Vincent and the Grenadines" },
   "840": { iso3: "USA", name: "United States", geojsonName: "United States of America" },
 
   // SOUTH AMERICA
@@ -427,7 +473,15 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "598": { iso3: "PNG", name: "Papua New Guinea", geojsonName: "Papua New Guinea" }, // Added by Marisol Morales - 3/2/2026
   "090": { iso3: "SLB", name: "Solomon Islands", geojsonName: "Solomon Islands" }, // Added by Marisol Morales - 3/2/2026
   "548": { iso3: "VUT", name: "Vanuatu", geojsonName: "Vanuatu" }, // Added by Marisol Morales - 3/2/2026
+  "296": { iso3: "KIR", name: "Kiribati", geojsonName: "Kiribati" },
+  "520": { iso3: "NRU", name: "Nauru", geojsonName: "Nauru" },
   "554": { iso3: "NZL", name: "New Zealand", geojsonName: "New Zealand" }, // Added by Marisol Morales - 3/2/2026
+  "583": { iso3: "FSM", name: "Micronesia", geojsonName: "Federated States of Micronesia" },
+  "584": { iso3: "MHL", name: "Marshall Islands", geojsonName: "Marshall Islands" },
+  "585": { iso3: "PLW", name: "Palau", geojsonName: "Palau" },
+  "776": { iso3: "TON", name: "Tonga", geojsonName: "Tonga" },
+  "798": { iso3: "TUV", name: "Tuvalu", geojsonName: "Tuvalu" },
+  "882": { iso3: "WSM", name: "Samoa", geojsonName: "Samoa" },
 }
 
 function MapFlyTo({ selectedGeoId, onMapReady }: { selectedGeoId: string | null; onMapReady?: (map: L.Map) => void }) {
@@ -498,12 +552,21 @@ export default function StatisticsMapLeaflet({
           rates[geoId] = nationalData.rate
         }
       } else {
-        // International filter: only use API data, skip national rate overrides
+        // International filter: use PIP API data, fall back to static estimates for countries with no PIP coverage
         if (typeof raw === "number" && Number.isFinite(raw)) {
           const normalized = normalizeRate(raw)
           if (normalized !== null) {
             rates[geoId] = normalized
             return
+          }
+        }
+        // Added by Reymes 3/7/26 - apply fallback for conflict zones, closed economies and high-income nations
+        // that the World Bank PIP API does not cover
+        const fallback = INTERNATIONAL_FALLBACK_RATES[iso3]
+        if (fallback !== undefined) {
+          const normalized = normalizeRate(fallback)
+          if (normalized !== null) {
+            rates[geoId] = normalized
           }
         }
       }
