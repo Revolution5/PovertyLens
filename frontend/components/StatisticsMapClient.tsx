@@ -15,15 +15,17 @@ type MapRow = {
   error?: string
 }
 // End of addition by Christella, 02/03/2026
-
+//Reymes Olide 1/31/26 map components
 type Props = {
   selectedGeoId: string | null
   onCountryClick: (geoId: string) => void
   mapRows: MapRow[]
+  //end of initial props - added by Reymes Olide 1/31/26
   showMarkers?: boolean; // Added by Christella, 02/03/2026
+  rateType?: "national" | "international"; // Added by Reymes 3/2/26 - toggle between national and international rates
 }
-
-export default function StatisticsMapClient({ selectedGeoId, onCountryClick, mapRows, showMarkers = true, }: Props) {
+//Initial add Reymes Olide 1/31/26 - Dynamic import wrapper for Leaflet map component
+export default function StatisticsMapClient({ selectedGeoId, onCountryClick, mapRows, showMarkers = true, rateType = "national" }: Props) {
   const [Component, setComponent] = useState<any>(null)
   // Added by Marisol for Dark Mode Start - 2/8/2026
   const [isDark, setIsDark] = useState(false);
@@ -61,7 +63,7 @@ export default function StatisticsMapClient({ selectedGeoId, onCountryClick, map
   return (
     <div>
       {Component ? (
-        <Component selectedGeoId={selectedGeoId} onCountryClick={onCountryClick} mapRows={mapRows} showMarkers={showMarkers}/>
+        <Component selectedGeoId={selectedGeoId} onCountryClick={onCountryClick} mapRows={mapRows} showMarkers={showMarkers} rateType={rateType}/>
       ) : (
         <div 
           className="w-full h-[360px] rounded-lg flex items-center justify-center"
@@ -76,3 +78,4 @@ export default function StatisticsMapClient({ selectedGeoId, onCountryClick, map
     </div>
   )
 }
+//End of initial addition by Reymes Olide, 1/31/26

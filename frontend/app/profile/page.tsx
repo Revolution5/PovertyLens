@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound } from 'lucide-react';
+import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle, Eye } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28 // Added Eye for Accessibility - Modified by Marisol 3/5/2026
 import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import for profile images 1/28/26
 
 export default function ProfilePage() {
@@ -25,6 +25,14 @@ export default function ProfilePage() {
   const [editUsername, setEditUsername] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // ============== marisol morales 3/1/26 - Add Payment Card state ==============
+  const [addCardOpen, setAddCardOpen] = useState(false); // Controls Add Card modal visibility
+  const [cardForm, setCardForm] = useState({ cardNumber: '', cardName: '', expiryDate: '', cvv: '' }); // Card form field values
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({}); // Per-field validation errors
+  const [cardSubmitting, setCardSubmitting] = useState(false); // True while mock API call is running
+  const [cardSuccess, setCardSuccess] = useState(false); // True after submission, triggers success banner
+  // ============== End Add Card State ==============
   
   // ============== Marisol Code for Dark Mode Detection 1/12/2026 ============== //
   const [isDark, setIsDark] = useState(false);
@@ -64,10 +72,7 @@ export default function ProfilePage() {
   // Marisol function for fetching images from Server
   const fetchUserImages = async (email: string) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/user-images?email=${encodeURIComponent(email)}`).catch(() => null);
-      if (!response) {
-        return;
-      }
+      const response = await fetch(`http://localhost:4000/api/profile/user-images?email=${encodeURIComponent(email)}`); // Edited by Christella - 02/27/2026
       const data = await response.json();
       
       if (data.success) {
@@ -286,6 +291,52 @@ export default function ProfilePage() {
       day: "numeric",
     });
   };
+
+  // ============== marisol morales 2-28 - Add Card helper functions ==============
+  const formatCardNumber = (value: string) => { // Inserts a space every 4 digits, max 19 chars
+    const cleaned = value.replace(/\D/g, '');
+    return (cleaned.match(/.{1,4}/g)?.join(' ') || cleaned).substring(0, 19);
+  };
+
+  const formatExpiry = (value: string) => { // Auto-inserts slash to produce MM/YY format
+    const cleaned = value.replace(/\D/g, '');
+    return cleaned.length >= 2 ? cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4) : cleaned;
+  };
+
+  const handleCardChange = (field: string, value: string) => { // Handles input for all card fields, applies formatting and clears field error
+    let formatted = value;
+    if (field === 'cardNumber') formatted = formatCardNumber(value);
+    else if (field === 'expiryDate') formatted = formatExpiry(value);
+    else if (field === 'cvv') formatted = value.replace(/\D/g, '').slice(0, 4); // Digits only, max 4
+    setCardForm(prev => ({ ...prev, [field]: formatted }));
+    if (cardErrors[field]) setCardErrors(prev => ({ ...prev, [field]: '' })); // Clear error when user corrects the field
+  };
+
+  const handleCardSubmit = async (e: React.FormEvent) => { // Validates fields then runs a mock submission (no data stored)
+    e.preventDefault();
+    const errs: Record<string, string> = {};
+    const digits = cardForm.cardNumber.replace(/\s/g, '');
+    if (digits.length !== 16) errs.cardNumber = 'Must be 16 digits';
+    if (!cardForm.cardName.trim()) errs.cardName = 'Cardholder name is required';
+    if (cardForm.expiryDate.length !== 5) errs.expiryDate = 'Enter as MM/YY';
+    else {
+      const month = parseInt(cardForm.expiryDate.split('/')[0]);
+      if (month < 1 || month > 12) errs.expiryDate = 'Invalid month';
+    }
+    if (cardForm.cvv.length < 3) errs.cvv = 'Must be 3–4 digits';
+    if (Object.keys(errs).length) { setCardErrors(errs); return; } // Stop if any errors exist
+    setCardSubmitting(true);
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated network delay
+    console.log('Mock card added (not stored):', { lastFour: cardForm.cardNumber.slice(-4), cardName: cardForm.cardName });
+    setCardSubmitting(false);
+    setCardSuccess(true);
+    setTimeout(() => { // Reset and close modal after 2s
+      setCardSuccess(false);
+      setCardForm({ cardNumber: '', cardName: '', expiryDate: '', cvv: '' });
+      setAddCardOpen(false);
+    }, 2000);
+  };
+  // ============== End Add Card Helpers ==============
 
   return (
     // ============== Marisol Code for Dark Mode: Updated page background 1/12/2026 ============== //
@@ -513,9 +564,98 @@ export default function ProfilePage() {
                   </div>
                   <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                 </div>
+
+                {/* ============== marisol morales 2-28 - Payment Card row, opens Add Card modal on click ============== */}
+                <div className="h-px" style={{ backgroundColor: 'var(--color-gray-light)' }}></div> {/* Divider between Password and Payment Card rows */}
+                <div 
+                  className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
+                  style={{
+                    backgroundColor: isDark ? 'transparent' : 'transparent' 
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; 
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  onClick={() => setAddCardOpen(true)} // Opens Add Card modal
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{
+                      backgroundColor: 'var(--color-gray-light)'
+                    }}>
+                      <CreditCard className="w-5 h-5" style={{ color: 'var(--color-gray)' }} /> {/* CreditCard icon added to lucide import */}
+                    </div>
+                    <div>
+                      <p className="font-medium" style={{ color: 'var(--foreground)' }}>Payment Card</p>
+                      <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                        Add a card for donations
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
+                </div>
+                {/* ============== End Payment Card Row ============== */}
               </div>
             </div>
           </div>
+
+          {/* ============== Accessibility Section - Added by Marisol 3/5/2026 ============== */}
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FEEE91] to-[#FF5656] flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Accessibility
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Customize your viewing experience
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+
+              <div className="space-y-4">
+                <Link href="/accessibility">
+                  <div 
+                    className="flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer" 
+                    style={{
+                      backgroundColor: isDark ? 'transparent' : 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{
+                        backgroundColor: 'var(--color-gray-light)'
+                      }}>
+                        <Eye className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
+                      </div>
+                      <div>
+                        <p className="font-medium" style={{ color: 'var(--foreground)' }}>Accessibility Settings</p>
+                        <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                          Adjust theme and contrast
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+          {/* ============== End Accessibility Section - marisol morales ============== */}
 
           {/* Delete Account */}
           <div className="rounded-xl border-2 border-red-200 overflow-hidden shadow-sm" style={{
@@ -791,6 +931,169 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* ============== marisol morales 3-1 - Add Payment Card Modal ============== */}
+      {addCardOpen && ( // Renders only when addCardOpen is true
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setAddCardOpen(false)}> {/* Clicking backdrop closes modal */}
+          <div 
+            className="rounded-xl p-6 max-w-md w-full mx-4 shadow-xl" 
+            style={{ backgroundColor: 'var(--background)' }}
+            onClick={(e) => e.stopPropagation()} // Prevents clicks inside from closing the modal
+          >
+            {/* Header matches Security section gradient icon style */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                  Add Payment Card
+                </h3>
+                <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                  Securely add your card for donations
+                </p>
+              </div>
+            </div>
+
+            <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+
+            {/* Success banner - shown for 2s after mock submission */}
+            {cardSuccess && (
+              <div
+                className="flex items-center gap-3 p-4 rounded-lg mb-6"
+                style={{
+                  backgroundColor: isDark ? 'rgba(34, 197, 94, 0.1)' : '#ECFDF5', 
+                  border: `1px solid ${isDark ? 'rgba(34, 197, 94, 0.3)' : '#10B981'}`, 
+                }}
+              >
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>Card Added Successfully!</p>
+                  <p className="text-xs" style={{ color: 'var(--color-gray)' }}>Card ending in {cardForm.cardNumber.slice(-4)} has been saved.</p>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleCardSubmit} className="space-y-4">
+              {/* Card Number */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>Card Number</label>
+                <input
+                  type="text"
+                  value={cardForm.cardNumber}
+                  onChange={(e) => handleCardChange('cardNumber', e.target.value)} // Auto-formats with spaces every 4 digits
+                  placeholder="1234 5678 9012 3456"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: cardErrors.cardNumber ? '#EF4444' : 'var(--color-gray-light)', // Red border on validation error
+                    color: 'var(--foreground)'
+                  }}
+                />
+                {cardErrors.cardNumber && <p className="text-xs mt-1 text-red-500">{cardErrors.cardNumber}</p>}
+              </div>
+
+              {/* Cardholder Name */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>Cardholder Name</label>
+                <input
+                  type="text"
+                  value={cardForm.cardName}
+                  onChange={(e) => handleCardChange('cardName', e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                  style={{
+                    backgroundColor: 'var(--background)',
+                    borderColor: cardErrors.cardName ? '#EF4444' : 'var(--color-gray-light)', // Red border on validation error
+                    color: 'var(--foreground)'
+                  }}
+                />
+                {cardErrors.cardName && <p className="text-xs mt-1 text-red-500">{cardErrors.cardName}</p>}
+              </div>
+
+              {/* Expiry + CVV side by side */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>Expiry Date</label>
+                  <input
+                    type="text"
+                    value={cardForm.expiryDate}
+                    onChange={(e) => handleCardChange('expiryDate', e.target.value)} // Auto-formats as MM/YY
+                    placeholder="MM/YY"
+                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                    style={{
+                      backgroundColor: 'var(--background)',
+                      borderColor: cardErrors.expiryDate ? '#EF4444' : 'var(--color-gray-light)', // Red border on validation error
+                      color: 'var(--foreground)'
+                    }}
+                  />
+                  {cardErrors.expiryDate && <p className="text-xs mt-1 text-red-500">{cardErrors.expiryDate}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>CVV</label>
+                  <input
+                    type="text"
+                    value={cardForm.cvv}
+                    onChange={(e) => handleCardChange('cvv', e.target.value)} // Digits only, max 4
+                    placeholder="123"
+                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8CE4FF] focus:border-transparent"
+                    style={{
+                      backgroundColor: 'var(--background)',
+                      borderColor: cardErrors.cvv ? '#EF4444' : 'var(--color-gray-light)', // Red border on validation error
+                      color: 'var(--foreground)'
+                    }}
+                  />
+                  {cardErrors.cvv && <p className="text-xs mt-1 text-red-500">{cardErrors.cvv}</p>}
+                </div>
+              </div>
+
+              {/* Cancel / Add Card buttons - same pattern as existing modals */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setAddCardOpen(false)} // Closes modal without submitting
+                  className="flex-1 px-4 py-2 border rounded-lg transition-colors font-medium"
+                  style={{
+                    borderColor: 'var(--color-gray-light)',
+                    color: isDark ? '#e5e5e5' : '#374151',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'; 
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'; 
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={cardSubmitting || cardSuccess} // Disabled while submitting or after success
+                  className="flex-1 px-4 py-2 font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: '#8CE4FF',
+                    color: '#1a1a1a'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!cardSubmitting) e.currentTarget.style.backgroundColor = '#6DD5FF';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!cardSubmitting) e.currentTarget.style.backgroundColor = '#8CE4FF';
+                  }}
+                >
+                  {cardSubmitting ? 'Adding Card...' : cardSuccess ? 'Card Added!' : 'Add Card'} {/* Label changes with submission state */}
+                </button>
+              </div>
+
+              <p className="text-xs text-center mt-2" style={{ color: 'var(--color-gray)' }}>
+                This is a demonstration only. No card data is stored or processed.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ============== End Add Payment Card Modal ============== */}
     </div>
   );
 }

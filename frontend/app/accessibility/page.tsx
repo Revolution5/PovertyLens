@@ -1,0 +1,259 @@
+// Created by Marisol Morales 3/4/2026 for accessibility page via Account Settings 
+
+"use client"
+
+import { useTheme } from '@/components/ThemeProvider';
+import Link from 'next/link';
+import { ArrowLeft, Moon, Sun, Contrast, Sparkles } from 'lucide-react';
+
+export default function AccessibilityPage() {
+  const { 
+    theme, 
+    contrast, 
+    toggleTheme, 
+    toggleContrast
+  } = useTheme();
+
+  return (
+    <div className="min-h-screen" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+      {/* Header */}
+      <header style={{ borderBottom: '1px solid var(--color-gray-light)' }}>
+        <div className="container mx-auto px-6 py-4">
+          <Link
+            href="/profile"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: 'var(--color-gray)',
+              transition: 'var(--transition-base)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--foreground)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--color-gray)';
+            }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Settings
+          </Link>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-12 max-w-4xl">
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 className="text-3xl mb-1 font-bold" style={{ color: 'var(--foreground)' }}>
+            Accessibility Settings
+          </h1>
+          <p style={{ color: 'var(--color-gray)', fontSize: '1.125rem' }}>
+            Customize your experience to meet your accessibility needs
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Theme Toggle */}
+          <div 
+            className="card"
+            style={{
+              padding: '1.5rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--background)',
+              boxShadow: 'var(--shadow-md)',
+              border: '2px solid var(--color-cyan)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div 
+                style={{
+                  width: '3rem',
+                  height: '3rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--gradient-cyan-yellow)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                {theme === "dark" ? (
+                  <Moon className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
+                ) : (
+                  <Sun className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
+                )}
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--foreground)' }}>
+                  Theme
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', marginBottom: '1rem' }}>
+                  Switch between light and dark mode to reduce eye strain and improve readability
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    onClick={toggleTheme}
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      height: '2rem',
+                      width: '3.5rem',
+                      alignItems: 'center',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: theme === "dark" ? "var(--color-cyan)" : "var(--color-gray-light)",
+                      transition: 'var(--transition-base)',
+                      border: '2px solid var(--color-gray-light)',
+                      cursor: 'pointer'
+                    }}
+                    aria-label="Toggle theme"
+                  >
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        height: '1.5rem',
+                        width: '1.5rem',
+                        borderRadius: '50%',
+                        backgroundColor: '#ffffff',
+                        transform: theme === "dark" ? "translateX(1.5rem)" : "translateX(0.25rem)",
+                        transition: 'var(--transition-base)',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}
+                    />
+                  </button>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)' }}>
+                    {theme === "dark" ? "Dark Mode" : "Light Mode"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* High Contrast */}
+          <div 
+            className="card"
+            style={{
+              padding: '1.5rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--background)',
+              boxShadow: 'var(--shadow-md)',
+              border: '2px solid var(--color-orange)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div 
+                style={{
+                  width: '3rem',
+                  height: '3rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--gradient-orange-red)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <Contrast className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--foreground)' }}>
+                  High Contrast
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', marginBottom: '1rem' }}>
+                  Increase contrast between text and background for better visibility
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button
+                    onClick={toggleContrast}
+                    aria-label="Toggle high contrast mode"
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      height: '2rem',
+                      width: '3.5rem',
+                      alignItems: 'center',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: contrast === 'high' ? "var(--color-orange)" : "var(--color-gray-light)",
+                      transition: 'var(--transition-base)',
+                      border: '2px solid var(--color-gray-light)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        height: '1.5rem',
+                        width: '1.5rem',
+                        borderRadius: '50%',
+                        backgroundColor: '#ffffff',
+                        transform: contrast === 'high' ? "translateX(1.5rem)" : "translateX(0.25rem)",
+                        transition: 'var(--transition-base)',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}
+                    />
+                  </button>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)' }}>
+                    {contrast === 'high' ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Coming Soon Section */}
+          <div 
+            style={{
+              marginTop: '2rem',
+              padding: '2rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--gradient-light)',
+              border: '2px dashed var(--color-yellow)',
+              textAlign: 'center'
+            }}
+          >
+            <div 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '4rem',
+                height: '4rem',
+                borderRadius: 'var(--radius-full)',
+                background: 'var(--gradient-cyan-yellow)',
+                marginBottom: '1rem'
+              }}
+            >
+              <Sparkles className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
+            </div>
+            <h3 style={{ fontWeight: '700', fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--foreground)' }}>
+              More Features Coming Soon
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', maxWidth: '32rem', margin: '0 auto' }}>
+              We're working on adding more accessibility features including font size adjustment, 
+              reduced motion options, and keyboard navigation enhancements. Stay tuned!
+            </p>
+          </div>
+        </div>
+
+        {/* Info Section */}
+        <div 
+          style={{
+            marginTop: '3rem',
+            padding: '1.5rem',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--gradient-light)',
+            border: '2px solid var(--color-cyan)'
+          }}
+        >
+          <h3 style={{ fontWeight: '600', marginBottom: '0.5rem', color: 'var(--foreground)' }}>
+            Need More Help?
+          </h3>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)' }}>
+            If you're experiencing any accessibility issues or need additional accommodations, 
+            please contact our support team. We're committed to making our application accessible 
+            to everyone.
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}

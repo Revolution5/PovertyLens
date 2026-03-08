@@ -7,6 +7,8 @@ import FreeRiceLeaderboardClient from '../../components/FreeRiceLeaderboardClien
 import FreeRiceRecent from '../../components/FreeRiceRecent';
 
 export default function FreeRicePage() {
+  const [refreshKey, setRefreshKey] = useState(0); // added by Marisol 2/16 to trigger refresh of recent donations 
+
   // ============== Added by Marisol Dark Mode Detection 1/12/2026 ============== //
   const [isDark, setIsDark] = useState(false);
 
@@ -125,7 +127,7 @@ export default function FreeRicePage() {
           </div>
 
           <div>
-            <FreeRiceRecent />
+            <FreeRiceRecent refreshKey={refreshKey} /> {/*Changed by Marisol to pass refreshKey prop*/} 
           </div>
         </div>
 
@@ -138,7 +140,7 @@ export default function FreeRicePage() {
               borderColor: isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.1)' // Changed by Marisol for dark mode 2/10/2026
             }}
           >
-            <FreeRiceLeaderboardClient showRecent={false} />
+            <FreeRiceLeaderboardClient showRecent={false} onDonationLogged={() => setRefreshKey(k => k + 1)} /> {/* Changed by Marisol Morales 2/16, onDonationLogged increments refreshKey so FreeRiceRecent auto-updates */}
           </div>
 
           <div 

@@ -43,7 +43,51 @@ export default function FAQ() {
                     <p className="mb-1">5. Operational Costs</p>
                 </div>
             )
-        }
+        },
+        // Added by marisol morales - 3/7/2026 - new FAQ entries covering About PovertyLens, poverty measurement, volunteering, and data sources
+        {
+            question: "What is PovertyLens and what is its mission?",
+            answer: (
+                <div>
+                    <p className="mb-2">PovertyLens is a platform dedicated to making global poverty data accessible, understandable, and actionable for everyone. Our mission is to bridge the gap between complex economic data and the public by presenting poverty statistics in a clear, visual, and human-centered way.</p>
+                    <p>We believe that informed communities are empowered communities — and that understanding the scale and shape of poverty is the first step toward addressing it.</p>
+                </div>
+            )
+        },
+        {
+            question: "How is poverty measured?",
+            answer: (
+                <div>
+                    <p className="mb-2">Poverty is typically measured in two ways:</p>
+                    <p className="mb-2"><strong>1. International (extreme) poverty line:</strong> The World Bank sets this at $2.15 per person per day (as of 2022). Anyone living below this threshold is considered to be in extreme poverty. This allows for comparisons across countries.</p>
+                    <p className="mb-2"><strong>2. National poverty lines:</strong> Each country sets its own poverty line based on the local cost of living. These vary widely — for example, the poverty line in the United States is significantly higher than in Sub-Saharan Africa.</p>
+                    <p>PovertyLens displays both international and national rates so you can explore poverty through either lens.</p>
+                </div>
+            )
+        },
+        {
+            question: "Where does PovertyLens get its data?",
+            answer: (
+                <div>
+                    <p className="mb-2">Our poverty statistics are sourced primarily from the <strong>World Bank Poverty and Inequality Platform (PIP)</strong>, which aggregates household survey data from countries around the world. National poverty line data is sourced from official government statistics and World Bank country reports.</p>
+                    <p className="mb-2">Data is cached and refreshed regularly to keep figures as current as possible. Each statistic on the platform includes a source label and the year it was recorded so you always know how recent the data is.</p>
+                    <p>For countries with limited survey data, some figures may be estimates based on the most recent available year.</p>
+                </div>
+            )
+        },
+        {
+            question: "How can I volunteer to help fight poverty?",
+            answer: (
+                <div>
+                    <p className="mb-2">There are many meaningful ways to get involved beyond donating:</p>
+                    <p className="mb-1"><strong>1. Local organizations:</strong> Search for food banks, shelters, and community outreach programs in your area that rely on volunteers.</p>
+                    <p className="mb-1"><strong>2. Skills-based volunteering:</strong> Offer professional skills — such as legal aid, financial literacy coaching, or tutoring — to organizations that serve low-income communities.</p>
+                    <p className="mb-1"><strong>3. Advocacy:</strong> Raise awareness by sharing accurate information about poverty with your network, or contact your local representatives to support poverty-reduction policies.</p>
+                    <p className="mt-2">Visit our <strong>Resources → Donations & Volunteering</strong> page for a curated list of organizations actively seeking volunteers.</p>
+                </div>
+            )
+        },
+        // End of addition - 3/7/2026
     ];
 
     return (

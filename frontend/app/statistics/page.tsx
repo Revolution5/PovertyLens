@@ -1,8 +1,14 @@
 // Edited by Christella - 1/30/2026
+//Editted by Marisol 3/4/2026 - Add in Continent filter for when selecting country for easier search. 
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
 import StatisticsMapClient from "../../components/StatisticsMapClient";
+import MapFilters, { RateType } from "../../components/mapfilters"; // Added by Reymes 3/2/26
+// Added by Reymes 3/2/26 - import rate data files for filter support
+import { NATIONAL_POVERTY_RATES, getNationalPovertyLine } from "../../data/nationalRates";
+//Added by Damon 3/6/2026
+import PovertyStorySearch from "../../components/PovertyStorySearch";
 
 // Added by Christella Taguicana - 02/03/2026
 /* Typees relative to Statistics */
@@ -34,6 +40,8 @@ type LiveResponse = {
   year?: number | null;
   povline?: number;
   fetchedAt?: string;
+  // Added by Reymes 3/2/26 - national poverty line for selected countries
+  nationalPovertyLine?: { amount: number; currency: string } | null;
   metric?: {
     headcount?: number | null;
     poverty_gap?: number | null;
@@ -232,6 +240,33 @@ const countryNames: Record<string, string> = {
   AUS: "Australia",
 };
 
+// Start of Added by Marisol 3/4/2026 — continent filter map
+const CONTINENT_ISO3: Record<string, string[]> = {
+  Africa: [
+    "DZA","AGO","BEN","BWA","BFA","BDI","CMR","CAF","TCD","COG","COD","CIV",
+    "EGY","ETH","SWZ","GAB","GMB","GHA","GIN","KEN","LSO","LBR","MDG","MWI",
+    "MLI","MRT","MAR","MOZ","NAM","NER","NGA","RWA","SEN","SLE","ZAF","SDN",
+    "TZA","TGO","TUN","UGA","ZMB","ZWE",
+  ],
+  Asia: [
+    "BGD","IND","JPN","KOR","CHN","IDN","PAK","PHL","VNM","THA","MMR","KHM",
+    "LAO","NPL","LKA","KAZ","UZB","AZE","GEO","ARM","IRQ","IRN","SAU","ARE",
+    "TUR","ISR","JOR","LBN","YEM","SYR","OMN","KWT","QAT","BHR","AFG","MNG",
+  ],
+  Europe: [
+    "AUT","BEL","FRA","DEU","ITA","NLD","NOR","ESP","SWE","CHE","GBR","POL",
+    "PRT","GRC","HUN","CZE","ROU","BGR","HRV","SRB","SVK","SVN","FIN","DNK",
+    "IRL","LUX","EST","LVA","LTU","ALB","MKD","BIH","MNE","MDA","BLR","UKR",
+    "RUS",
+  ],
+  "North America": ["CAN","MEX","USA","GTM","BLZ","HND","SLV","NIC","CRI","PAN"],
+  "South America": ["BRA","ARG","CHL","COL","PER","VEN","ECU","BOL","PRY","URY","GUY","SUR"],
+  Oceania: ["AUS","NZL","PNG","FJI","SLB","VUT","WSM","TON","KIR","FSM"],
+};
+// End of Added by Marisol 3/4/2026 — continent filter map
+
+// Added by Reymes 3/2/26 - national poverty rates imported from data/nationalRates.ts
+
 // Added by Christella - 1/30/2026
 function StoryCard({ 
   // Added by Daniel
@@ -367,9 +402,9 @@ function StoryCard({
                 By {userProfile!.username}
               </div>
             ) : (
-              // SHOW "ANONYMOUS" WHEN displayName = false
+              // SHOW "PovertyLens User" when displayName = false or user account is deleted - edit by Christella - 03/03/2026
               <div className="text-sm mt-1" style={{ color: 'var(--color-gray)' }}>
-                Anonymous
+                PovertyLens User
               </div>
             )}
           </div>
@@ -624,6 +659,7 @@ function SavedStoriesSection({
 // Added by Christella - 1/30/2026
 export default function StatisticsPage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedContinent, setSelectedContinent] = useState<string | null>(null); // Added by Marisol 3/4/2026 - continent filter state
   const [liveResult, setLiveResult] = useState<LiveResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -635,6 +671,10 @@ export default function StatisticsPage() {
   const [thresholdLoading, setThresholdLoading] = useState(false);
   const [thresholdError, setThresholdError] = useState("");
   const [filteredStories, setFilteredStories] = useState<Story[]>([]);
+  // Pagination state - Added by Christella - 03/03/2026
+  const [storiesPage, setStoriesPage] = useState(1);
+  const [filteredPage, setFilteredPage] = useState(1);
+  const STORIES_PER_PAGE = 9;
   //
   const [statsByCountry, setStatsByCountry] = useState<Record<string, CachedStat>>({});
   const [mapRows, setMapRows] = useState<MapRow[]>([]);
@@ -644,6 +684,9 @@ export default function StatisticsPage() {
   const [countriesLoading, setCountriesLoading] = useState(false);
   const [countriesError, setCountriesError] = useState<string | null>(null);
   // End of addition by Christella - 1/30/2026
+  
+  // Added by Reymes 3/2/26 - toggle between national and international poverty rates on map
+  const [rateType, setRateType] = useState<RateType>("national");
   
   /* user profile cache - daniel q. 2/4 */
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
@@ -690,7 +733,7 @@ export default function StatisticsPage() {
 
     try {
       const profileRes = await fetch(
-        `${BACKEND_URL}/api/user-images?email=${encodeURIComponent(email)}`
+        `${BACKEND_URL}/api/profile/user-images?email=${encodeURIComponent(email)}`
       );
       const profileData = await profileRes.json();
 
@@ -758,6 +801,7 @@ export default function StatisticsPage() {
 
       const storiesList = Array.isArray(data.stories) ? data.stories : [];
       setStories(storiesList);
+      setStoriesPage(1); // Reset to page 1 on new country selection - Added by Christella - 03/03/2026
 
       await fetchProfilesForStories(storiesList);
 
@@ -796,6 +840,7 @@ export default function StatisticsPage() {
 
       const merged = Array.from(byId.values());
       setFilteredStories(merged);
+      setFilteredPage(1); // Reset to page 1 on new search - Added by Christella - 03/03/2026
       await fetchProfilesForStories(merged);
       return merged;
     } catch (err) {
@@ -817,19 +862,7 @@ export default function StatisticsPage() {
     }
 
     // find countries in mapRows with headcount >= parsed
-    // Use national poverty rates for developed countries when available
-    const NATIONAL_POVERTY_RATES: Record<string, number> = {
-      USA: 10.6,
-      CAN: 9.4,
-      GBR: 18.0,
-      DEU: 14.8,
-      FRA: 14.5,
-      JPN: 15.7,
-      AUS: 13.4,
-      ITA: 20.1,
-      ESP: 20.4,
-      KOR: 16.7,
-    };
+    // Updated by Reymes 3/2/26 - use national poverty rates for developed countries when available
 
     // The API may return headcount as a decimal fraction (e.g. 0.10 for 10%),
     // so normalize to percentage when the value is <= 1. For some developed
@@ -840,8 +873,9 @@ export default function StatisticsPage() {
         const iso = r.country?.toUpperCase();
         const raw = (r.headcount as number) ?? NaN;
         let rate = Number.NaN;
+        // Added by Reymes 3/2/26 - apply national rates first for developed countries
         if (iso && NATIONAL_POVERTY_RATES[iso]) {
-          rate = NATIONAL_POVERTY_RATES[iso];
+          rate = NATIONAL_POVERTY_RATES[iso]?.rate ?? null;
         } else if (!Number.isNaN(raw)) {
           rate = raw <= 1 ? raw * 100 : raw;
         }
@@ -885,7 +919,32 @@ export default function StatisticsPage() {
         throw new Error(data.message || "Failed to load map data");
       }
 
-      setMapRows(Array.isArray(data.rows) ? data.rows : []);
+      // Added by Reymes 3/2/26 - keep mapRows pure API-only, apply filters at render time
+      const incomingRows: MapRow[] = Array.isArray(data.rows) ? data.rows : [];
+      const byIso = new Map<string, MapRow>();
+
+      incomingRows.forEach((row) => {
+        if (!row?.country) return;
+        const iso = row.country.toUpperCase();
+        byIso.set(iso, row);
+      });
+
+      // Added by Reymes 3/2/26 - inject placeholder rows for countries missing API data
+      // (national rates will be applied only when filter is set to "national")
+      Object.entries(NATIONAL_POVERTY_RATES).forEach(([iso]) => {
+        if (!byIso.has(iso)) {
+          byIso.set(iso, {
+            country: iso,
+            headcount: null,
+            year: 2022,
+            povline: 2.15,
+            source: "missing",
+            fetchedAt: new Date().toISOString(),
+          });
+        }
+      });
+
+      setMapRows(Array.from(byIso.values()));
     } catch (e: any) {
       setMapRows([]);
       setMapError(e?.message || "Server error");
@@ -952,14 +1011,28 @@ export default function StatisticsPage() {
       const allNamesAreIso = countriesList.every((c) => c.name === c.iso3);
       // If all names are just ISO codes, fall back to derived list
       if (allNamesAreIso) {
-        return derivedCountriesFromMapRows;
+        // Modified by marisol morales 3/4 - added continent filter
+        const base = derivedCountriesFromMapRows;
+        if (!selectedContinent) return base;
+        const allowed = new Set(CONTINENT_ISO3[selectedContinent] ?? []);
+        return base.filter((c) => allowed.has(c.iso3));
+        // End modification
       }
-      return countriesList;
+      // Modified by marisol morales 3/4 - added continent filter
+      const base = countriesList;
+      if (!selectedContinent) return base;
+      const allowed = new Set(CONTINENT_ISO3[selectedContinent] ?? []);
+      return base.filter((c) => allowed.has(c.iso3));
+      // End modification
     }
     // No countries list, use derived
-    return derivedCountriesFromMapRows;
-  }, [countriesList, derivedCountriesFromMapRows]);
-
+    // Modified by marisol morales 3/4 - added continent filter
+    const base = derivedCountriesFromMapRows;
+    if (!selectedContinent) return base;
+    const allowed = new Set(CONTINENT_ISO3[selectedContinent] ?? []);
+    return base.filter((c) => allowed.has(c.iso3));
+    // End modification
+  }, [countriesList, derivedCountriesFromMapRows, selectedContinent]); // Modified by marisol morales 3/4 - added selectedContinent dependency
   useEffect(() => {
     fetchMapData();
     fetchCountriesFromBackend();
@@ -1015,6 +1088,30 @@ export default function StatisticsPage() {
     setStories([]);
     fetchStories(iso3);
 
+    // Added by Reymes 3/2/26 - strict national-only behavior for national filter
+    if (rateType === "national") {
+      const fallbackData = NATIONAL_POVERTY_RATES[iso3.toUpperCase()];
+      if (fallbackData) {
+        const povLineData = getNationalPovertyLine(iso3);
+        setLiveResult({
+          success: true,
+          source: `National poverty line (${fallbackData.description})`,
+          country: iso3,
+          year: fallbackData.year,
+          povline: fallbackData.povLine,
+          nationalPovertyLine: povLineData,
+          metric: {
+            headcount: fallbackData.rate / 100,
+            poverty_gap: null,
+            poverty_severity: null,
+          },
+        });
+      } else {
+        setError("No national poverty-line data is available for this country yet.");
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const cached = statsByCountry[iso3];
@@ -1051,6 +1148,16 @@ export default function StatisticsPage() {
       setLoading(false);
     }
   };
+
+  // Added by Marisol - 3/3/2026 (needed to fix bug.)
+  // Re-fetch stats when rateType changes and a country is already selected
+useEffect(() => {
+    if (selectedCountry) {
+      handleSelectCountry(selectedCountry);
+      }
+  }, [rateType]);
+  // End of addition by Marisol - 3/3/2026
+
 
   // Added by Christella - 1/30/2026
   const handleCountryClick = async (geoId: string) => {
@@ -1114,12 +1221,17 @@ export default function StatisticsPage() {
             style={{ backgroundColor: 'var(--background)' }}
           >
             <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Map</h2>
+            {/* Added by Reymes 3/2/26 - rate type toggle */}
+            <div className="mb-4">
+              <MapFilters value={rateType} onChange={setRateType} />
+            </div>
             <div className="mb-4 relative z-0">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
                 onCountryClick={handleCountryClick}
                 mapRows={mapRows}
                 showMarkers={false}
+                rateType={rateType}
               />
               <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                 The map shows a baselayer only. Pick a country from the panel to the right.
@@ -1135,92 +1247,198 @@ export default function StatisticsPage() {
 
           {/* Added by Christella - 01/30/2026 */}
           {/* Statistics panel (right) */}
-          <div 
-            className="rounded-lg shadow-md p-6"
+          <div
+            className="rounded-2xl shadow-md p-6 flex flex-col gap-5"
             style={{ backgroundColor: 'var(--background)' }}
           >
-            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Statistics</h2>
-            <div className="mb-3">
-              {countriesLoading ? (
-                <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading countries…</div>
-              ) : countriesError ? (
-                <div className="text-sm text-red-600">Could not load countries: {countriesError}</div>
-              ) : (
+            {/* Panel heading */}
+            <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Statistics</h2>
+
+            {/* Start of Added by Marisol 3/4/2026 - Continent filter - moved inside Statistics card by Marisol 3/7/2026 */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-gray)' }}>
+                Filter by Continent
+              </label>
+              <div className="relative">
                 <select
-                  value={selectedCountry ?? ""}
-                  onChange={(e) => handleSelectCountry(e.target.value || null)}
-                  className="w-full border rounded p-2 mb-4"
+                  value={selectedContinent ?? ""}
+                  onChange={(e) => {
+                    setSelectedContinent(e.target.value || null);
+                    setSelectedCountry(null);
+                    setLiveResult(null);
+                    setStories([]);
+                  }}
+                  className="w-full appearance-none rounded-lg border px-3 py-2.5 pr-9 text-sm transition-all cursor-pointer focus:outline-none"
                   style={{
                     backgroundColor: 'var(--background)',
                     borderColor: 'var(--color-gray-light)',
-                    color: 'var(--foreground)'
+                    color: 'var(--foreground)',
                   }}
                 >
-                  <option value="">— Select a country —</option>
-                  {countriesToShow.map((c) => (
-                    <option key={c.iso3} value={c.iso3}>
-                      {c.name ?? c.iso3} ({c.iso3})
-                    </option>
+                  <option value="">— All continents —</option>
+                  {Object.keys(CONTINENT_ISO3).map((continent) => (
+                    <option key={continent} value={continent}>{continent}</option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 5L7 9L11 5" stroke="var(--color-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            {/* End of Added by Marisol 3/4/2026 - Continent filter */}
+
+            {/* Country selector */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-gray)' }}>
+                Select Country
+              </label>
+              {countriesLoading ? (
+                <div
+                  className="w-full rounded-xl border px-4 py-3 text-sm"
+                  style={{ borderColor: 'var(--color-gray-light)', color: 'var(--color-gray)', backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
+                >
+                  Loading countries…
+                </div>
+              ) : countriesError ? (
+                <div className="text-sm rounded-xl border px-4 py-3" style={{ borderColor: 'rgba(255,86,86,0.4)', color: 'var(--color-red)', backgroundColor: isDark ? 'rgba(255,86,86,0.07)' : 'rgba(255,86,86,0.05)' }}>
+                  Could not load countries: {countriesError}
+                </div>
+              ) : (
+                // Reymes 3/3/26 - simplified dropdown to neutral border/background for improved readability
+                <div className="relative">
+                  <select
+                    value={selectedCountry ?? ""}
+                    onChange={(e) => handleSelectCountry(e.target.value || null)}
+                    className="w-full appearance-none rounded-lg border px-3 py-2.5 pr-9 text-sm transition-all cursor-pointer focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--background)',
+                      borderColor: 'var(--color-gray-light)',
+                      color: 'var(--foreground)',
+                    }}
+                  >
+                    <option value="">— Select a country —</option>
+                    {countriesToShow.map((c) => (
+                      <option key={c.iso3} value={c.iso3}>
+                        {c.name ?? c.iso3} ({c.iso3})
+                      </option>
+                    ))}
+                  </select>
+                  {/* Chevron icon */}
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 5L7 9L11 5" stroke="var(--color-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                </div>
               )}
             </div>
 
+            {/* Loading state */}
             {loading && (
-              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading statistics...</div>
+              <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-gray)' }}>
+                <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                </svg>
+                Loading statistics…
+              </div>
             )}
 
-            {error && <div className="text-red-600 text-sm">{error}</div>}
+            {/* Error state */}
+            {error && (
+              <div
+                className="text-sm rounded-xl px-4 py-3 border"
+                style={{ color: 'var(--color-red)', borderColor: 'rgba(255,86,86,0.35)', backgroundColor: isDark ? 'rgba(255,86,86,0.07)' : 'rgba(255,86,86,0.05)' }}
+              >
+                {error}
+              </div>
+            )}
 
+            {/* Results */}
             {liveResult?.metric && (
-              <>
-                <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                  {liveResult.source ? `Source: ${liveResult.source}` : ""}
-                  {liveResult.fetchedAt
-                    ? ` • Updated: ${new Date(liveResult.fetchedAt).toLocaleString()}`
-                    : ""}
-                </div>
+              <div className="flex flex-col gap-4">
+                {/* Source / date meta */}
+                {(liveResult.source || liveResult.fetchedAt) && (
+                  <div
+                    className="flex flex-wrap gap-x-3 gap-y-1 text-xs px-3 py-2 rounded-lg"
+                    style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', color: 'var(--color-gray)' }}
+                  >
+                    {liveResult.source && <span>Source: {liveResult.source}</span>}
+                    {liveResult.fetchedAt && (
+                      <span>Updated: {new Date(liveResult.fetchedAt).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                )}
 
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div 
-                    className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
+                {/* National poverty line badge - Added by Reymes 3/2/26 */}
+                {/* Reymes 3/3/26 - changed to neutral card style (removed yellow tint) to match stat cards */}
+                {liveResult.nationalPovertyLine && (
+                  <div
+                    className="flex flex-col gap-1 px-4 py-3 rounded-lg border"
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgb(249,250,251)',
+                      borderColor: 'var(--color-gray-light)',
+                    }}
                   >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Headcount</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.headcount !== null && liveResult.metric.headcount !== undefined
-                        ? `${(liveResult.metric.headcount * 100).toFixed(2)}%` //converted to percentage Reymes
-                        : "N/A"}
+                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                      National Poverty Line
+                    </div>
+                    <div className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
+                      {liveResult.nationalPovertyLine.amount.toLocaleString()}{' '}
+                      <span className="text-sm font-normal" style={{ color: 'var(--color-gray)' }}>
+                        {liveResult.nationalPovertyLine.currency}/yr
+                      </span>
                     </div>
                   </div>
-                  <div 
-                    className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
-                  >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Gap</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.poverty_gap !== null && liveResult.metric.poverty_gap !== undefined
-                        ? `${(liveResult.metric.poverty_gap * 100).toFixed(2)}%` //converted to percentage Reymes
-                        : "N/A"}
+                )}
+
+                {/* Stat cards */}
+                {/* Reymes 3/3/26 - refactored to single mapped array; removed color-tinted backgrounds in favor of neutral cards */}
+                <div className="grid grid-cols-3 gap-3">
+                  {[{
+                    label: 'Headcount',
+                    value: liveResult.metric.headcount,
+                  }, {
+                    label: 'Pov. Gap',
+                    value: liveResult.metric.poverty_gap,
+                  }, {
+                    label: 'Severity',
+                    value: liveResult.metric.poverty_severity,
+                  }].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="flex flex-col gap-1 p-3 rounded-lg border"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgb(249,250,251)',
+                        borderColor: 'var(--color-gray-light)',
+                      }}
+                    >
+                      <div className="text-xs" style={{ color: 'var(--color-gray)' }}>{label}</div>
+                      <div className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                        {value !== null && value !== undefined
+                          ? `${(value * 100).toFixed(2)}%`
+                          : <span style={{ color: 'var(--color-gray)' }}>N/A</span>}
+                      </div>
                     </div>
-                  </div>
-                  <div 
-                    className="p-3 rounded"
-                    style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgb(249, 250, 251)' }} // Changed by Marisol for dark mode support - 2/8/2026
-                  >
-                    <div className="text-xs" style={{ color: 'var(--color-gray)' }}>Severity</div>
-                    <div className="font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {liveResult.metric.poverty_severity !== null && liveResult.metric.poverty_severity !== undefined
-                        ? `${(liveResult.metric.poverty_severity * 100).toFixed(2)}%`  //converted to percentage Reymes
-                        : "N/A"}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </>
+              </div>
             )}
 
-            {!loading && selectedCountry && !liveResult?.metric && !error && (
-              <div className="text-sm" style={{ color: 'var(--color-gray)' }}>Select a country to load statistics.</div>
+            {/* Empty / prompt state */}
+            {!loading && !liveResult?.metric && !error && (
+              <div
+                className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed"
+                style={{ borderColor: 'var(--color-gray-light)', color: 'var(--color-gray)' }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.4 }}>
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span className="text-sm text-center">Select a country above to view its poverty statistics.</span>
+              </div>
             )}
           </div>
         </div>
@@ -1230,8 +1448,25 @@ export default function StatisticsPage() {
           className="rounded-lg shadow-md p-6"
           style={{ backgroundColor: 'var(--background)' }}
         >
-          {/* Country-specific stories (always shown at top) */}
-          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
+        {/* Added by Damon 3/6/2026 */}
+          {/* Poverty-rate search section - extracted to separate component */}
+          <PovertyStorySearch
+            povertyThreshold={povertyThreshold}
+            setPovertyThreshold={setPovertyThreshold}
+            thresholdLoading={thresholdLoading}
+            thresholdError={thresholdError}
+            filteredStories={filteredStories}
+            filteredPage={filteredPage}
+            setFilteredPage={setFilteredPage}
+            handleThresholdSearch={handleThresholdSearch}
+            userProfilesCache={userProfilesCache}
+            setFilteredStories={setFilteredStories}
+            setThresholdError={setThresholdError}
+            StoryCard={StoryCard}
+          />
+
+          {/* Country-specific stories (always shown below search) */}
+          <h3 className="text-xl font-semibold mb-3 mt-6" style={{ color: 'var(--foreground)' }}>
             {selectedCountry ? `Stories from ${countryNames[selectedCountry] ?? selectedCountry}` : "Stories"}
           </h3>
 
@@ -1254,80 +1489,58 @@ export default function StatisticsPage() {
             <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories for this country yet.</p>
           )}
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stories.map((story) => (
-              <StoryCard
-                key={story._id}
-                story={story}
-                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-              />
-            ))}
-          </div>
-
-          {/* Poverty-rate search section (always shown below) */}
-          <hr className="my-6" />
-
-          <h3 className="text-xl font-semibold mb-3" style={{ color: 'var(--foreground)' }}>
-            Story Search Results
-          </h3>
-
-          <div className="mb-4">
-            <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
-              Show stories from countries with poverty rate greater than or equal to:
-            </label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={povertyThreshold}
-                onChange={(e) => setPovertyThreshold(e.target.value)}
-                placeholder="e.g., 10 (percent)"
-                className="border rounded p-2 w-36"
-                style={{
-                  backgroundColor: 'var(--background)',
-                  borderColor: 'var(--color-gray-light)',
-                  color: 'var(--foreground)'
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={handleThresholdSearch}
-                disabled={thresholdLoading}
-                className="px-3 py-2 rounded bg-[#FFA239] text-white font-semibold"
-              >
-                {thresholdLoading ? 'Searching…' : 'Find stories'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setPovertyThreshold(''); setFilteredStories([]); setThresholdError(''); }}
-                className="px-3 py-2 rounded border"
-              >
-                Clear
-              </button>
-            </div>
-
-            {thresholdError && <div className="text-sm text-red-600 mt-2">{thresholdError}</div>}
-          </div>
-
-{/* Added/modified by Damon 2/20/2026 */}
-          {thresholdLoading && <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Searching stories for matching countries...</p>}
-          {filteredStories.length === 0 && !thresholdLoading && !thresholdError && (
-            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No stories found for matched countries.</p>
-          )}
-
-{/* Added/modified by Damon 2/20/2026 */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredStories.map((story) => (
-              <StoryCard
-                key={story._id}
-                story={story}
-                userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
-              />
-            ))}
-          </div>
+          {/* Paginated country stories - Added by Christella - 03/03/2026 */}
+          {(() => {
+            const totalPages = Math.ceil(stories.length / STORIES_PER_PAGE);
+            const paginated = stories.slice((storiesPage - 1) * STORIES_PER_PAGE, storiesPage * STORIES_PER_PAGE);
+            return (
+              <>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {paginated.map((story) => (
+                    <StoryCard
+                      key={story._id}
+                      story={story}
+                      userProfile={story.userEmail ? userProfilesCache[story.userEmail] : null}
+                    />
+                  ))}
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    <button
+                      onClick={() => setStoriesPage(p => Math.max(1, p - 1))}
+                      disabled={storiesPage === 1}
+                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
+                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setStoriesPage(page)}
+                        className="px-4 py-2 rounded-lg border text-sm font-medium"
+                        style={{
+                          borderColor: storiesPage === page ? '#FFA239' : 'var(--color-gray-light)',
+                          backgroundColor: storiesPage === page ? '#FFA239' : 'var(--background)',
+                          color: storiesPage === page ? 'white' : 'var(--foreground)'
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setStoriesPage(p => Math.min(totalPages, p + 1))}
+                      disabled={storiesPage === totalPages}
+                      className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40"
+                      style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)', backgroundColor: 'var(--background)' }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
         {/* added daniel q. 3/7/26 start */}
         <div className="mt-8">

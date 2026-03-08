@@ -32,7 +32,7 @@ const variantClass: Record<NonNullable<ResourceProps['variant']>, string> = {
 };
 
 // ============================
-// Added for LIGHT MODE tinted card backgrounds + hover outline (mirrors ActionCard behavior)
+// Edit by Christella - 02/17/2026: Added for LIGHT MODE tinted card backgrounds + hover outline (mirrors ActionCard behavior)
 // ============================
 const tintBgLight: Record<NonNullable<ResourceProps['variant']>, string> = {
     cyan:   '#E5F8FF',
@@ -239,6 +239,7 @@ export default function EducationalResources(){
 function ResourceCard({ name, description, url, variant }: ResourceProps) {
     const borderClass = variant ? variantClass[variant] : '';
 
+    // Edit by Christella - 02/17/2026
     const tintBg = variant ? tintBgLight[variant] : 'var(--background)';
     const accentBorder = variant ? accentColorVar[variant] : 'var(--color-gray-light)';
 
@@ -259,6 +260,7 @@ function ResourceCard({ name, description, url, variant }: ResourceProps) {
 
         return () => observer.disconnect();
     }, []);
+    // End of edit by Christella - 02/17/2026
 
     return (
         <a
@@ -273,6 +275,7 @@ function ResourceCard({ name, description, url, variant }: ResourceProps) {
                 color: 'var(--foreground)',
                 height: '100%',
                 boxSizing: 'border-box',
+                // Edit by Christella - 02/17/2026
                 backgroundColor: isDark ? 'transparent' : tintBg,
 
                 // Light mode neutral border
@@ -290,6 +293,7 @@ function ResourceCard({ name, description, url, variant }: ResourceProps) {
                 } else {
                     e.currentTarget.style.borderColor = 'var(--color-gray-light)';
                 }
+                // End of edit by Christella - 02/17/2026                
             }}
         >
             {/* Colored accent bar at top, derived from variant */}

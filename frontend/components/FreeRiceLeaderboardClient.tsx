@@ -8,7 +8,8 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:400
 type TopEntry = { email: string | null; username: string | null; totalGrains: number }
 type Donation = { _id?: string; email?: string | null; username?: string | null; grains: number; createdAt: string }
 
-export default function FreeRiceLeaderboardClient({ showRecent = true }: { showRecent?: boolean }) {
+export default function FreeRiceLeaderboardClient({ showRecent = true, onDonationLogged }: { showRecent?: boolean; onDonationLogged?: () => void }) // Modified by Marisol 2/16 to accept onDonationLogged callback prop, which is called after a successful donation to trigger refresh of recent donations in parent component (page.tsx)
+{
   const [top, setTop] = useState<TopEntry[]>([])
   const [recent, setRecent] = useState<Donation[]>([])
   const [loading, setLoading] = useState(false)
@@ -131,6 +132,7 @@ export default function FreeRiceLeaderboardClient({ showRecent = true }: { showR
         setAnswers('')
         setGrains('')
         fetchLeaderboard(email)
+        onDonationLogged?.() // Added by Marisol 2/16 to notify parent so FreeRiceRecent re-fetches and shows the new donation
       } else {
         setMessage(data && data.message ? data.message : 'Could not log donation')
       }

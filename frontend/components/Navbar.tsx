@@ -5,9 +5,7 @@ import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ChevronDown, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
-// ============== Marisol Morales Code 1/9/2026 - Import ThemeToggle for dark mode ============== //
-import { ThemeToggle } from './ThemeToggle';
-// ============== End Import ============== //
+import { ThemeToggle } from './ThemeToggle'; // Added by marisol morales - 3/7/2026 - restore theme toggle for logged-out users
 
 export default function Navbar() {
     // Hooks initialization
@@ -54,9 +52,25 @@ export default function Navbar() {
     }, [resourcesOpen, userMenuOpen]);
 
     // Handle logout function
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        // Added by Marisol - 03/05/2026 - log the logout before clearing localStorage
+        const email = localStorage.getItem('userEmail');
+        if (email) {
+            try {
+                await fetch('http://localhost:4000/api/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+            } catch (err) {
+                console.error('Error logging logout:', err);
+            }
+        }
+        // End of addition by Marisol - 03/05/2026
+
         localStorage.removeItem('userEmail');
         localStorage.removeItem('username');
+        localStorage.setItem('contrast', 'normal');         // Reset high contrast mode to normal on logout - Added by Damon 3/7/2026
         setIsLoggedIn(false);
         setUserMenuOpen(false);
         // Force a full page reload to reset all state
@@ -111,9 +125,9 @@ export default function Navbar() {
                                 height={150}
                                 className="object-contain"/>
                         </Link>
-                        {/* ============== Marisol Morales Code 1/9/2026 - Theme Toggle Next to Logo ============== */}
-                        <ThemeToggle />
-                        {/* ============== End Theme Toggle ============== */}
+                        {/* Added by marisol morales - 3/7/2026 - show theme toggle next to logo when logged out */}
+                        {!isLoggedIn && <ThemeToggle showContrast={false} />}
+                        {/* End addition */}
                     </div>
 
                     {/* Desktop Navigation Links - Absolutely Centered */}
@@ -292,6 +306,23 @@ export default function Navbar() {
                                             >
                                                 Account Settings
                                             </Link>
+                                            {/*Added by Marisol to keep track of user activity - Start */}
+                                            <Link 
+                                                href="/accountActivity" 
+                                                className="block px-4 py-2.5 text-sm transition-all duration-200"
+                                                style={{ color: 'var(--foreground)' }}
+                                                onMouseEnter={(e) => {
+                                                    const isDark = document.documentElement.classList.contains('dark');
+                                                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                }}
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                Account Activity 
+                                            </Link>
+                                            {/*Added by Marisol to keep track of user activity - End */}
                                             <hr style={{ borderColor: 'var(--color-gray-light)' }} className="my-2" />
                                             <button
                                                 onClick={handleLogout}
@@ -420,13 +451,6 @@ export default function Navbar() {
                                 About Us
                             </Link>
 
-                            {/* ============== Marisol Morales Code 2/9/2026 - Mobile Theme Toggle ============== */}
-                            {/* Theme Toggle for Mobile */}
-                            <div className="px-2 py-2 flex items-center justify-between">
-                                <span className="font-medium text-sm text-gray-700 dark:text-gray-200">Theme</span>
-                                <ThemeToggle />
-                            </div>
-                            {/* ============== End Mobile Theme Toggle ============== */}
 
                             {/* Mobile Search */}
                             <form onSubmit={handleSearch} className="relative px-2 md:hidden">
