@@ -43,32 +43,39 @@ export default function NotificationBell() {
     if (!userEmail) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/notifications?userId=${userEmail}`);
+      const response = await fetch(`http://localhost:4000/api/notifications?userId=${userEmail}`).catch(() => null);
+      if (!response) {
+        setNotifications([]);
+        return;
+      }
       const data = await response.json();
       setNotifications(data.notifications || []);
       
       const unread = data.notifications.filter((n: Notification) => !n.read).length;
       setUnreadCount(unread);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
+      setNotifications([]);
     }
   };
 
-  const markAllAsRead = async () => {
+   const clearAllNotifications = async () => {
     const userEmail = localStorage.getItem('userEmail');
     if (!userEmail) return;
 
     try {
-      await fetch('http://localhost:4000/api/notifications/read', {
-        method: 'POST',
+      const response = await fetch('http://localhost:4000/api/notifications/clear', {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userEmail })
       });
-      
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
+
+      if (response.ok) {
+        setNotifications([]);
+        setUnreadCount(0);
+        setIsOpen(false); // Close the dropdown after clearing
+      }
     } catch (error) {
-      console.error('Error marking as read:', error);
+      console.error('Error clearing notifications:', error);
     }
   };
 
@@ -120,6 +127,7 @@ export default function NotificationBell() {
             backgroundColor: 'var(--background)',
             borderColor: 'var(--color-gray-light)'
           }}
+          onMouseLeave={() => setIsOpen(false)}
         >
           {/* Header */}
           <div 
@@ -128,19 +136,23 @@ export default function NotificationBell() {
           >
             <div className="flex justify-between items-center">
               <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>Notifications</h3>
-              {unreadCount > 0 && (
+
+              {notifications.length > 0 && (
                 <button
-                  onClick={markAllAsRead}
-                  className="text-sm font-medium"
-                  style={{ color: '#8CE4FF' }}
+                  onClick={clearAllNotifications}
+                  className="text-sm font-medium px-2 py-1 rounded transition-colors"
+                  style={{ 
+                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                    color: '#EF4444'
+                  }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#6DD5FF';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#8CE4FF';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)';
                   }}
                 >
-                  Mark all read
+                  Clear all
                 </button>
               )}
             </div>

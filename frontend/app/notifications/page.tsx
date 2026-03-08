@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 interface Notification {
   id: string;
   message: string;
-  read: boolean;
   createdAt: string;
 }
 
@@ -55,7 +54,6 @@ export default function NotificationsPage() {
     const email = localStorage.getItem('userEmail');
     if (!email) return;
     
-    // Initial fetch
     fetch(`http://localhost:4000/api/notifications?userId=${email}`)
       .then(res => res.json())
       .then((data: ApiResponse) => {
@@ -67,24 +65,25 @@ export default function NotificationsPage() {
     
     const intervalId = setInterval(fetchNotifications, 5000);
     
-    // Cleanup on unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  const markAsRead = async (id: string): Promise<void> => {
+  const clearAllNotifications = async () => {
+    const email = localStorage.getItem('userEmail');
+    if (!email) return;
+
     try {
-      await fetch(`http://localhost:4000/api/notifications/${id}/read`, {
-        method: 'POST'
+      const response = await fetch('http://localhost:4000/api/notifications/clear', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: email })
       });
-      
-      // Update local state
-      setNotifications(prev => 
-        prev.map(note => 
-          note.id === id ? { ...note, read: true } : note
-        )
-      );
+
+      if (response.ok) {
+        setNotifications([]);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error clearing notifications:', error);
     }
   };
 
@@ -92,9 +91,32 @@ export default function NotificationsPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6" style={{ color: isDark ? '#FFB660' : '#623100' }}> {/* Changed by Marisol 2/10/2026 for Dark Mode Support */}
-        Notifications</h1> 
-      
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold" style={{ color: isDark ? '#FFB660' : '#623100' }}>
+          Notifications
+        </h1>
+        
+        {notifications.length > 0 && (
+          <button
+            onClick={clearAllNotifications}
+            className="px-4 py-2 rounded-lg font-medium transition-colors"
+            style={{ 
+              backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+              color: '#EF4444',
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)';
+            }}
+          >
+            Clear All
+          </button>
+        )}
+      </div>
+
       {notifications.length === 0 ? (
         <div className="text-center py-12">
           <p style={{ color: 'var(--color-gray)' }}>No notifications yet.</p>
@@ -104,14 +126,11 @@ export default function NotificationsPage() {
           {notifications.map((note) => (
             <div 
               key={note.id} 
-              className="p-4 rounded-lg border hover:shadow transition-shadow cursor-pointer"
+              className="p-4 rounded-lg border hover:shadow transition-shadow"
               style={{
-                borderColor: note.read ? 'var(--color-gray-light)' : '#C8AB8F',
-                backgroundColor: note.read 
-                  ? (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgb(249, 250, 251)') // Changed by Marisol 2/10/2026 for Dark Mode Support
-                  : (isDark ? 'rgba(254, 238, 145, 0.1)' : '#F9F5ED') // Changed by Marisol 2/10/2026 for Dark Mode Support
+                borderColor: 'var(--color-gray-light)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgb(249, 250, 251)'
               }}
-              onClick={() => !note.read && markAsRead(note.id)}
             >
               <p style={{ color: 'var(--foreground)' }}>{note.message}</p>
               <p className="text-sm mt-2" style={{ color: 'var(--color-gray)' }}>
@@ -122,17 +141,6 @@ export default function NotificationsPage() {
                   hour: '2-digit',
                   minute: '2-digit'
                 })}
-                {!note.read && (
-                  <span 
-                    className="ml-3 px-2 py-1 text-xs rounded"
-                    style={{
-                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgb(219, 234, 254)', // Changed by Marisol 2/10/2026 for Dark Mode Support
-                      color: isDark ? '#93c5fd' : 'rgb(30, 64, 175)' // Changed by Marisol 2/10/2026 for Dark Mode Support
-                    }}
-                  >
-                    New
-                  </span>
-                )}
               </p>
             </div>
           ))}

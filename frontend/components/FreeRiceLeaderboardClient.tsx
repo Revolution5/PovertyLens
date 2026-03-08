@@ -44,7 +44,11 @@ export default function FreeRiceLeaderboardClient({ showRecent = true, onDonatio
     setMessage(null)
     try {
       const url = email ? `${BACKEND_URL}/api/freerice/leaderboard?email=${encodeURIComponent(email)}` : `${BACKEND_URL}/api/freerice/leaderboard`
-      const res = await fetch(url)
+      const res = await fetch(url).catch(() => null);
+      if (!res) {
+        setMessage('Could not connect to backend server')
+        return
+      }
 
       // Handle non-OK HTTP responses
       if (!res.ok) {
@@ -101,7 +105,11 @@ export default function FreeRiceLeaderboardClient({ showRecent = true, onDonatio
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ grains: computedGrains, email }),
-      })
+      }).catch(() => null);
+      if (!res) {
+        setMessage('Could not connect to backend server')
+        return
+      }
 
       if (!res.ok) {
         const text = await res.text().catch(() => '')

@@ -51,6 +51,7 @@ export default function ViewStoriesPage() {
     const [editing, setEditing] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'all'>('active');  // Added by Christella - 1/30/2026
+    const [isOffline, setIsOffline] = useState(false);
 
     const [editTitle, setEditTitle] = useState('');
     const [editText, setEditText] = useState('');
@@ -82,9 +83,9 @@ export default function ViewStoriesPage() {
 {/* ============== Marisol Morales Code 2/8/2026 - Dark Mode End ============== */}
     const selectedStory = stories[selectedIndex];
 
-    // Ensures that frontend can communicate with the backend
+    // edited by daniel q. - 3/7/26 - added offline support and caching start
     useEffect(() => {
-        const fetchStories = async () => {
+        const loadStories = async () => {
             try {
                 const userEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null; // Added by Christella - 1/30/2026
                 if (!userEmail) {
@@ -93,27 +94,51 @@ export default function ViewStoriesPage() {
                     return;
                 }
 
-                const res = await fetch(`${BACKEND_URL}/api/stories?userEmail=${encodeURIComponent(userEmail)}&includeArchived=true`);
-                const data = await res.json();
-
-                if (!res.ok || !data.success) {
-                    setMessage(data.message || 'Error fetching stories.');
-                    setLoading(false);
-                    return;
+                const cacheKey = `stories_${userEmail}`;
+                const cachedStories = localStorage.getItem(cacheKey);
+                
+                if (cachedStories) {
+                    try {
+                        const parsed = JSON.parse(cachedStories);
+                        setStories(parsed);
+                        setSelectedIndex(0);
+                        setIsOffline(true);
+                    } catch (e) {
+                        console.error('Error parsing cached stories:', e);
+                    }
                 }
 
-                setStories(data.stories || []);
-                setSelectedIndex(0);
-                setMessage(null);
+                const res = await fetch(`${BACKEND_URL}/api/stories?userEmail=${encodeURIComponent(userEmail)}&includeArchived=true`)
+                    .catch(() => null);
+                
+                if (res && res.ok) {
+                    const data = await res.json();
+                    
+                    if (data.success && data.stories) {
+                        setStories(data.stories);
+                        setSelectedIndex(0);
+                        setIsOffline(false);
+                        
+                        localStorage.setItem(cacheKey, JSON.stringify(data.stories));
+                    }
+                } else {
+                    if (cachedStories) {
+                        setMessage('You are currently offline. Showing cached stories.');
+                    } else {
+                        setMessage('Unable to connect to server and no cached stories found.');
+                    }
+                }
             } catch (err) {
-                console.error(err);
-                setMessage('Error connecting to server to fetch stories');
+                console.error('Error in loadStories:', err);
+                setMessage('Error loading stories. Please try again.');
             } finally {
                 setLoading(false);
             }
         };
-        fetchStories();
+        
+        loadStories();
     }, []);
+    // edited by daniel q. - 3/7/26 - added offline support and caching end
 
     useEffect(() => {
         if (selectedStory && editing) {
@@ -161,6 +186,34 @@ export default function ViewStoriesPage() {
             return;
         }
 
+        if (isOffline) {
+
+            const pendingEdits = JSON.parse(localStorage.getItem('pendingEdits') || '[]');
+            pendingEdits.push({
+                storyId: selectedStory._id,
+                title: editTitle,
+                storyText: editText,
+                displayName: editDisplayName,
+                displayPhoto: editDisplayPhoto,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('pendingEdits', JSON.stringify(pendingEdits));
+            
+            const updated = [...stories];
+            updated[selectedIndex] = {
+                ...selectedStory,
+                title: editTitle,
+                storyText: editText,
+                displayName: editDisplayName,
+                displayPhoto: editDisplayPhoto,
+                updatedAt: new Date().toISOString(),
+            };
+            setStories(updated);
+            setMessage('Changes saved locally. They will sync when you\'re back online.');
+            setEditing(false);
+            return;
+        }
+
         try {
             setSavingEdit(true);
             const res = await fetch(`${BACKEND_URL}/api/stories/${selectedStory._id}`, {
@@ -193,6 +246,10 @@ export default function ViewStoriesPage() {
                 updatedAt: data.story?.updatedAt || new Date().toISOString(),
             };
             setStories(updated);
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                localStorage.setItem(`stories_${userEmail}`, JSON.stringify(updated));
+            }
             setMessage('Changes saved successfully!');
             setEditing(false);
         } catch (err) {
@@ -216,6 +273,24 @@ export default function ViewStoriesPage() {
         const confirmed = window.confirm(newArchived ?
             'Are you sure you want to archive this story?\nYou will still be able to access it later on.' : 'Are you sure you want to unarchive this story?');
         if (!confirmed) return;
+
+        if (isOffline) {
+            const pendingArchives = JSON.parse(localStorage.getItem('pendingArchives') || '[]');
+            pendingArchives.push({
+                storyId: selectedStory._id,
+                archived: newArchived,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('pendingArchives', JSON.stringify(pendingArchives));
+            
+            const updated = [...stories];
+            updated[selectedIndex] = { ...selectedStory, archived: newArchived };
+            setStories(updated);
+            setMessage(`Story marked as ${newArchived ? 'archived' : 'unarchived'} locally. Will sync when online.`);
+            setEditing(false);
+            return;
+        }
+
         try {
             const res = await fetch(`${BACKEND_URL}/api/stories/${targetStory._id}/archive`, { // Modified by Christella - 03/05/2026
                 method: 'PATCH',
@@ -235,6 +310,10 @@ export default function ViewStoriesPage() {
                 s._id === targetStory._id ? { ...s, archived: newArchived } : s
             );
             setStories(updated);
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                localStorage.setItem(`stories_${userEmail}`, JSON.stringify(updated));
+            }
             setEditing(false);
             setMessage(newArchived ? 'Story archived successfully.' : 'Story unarchived successfully.');
         } catch (err) {
@@ -251,6 +330,22 @@ export default function ViewStoriesPage() {
         const confirmed = window.confirm('Are you sure you want to delete this story?\nThis action CANNOT be undone.');
         if (!confirmed) return;
 
+        if (isOffline) {
+            const pendingDeletes = JSON.parse(localStorage.getItem('pendingDeletes') || '[]');
+            pendingDeletes.push({
+                storyId: targetStory._id,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('pendingDeletes', JSON.stringify(pendingDeletes));
+            
+            const updated = stories.filter((s) => s._id !== targetStory._id);
+            setStories(updated);
+            setSelectedIndex(0);
+            setEditing(false);
+            setMessage('Story marked for deletion. Will be deleted when online.');
+            return;
+        }
+
         try {
             // Modified by Christella - 03/05/2026 - use targetStory._id instead of selectedStory._id
             const res = await fetch(`${BACKEND_URL}/api/stories/${targetStory._id}`, {
@@ -265,6 +360,10 @@ export default function ViewStoriesPage() {
 
             const updated = stories.filter((s) => s._id !== targetStory._id);
             setStories(updated);
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                localStorage.setItem(`stories_${userEmail}`, JSON.stringify(updated));
+            }
             setSelectedIndex(0);
             setEditing(false);
             setMessage('Story deleted.');
@@ -296,7 +395,7 @@ export default function ViewStoriesPage() {
             padding: '2rem',
         }}>
             <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
-                {/* Header */}
+                {/* Header - edited by daniel q. 3/7/26 start */}
                 <div style={{ marginBottom: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
                         <div style={{
@@ -320,9 +419,23 @@ export default function ViewStoriesPage() {
                             Your Stories
                         </h1>
                     </div>
-                    <p style={{ color: isDark ? 'var(--color-gray)' : '#333', fontSize: '1rem' }}> {/* Changed by Marisol for Dark Mode - 2/8/2026*/}
-                        Manage all your published and draft stories in one place
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <p style={{ color: isDark ? 'var(--color-gray)' : '#333', fontSize: '1rem' }}> {/* Changed by Marisol for Dark Mode - 2/8/2026*/}
+                            Manage all your published and draft stories in one place
+                        </p>
+                        {isOffline && (
+                            <span style={{
+                                background: '#726556',
+                                color: 'white',
+                                padding: '0.25rem 0.75rem',
+                                borderRadius: '9999px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                            }}>
+                                Offline Mode - Changes saved locally
+                            </span>
+                        )}
+                    </div> {/*- edited by daniel q. 3/7/26 end */}
                 </div>
 
                 {loading && (
