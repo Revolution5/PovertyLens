@@ -3,13 +3,13 @@
 
 const express = require('express');
 const router = express.Router();
-
 //Password hashing/encryption added by Damon
 const bcrypt = require('bcryptjs');
 
 const { getDb } = require('../database');
 const { createNotification } = require('../helpers/notificationshelper');
 const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
+
 
 // Sign up
 router.post('/signup', async (req, res) => {
@@ -193,5 +193,99 @@ router.post('/logout', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during logout' });
   }
 });
+//START Forgot Password - Added by Damon 3/7/2026
+// Check whether an email has an existing account before showing reset form
+router.post('/forgot-password/check-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const db = getDb();
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account exists with that email address'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Email found. You can set a new password now.'
+    });
+  } catch (error) {
+    console.error('Forgot password email check error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while checking email'
+    });
+  }
+});
+
+router.post('/forgot-password/reset-direct', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and new password are required'
+      });
+    }
+
+    if (String(newPassword).length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    const db = getDb();
+    const usersCollection = db.collection('users');
+    const user = await usersCollection.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account exists with that email address'
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          password: hashedPassword,
+          passwordUpdatedAt: new Date()
+        }
+      }
+    );
+
+    await createNotification(email, 'Your password was reset successfully.');
+    await logActivity(email, 'Reset password', '', req);
+
+    return res.json({
+      success: true,
+      message: 'Password reset successfully'
+    });
+  } catch (error) {
+    console.error('Direct reset password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while resetting password'
+    });
+  }
+});
+//END Forgot Password - Added by Damon 3/7/2026
 
 module.exports = router;

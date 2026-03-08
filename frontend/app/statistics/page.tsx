@@ -7,6 +7,7 @@ import StatisticsMapClient from "../../components/StatisticsMapClient";
 import MapFilters, { RateType } from "../../components/mapfilters"; // Added by Reymes 3/2/26
 // Added by Reymes 3/2/26 - import rate data files for filter support
 import { NATIONAL_POVERTY_RATES, getNationalPovertyLine } from "../../data/nationalRates";
+import { INTERNATIONAL_FALLBACK_RATES } from "../../data/internationalRates"; // Added by Reymes 3/7/26
 //Added by Damon 3/6/2026
 import PovertyStorySearch from "../../components/PovertyStorySearch";
 
@@ -931,16 +932,28 @@ export default function StatisticsPage() {
 
       // Added by Reymes 3/2/26 - inject placeholder rows for countries missing API data
       // (national rates will be applied only when filter is set to "national")
+      // Added by Reymes 3/7/26 - use INTERNATIONAL_FALLBACK_RATES for high-income countries not in PIP
       Object.entries(NATIONAL_POVERTY_RATES).forEach(([iso]) => {
         if (!byIso.has(iso)) {
+          const fallbackHeadcount = INTERNATIONAL_FALLBACK_RATES[iso] ?? null;
           byIso.set(iso, {
             country: iso,
-            headcount: null,
+            headcount: fallbackHeadcount,
             year: 2022,
             povline: 2.15,
-            source: "missing",
+            source: fallbackHeadcount !== null ? "fallback" : "missing",
             fetchedAt: new Date().toISOString(),
           });
+        } else {
+          // Country exists in API data but headcount may be null — apply fallback if so
+          const existing = byIso.get(iso)!;
+          if ((existing.headcount === null || existing.headcount === undefined) && INTERNATIONAL_FALLBACK_RATES[iso] !== undefined) {
+            byIso.set(iso, {
+              ...existing,
+              headcount: INTERNATIONAL_FALLBACK_RATES[iso],
+              source: "fallback",
+            });
+          }
         }
       });
 
