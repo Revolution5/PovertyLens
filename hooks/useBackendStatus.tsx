@@ -19,7 +19,7 @@ const useBackendStatus = () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        const response = await fetch('http://localhost:4000/api/health', {
+        const response = await fetch('http://localhost:4000/api/debug/ping', {
           signal: controller.signal,
         }).catch(() => null);
         
