@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/read', async (req, res) => {
+router.delete('/clear', async (req, res) => {
   try {
     const { userId } = req.body;
     
@@ -50,32 +50,17 @@ router.post('/read', async (req, res) => {
     const db = getDb();
     const notificationsCollection = db.collection('notifications');
     
-    await notificationsCollection.updateMany(
-      { userId, read: false },
-      { $set: { read: true } }
-    );
+    // Delete all notifications for this user
+    const result = await notificationsCollection.deleteMany({ userId });
     
-    res.json({ success: true });
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.deletedCount} notifications` 
+    });
     
   } catch (error) {
-    console.error('Error marking notifications as read:', error);
+    console.error('Error clearing notifications:', error);
     res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Mark a single notification as read by id
-router.post('/:id/read', async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ success: false, message: 'id required' });
-
-    const db = getDb();
-    const notificationsCollection = db.collection('notifications');
-    await notificationsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { read: true } });
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Error marking notification as read:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
