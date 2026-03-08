@@ -332,6 +332,7 @@ function StoryCard({
         localStorage.setItem('savedStories', JSON.stringify(updated));
         setIsSaved(true);
       }
+      window.dispatchEvent(new Event('savedStoriesUpdated'));
     } catch (error) {
       console.error('Error saving story offline:', error);
     }
@@ -504,9 +505,12 @@ function SavedStoriesSection({
     
     loadSaved();
     
-    // Listen for storage changes (in case another tab modifies saved stories)
     window.addEventListener('storage', loadSaved);
-    return () => window.removeEventListener('storage', loadSaved);
+    window.addEventListener('savedStoriesUpdated', loadSaved); 
+    return () => { 
+      window.removeEventListener('storage', loadSaved);
+      window.removeEventListener('savedStoriesUpdated', loadSaved);
+    };
   }, []);
 
   const removeFromSaved = (storyId: string) => {
