@@ -203,7 +203,7 @@ useEffect(() => {
                 isLogin ? 'Login to Account' : 'Create Account'
               )}
             </button>
-
+{/* START Added/Modified by Damon for Forgot Password 3/7/2026 */}
             {isLogin && (
               <button
                 type="button"
@@ -220,6 +220,7 @@ useEffect(() => {
                 Forgot your password?
               </button>
             )}
+            {/* END Added/Modified by Damon for Forgot Password 3/7/2026 */}
           </form>
           
           {message && (

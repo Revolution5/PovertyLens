@@ -193,7 +193,7 @@ router.post('/logout', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during logout' });
   }
 });
-
+//START Forgot Password - Added by Damon 3/7/2026
 // Check whether an email has an existing account before showing reset form
 router.post('/forgot-password/check-email', async (req, res) => {
   try {
@@ -230,7 +230,6 @@ router.post('/forgot-password/check-email', async (req, res) => {
   }
 });
 
-// Reset password immediately after email has been verified on the UI
 router.post('/forgot-password/reset-direct', async (req, res) => {
   try {
     const { email, newPassword } = req.body;
@@ -287,5 +286,6 @@ router.post('/forgot-password/reset-direct', async (req, res) => {
     });
   }
 });
+//END Forgot Password - Added by Damon 3/7/2026
 
 module.exports = router;
