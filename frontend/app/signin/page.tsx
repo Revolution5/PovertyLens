@@ -203,6 +203,23 @@ useEffect(() => {
                 isLogin ? 'Login to Account' : 'Create Account'
               )}
             </button>
+
+            {isLogin && (
+              <button
+                type="button"
+                onClick={() => router.push('/forgot-password')}
+                className="w-full py-2 px-4 rounded-xl font-medium underline underline-offset-4 transition-opacity"
+                style={{ color: 'var(--foreground)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.75';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1';
+                }}
+              >
+                Forgot your password?
+              </button>
+            )}
           </form>
           
           {message && (
