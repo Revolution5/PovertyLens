@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, ChevronDown, Menu, X } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, Menu, X, BookOpen, Clock, BookMarked } from 'lucide-react'; // Modified by Christella - 03/13/2026 - added ChevronRight, BookOpen, Clock, BookMarked
 import NotificationBell from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle'; // Added by marisol morales - 3/7/2026 - restore theme toggle for logged-out users
 
@@ -16,6 +16,12 @@ export default function Navbar() {
     const [resourcesOpen, setResourcesOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    // Added by Christella - 03/13/2026 - state for nested edu submenu (desktop + mobile)
+    const [eduOpen, setEduOpen] = useState(false);
+    const [mobileEduOpen, setMobileEduOpen] = useState(false);
+    const eduTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // End of addition by Christella - 03/13/2026
     
     // State for the search input value
     const [searchQuery, setSearchQuery] = useState("");
@@ -38,6 +44,7 @@ export default function Navbar() {
             // Close resources dropdown if clicking outside
             if (resourcesOpen && !target.closest('.resources-dropdown')) {
                 setResourcesOpen(false);
+                setEduOpen(false); // Added by Christella - 03/13/2026
             }
             // Close user menu if clicking outside
             if (userMenuOpen && !target.closest('.user-menu')) {
@@ -103,6 +110,24 @@ export default function Navbar() {
         return pathname === path;
     };
 
+    // Added by Christella - 03/13/2026 - hover handlers for edu submenu with delay to avoid flicker
+    const handleEduMouseEnter = () => {
+        if (eduTimeoutRef.current) clearTimeout(eduTimeoutRef.current);
+        setEduOpen(true);
+    };
+    const handleEduMouseLeave = () => {
+        eduTimeoutRef.current = setTimeout(() => setEduOpen(false), 150);
+    };
+
+    // Shared hover background helper
+    const hoverStyle = (e: React.MouseEvent<HTMLElement>, entering: boolean) => {
+        const isDark = document.documentElement.classList.contains('dark');
+        e.currentTarget.style.backgroundColor = entering
+            ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)')
+            : 'transparent';
+    };
+    // End of addition by Christella - 03/13/2026
+
     return (
         // ============== Marisol Morales Code 1/9/2026 - DARK MODE NAVBAR - Using CSS Variables ============== //
         <nav 
@@ -158,7 +183,7 @@ export default function Navbar() {
                             {/* Resources Dropdown */}
                             <div className="relative resources-dropdown">
                                 <button
-                                    onClick={() => setResourcesOpen(!resourcesOpen)}
+                                    onClick={() => { setResourcesOpen(!resourcesOpen); setEduOpen(false); }} // Modified by Christella - 03/13/2026 - also close edu submenu
                                     className={`flex items-center gap-1 font-medium text-sm transition-colors pb-1 border-b-2 whitespace-nowrap ${
                                         (isActive('/eduresource') || isActive('/donationspages'))
                                             ? 'text-[#FFA239] border-[#FFA239]' 
@@ -186,21 +211,84 @@ export default function Navbar() {
                                             border: '1px solid var(--color-gray-light)'
                                         }}
                                     >
-                                        <Link 
-                                            href="/eduresource" 
-                                            className="block px-4 py-2.5 text-sm transition-all duration-200"
-                                            style={{ color: 'var(--foreground)' }}
-                                            onMouseEnter={(e) => {
-                                                const isDark = document.documentElement.classList.contains('dark');
-                                                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.backgroundColor = 'transparent';
-                                            }}
-                                            onClick={() => setResourcesOpen(false)}
+                                        {/* ===== Added by Christella - 03/13/2026 - Educational Resources with nested submenu ===== */}
+                                        <div
+                                            className="relative"
+                                            onMouseEnter={handleEduMouseEnter}
+                                            onMouseLeave={handleEduMouseLeave}
                                         >
-                                            Educational Resources
-                                        </Link>
+                                            {/* Hover row */}
+                                            <div
+                                                className="flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer transition-all duration-200"
+                                                style={{ color: 'var(--foreground)' }}
+                                                onMouseEnter={e => hoverStyle(e, true)}
+                                                onMouseLeave={e => hoverStyle(e, false)}
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    Educational Resources
+                                                </span>
+                                                <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                                            </div>
+
+                                            {/* Flyout submenu */}
+                                            {eduOpen && (
+                                                <div
+                                                    className="absolute left-full top-0 ml-1 w-56 rounded-lg shadow-xl py-2 z-50"
+                                                    style={{
+                                                        backgroundColor: 'var(--background)',
+                                                        border: '1px solid var(--color-gray-light)'
+                                                    }}
+                                                    onMouseEnter={handleEduMouseEnter}
+                                                    onMouseLeave={handleEduMouseLeave}
+                                                >
+                                                    {/* Quick Links — goes to the main edu resources page */}
+                                                    <Link
+                                                        href="/eduresource"
+                                                        className="flex items-center gap-2 px-4 py-2.5 text-sm transition-all duration-200"
+                                                        style={{ color: 'var(--foreground)' }}
+                                                        onMouseEnter={e => hoverStyle(e, true)}
+                                                        onMouseLeave={e => hoverStyle(e, false)}
+                                                        onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
+                                                    >
+                                                        Quick Links
+                                                    </Link>
+
+                                                    <hr className="my-2" style={{ borderColor: 'var(--color-gray-light)' }} />
+
+                                                    {/* Poverty Timeline */}
+                                                    <Link
+                                                        href="/timeline"
+                                                        className="flex items-center gap-2 px-4 py-2.5 text-sm transition-all duration-200"
+                                                        style={{ color: 'var(--foreground)' }}
+                                                        onMouseEnter={e => hoverStyle(e, true)}
+                                                        onMouseLeave={e => hoverStyle(e, false)}
+                                                        onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
+                                                    >
+                                                        Poverty Timeline
+                                                    </Link>
+
+                                                    {/* Poverty Glossary — coming soon */}
+                                                    <Link
+                                                        href="glossary"
+                                                        className="flex items-center gap-2 px-4 py-2.5 text-sm transition-all duration-200"
+                                                        style={{ color: 'var(--foreground)' }}
+                                                        onMouseEnter={e => hoverStyle(e, true)}
+                                                        onMouseLeave={e => hoverStyle(e, false)}
+                                                        onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
+                                                    >
+                                                        Poverty Glossary
+                                                        <span
+                                                            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"
+                                                            style={{ background: 'rgba(255,162,57,0.15)', color: '#FFA239' }}
+                                                        >
+                                                            Soon
+                                                        </span>
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* ===== End of addition by Christella - 03/13/2026 ===== */}
+
                                         <Link 
                                             href="/donationspages" 
                                             className="block px-4 py-2.5 text-sm transition-all duration-200"
@@ -214,7 +302,7 @@ export default function Navbar() {
                                             }}
                                             onClick={() => setResourcesOpen(false)}
                                         >
-                                            Donations & Volunteer
+                                            Donations &amp; Volunteer
                                         </Link>
                                     </div>
                                 )}
@@ -407,16 +495,44 @@ export default function Navbar() {
                                 </button>
                                 {resourcesOpen && (
                                     <div className="ml-4 mt-2 space-y-2">
-                                        <Link 
-                                            href="/eduresource" 
-                                            className="block px-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-[#FFA239]"
-                                            onClick={() => {
-                                                setResourcesOpen(false);
-                                                setMobileMenuOpen(false);
-                                            }}
+                                        {/* ===== Added by Christella - 03/13/2026 - mobile edu accordion ===== */}
+                                        <button
+                                            onClick={() => setMobileEduOpen(!mobileEduOpen)}
+                                            className="flex items-center justify-between w-full px-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-[#FFA239]"
                                         >
-                                            Educational Resources
-                                        </Link>
+                                            <span className="flex items-center gap-2">
+                                                Educational Resources
+                                            </span>
+                                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileEduOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        {mobileEduOpen && (
+                                            <div className="ml-4 space-y-1">
+                                                <Link
+                                                    href="/eduresource"
+                                                    className="block px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#FFA239]"
+                                                    onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
+                                                >
+                                                    Quick Links
+                                                </Link>
+                                                <Link
+                                                    href="timeline"
+                                                    className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#FFA239]"
+                                                    onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
+                                                >
+                                                    Poverty Timeline
+                                                </Link>
+                                                <Link
+                                                    href="glossary"
+                                                    className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#FFA239]"
+                                                    onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
+                                                >
+                                                    Poverty Glossary
+                                                    <span className="ml-1 text-xs" style={{ color: '#FFA239' }}>(Soon)</span>
+                                                </Link>
+                                            </div>
+                                        )}
+                                        {/* ===== End of addition by Christella - 03/13/2026 ===== */}
+
                                         <Link 
                                             href="/donationspages" 
                                             className="block px-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-[#FFA239]"
@@ -425,7 +541,7 @@ export default function Navbar() {
                                                 setMobileMenuOpen(false);
                                             }}
                                         >
-                                            Donations & Volunteer
+                                            Donations &amp; Volunteer
                                         </Link>
                                     </div>
                                 )}
@@ -450,7 +566,6 @@ export default function Navbar() {
                             >
                                 About Us
                             </Link>
-
 
                             {/* Mobile Search */}
                             <form onSubmit={handleSearch} className="relative px-2 md:hidden">
