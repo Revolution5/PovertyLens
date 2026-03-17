@@ -156,6 +156,11 @@ export default function GlossaryPage() {
   const bookmarkedCount = Object.values(userData).filter(d => d.bookmarked).length;
   const learnedCount    = Object.values(userData).filter(d => d.learned).length;
 
+  // My Terms panel — derives the actual term objects from userData
+  const [myTermsTab, setMyTermsTab] = useState<'saved' | 'learned'>('saved');
+  const savedTerms  = terms.filter(t => userData[t._id]?.bookmarked);
+  const learnedTerms = terms.filter(t => userData[t._id]?.learned);
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--background)', paddingTop: 40, paddingLeft: 80, paddingRight: 80 }}>
 
@@ -473,7 +478,124 @@ export default function GlossaryPage() {
           ))}
         </div>
       )}
+
+      {/* My Terms panel — saved & learned tabs, shown at the bottom for logged-in users */}
+      {userEmail && (savedTerms.length > 0 || learnedTerms.length > 0) && (
+        <div style={{ paddingLeft: 24, paddingBottom: 80 }}>
+
+          {/* Section divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+            <span style={{ fontSize: 28, fontWeight: 900, color: 'var(--color-white)', lineHeight: 1 }}>My Terms</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--color-gray-light)' }} />
+          </div>
+
+          <div style={{
+            borderRadius: 'var(--radius-xl)',
+            border: '1.5px solid var(--color-gray-light)',
+            overflow: 'hidden',
+          }}>
+            {/* Tab header */}
+            <div style={{ display: 'flex', borderBottom: '1.5px solid var(--color-gray-light)' }}>
+              <button
+                onClick={() => setMyTermsTab('saved')}
+                style={{
+                  flex: 1, padding: '0.75rem 1rem',
+                  fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                  background: myTermsTab === 'saved' ? 'var(--color-gray-light)' : 'transparent',
+                  color: myTermsTab === 'saved' ? 'var(--color-cyan)' : 'var(--color-gray)',
+                  border: 'none',
+                  borderBottom: myTermsTab === 'saved' ? '2px solid var(--color-cyan)' : '2px solid transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                <BookmarkCheck style={{ width: 15, height: 15 }} />
+                Saved ({savedTerms.length})
+              </button>
+              <button
+                onClick={() => setMyTermsTab('learned')}
+                style={{
+                  flex: 1, padding: '0.75rem 1rem',
+                  fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                  background: myTermsTab === 'learned' ? 'var(--color-gray-light)' : 'transparent',
+                  color: myTermsTab === 'learned' ? '#4CAF50' : 'var(--color-gray)',
+                  border: 'none',
+                  borderBottom: myTermsTab === 'learned' ? '2px solid #4CAF50' : '2px solid transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                <CheckCircle style={{ width: 15, height: 15 }} />
+                Learned ({learnedTerms.length})
+              </button>
+            </div>
+
+            {/* Tab content */}
+            <div style={{ padding: '1.2rem', background: isDark ? 'rgba(255,255,255,0.02)' : 'var(--color-gray-light)' }}>
+              {(() => {
+                const list = myTermsTab === 'saved' ? savedTerms : learnedTerms;
+                if (list.length === 0) {
+                  return (
+                    <p style={{ fontSize: 14, color: 'var(--color-gray)', textAlign: 'center', padding: '1rem 0' }}>
+                      {myTermsTab === 'saved' ? 'No saved terms yet — click the bookmark icon on any term.' : 'No learned terms yet — click the circle icon on any term.'}
+                    </p>
+                  );
+                }
+                return (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {list.map(term => {
+                      const catCfg = CATEGORY_COLORS[term.category] || CATEGORY_COLORS['Economic'];
+                      const ud     = userData[term._id];
+                      return (
+                        <div
+                          key={term._id}
+                          style={{
+                            borderRadius: 'var(--radius-md)',
+                            padding: '0.6rem 0.9rem',
+                            background: isDark ? 'rgba(255,255,255,0.04)' : 'white',
+                            border: `1.5px solid ${myTermsTab === 'saved' ? 'var(--color-cyan)' : '#4CAF5050'}`,
+                            display: 'flex', flexDirection: 'column', gap: 4,
+                            minWidth: 180, maxWidth: 260, flex: '1 1 180px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                              {term.term}
+                            </span>
+                            <span style={{
+                              fontSize: '0.58rem', fontWeight: 600,
+                              padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)',
+                              background: catCfg.bg, color: catCfg.color,
+                            }}>
+                              {term.category}
+                            </span>
+                          </div>
+                          <p style={{
+                            fontSize: '0.7rem', lineHeight: 1.5,
+                            color: 'var(--foreground)', opacity: 0.7, margin: 0,
+                            overflow: 'hidden',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}>
+                            {term.definition}
+                          </p>
+                          {ud?.note && (
+                            <p style={{ fontSize: '0.68rem', color: 'var(--color-orange)', fontStyle: 'italic', margin: 0 }}>
+                              Notes: {ud.note}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-// End of creation by Christella - 03/17/2026
+// End of creation by Christella - 3/17/2026
