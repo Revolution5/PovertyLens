@@ -5,7 +5,7 @@ const express = require('express');
 const router  = express.Router();
 const { MongoClient, ObjectId } = require('mongodb');
 
-const MONGO_URI = process.env.CONNECTION_URI || process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGO_URI = process.env.CONNECTION_URI;
 const DB_NAME   = 'povertylensapp';
 
 async function getDb() {
