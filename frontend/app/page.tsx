@@ -20,6 +20,10 @@ import { AppTour } from '@/components/AppTour'; // Tour for non-logged-in users 
 import { UserAppTour } from '@/components/UserAppTour'; // Separate tour specifically for logged-in users on the dashboard - kept separate from AppTour intentionally
 // ============== End User App Tour Import ==============
 
+// Added by Christella - 03/17/2026 - public bento pledge wall for the landing page
+import PledgeWallPublic from '@/components/PledgeWallPublic';
+// End of addition by Christella - 03/17/2026
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000' // Added by Marisol for easier backend URL management 2/3/2025
 
 // ActionCard Component (integrated)
@@ -618,6 +622,12 @@ export default function Home() {
                     </div>
                 </div>
             )}
+
+            {/* Added by Christella - 03/17/2026 - public bento pledge wall, wrapped to match mission section margins */}
+            <div className="px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full">
+                <PledgeWallPublic />
+            </div>
+            {/* End of addition by Christella - 03/17/2026 */}
 
             {/* ============== App Tour Component - Added by Marisol 2/10/2026 ============== */}
             <AppTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
