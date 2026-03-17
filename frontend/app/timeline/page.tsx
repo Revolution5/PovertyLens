@@ -41,7 +41,7 @@ const CATEGORY_CONFIG = {
   Breakthrough:       { color: '#4CAF50',             rawColor: '#4CAF50', icon: <Zap          className="w-4 h-4" />, label: 'Breakthrough'     },
   'Natural Disaster': { color: 'var(--color-orange)', rawColor: '#FFA239', icon: <CloudRain    className="w-4 h-4" />, label: 'Natural Disaster' },
   'War & Conflict':   { color: '#CF6679',             rawColor: '#CF6679', icon: <Swords       className="w-4 h-4" />, label: 'War & Conflict'   },
-  'Aid & Relief':     { color: 'var(--color-yellow)', rawColor: '#FEEE91', icon: <Heart        className="w-4 h-4" />, label: 'Aid & Relief'     },
+  'Aid & Relief':     { color: '#D4B800',             rawColor: '#D4B800', icon: <Heart        className="w-4 h-4" />, label: 'Aid & Relief'     }, // Edited by Christella - 3/17/2026 - made yellow darker
   'Economic Crisis':  { color: '#B388FF',             rawColor: '#B388FF', icon: <TrendingDown className="w-4 h-4" />, label: 'Economic Crisis'  },
 } as const;
 
@@ -66,8 +66,8 @@ function CardBody({ event, cfg }: { event: TimelineEvent; cfg: Cfg }) {
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = cfg.rawColor;
-        el.style.boxShadow   = `0 0 18px ${cfg.rawColor}44`;
+        el.style.borderColor = `${cfg.rawColor}99`; // Edited by Christella - 03/17/2026 - made hover less neon
+        el.style.boxShadow   = `0 2px 8px ${cfg.rawColor}22`; // Edited by Christella - 03/17/2026 - made hover less neon
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLElement;
@@ -223,7 +223,7 @@ export default function TimelinePage() {
       try {
         const res  = await fetch(url);
         const data = await res.json();
-        if (!cancelled && data.success) setEvents(data.events);
+        if (!cancelled && data.success) setEvents(data.events.slice().sort((a: TimelineEvent, b: TimelineEvent) => a.year - b.year)); // Edited by Christella - 03/17/2026 - made order from oldest to newest events
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -277,7 +277,7 @@ export default function TimelinePage() {
         <p style={{ margin: '16px 0 0 0', fontSize: 20, lineHeight: 1.7, color: 'var(--color-gray-dark)' }}>
           Disclaimer: All events and sources are presented for informational and educational
           purposes only. PovertyLens does not claim ownership of or credit for any
-          third-party information — sources are linked directly on each card.
+          third-party information. The sources are linked directly on each card.
         </p>
       </header>
 

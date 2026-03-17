@@ -250,7 +250,6 @@ export default function Navbar() {
                                                         onMouseLeave={e => hoverStyle(e, false)}
                                                         onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
                                                     >
-                                                        <BookOpen className="w-3.5 h-3.5" style={{ color: '#8CE4FF' }} />
                                                         Quick Links
                                                     </Link>
 
@@ -265,7 +264,6 @@ export default function Navbar() {
                                                         onMouseLeave={e => hoverStyle(e, false)}
                                                         onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
                                                     >
-                                                        <Clock className="w-3.5 h-3.5" style={{ color: '#FFA239' }} />
                                                         Poverty Timeline
                                                     </Link>
 
@@ -278,7 +276,6 @@ export default function Navbar() {
                                                         onMouseLeave={e => hoverStyle(e, false)}
                                                         onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
                                                     >
-                                                        <BookMarked className="w-3.5 h-3.5" style={{ color: '#4CAF50' }} />
                                                         Poverty Glossary
                                                         <span
                                                             className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"
@@ -504,7 +501,6 @@ export default function Navbar() {
                                             className="flex items-center justify-between w-full px-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-[#FFA239]"
                                         >
                                             <span className="flex items-center gap-2">
-                                                <BookOpen className="w-3.5 h-3.5" />
                                                 Educational Resources
                                             </span>
                                             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileEduOpen ? 'rotate-180' : ''}`} />
@@ -523,14 +519,14 @@ export default function Navbar() {
                                                     className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#FFA239]"
                                                     onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
                                                 >
-                                                    <Clock className="w-3 h-3" /> Poverty Timeline
+                                                    Poverty Timeline
                                                 </Link>
                                                 <Link
                                                     href="glossary"
                                                     className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#FFA239]"
                                                     onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
                                                 >
-                                                    <BookMarked className="w-3 h-3" /> Poverty Glossary
+                                                    Poverty Glossary
                                                     <span className="ml-1 text-xs" style={{ color: '#FFA239' }}>(Soon)</span>
                                                 </Link>
                                             </div>
