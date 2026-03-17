@@ -2,9 +2,10 @@
 // Run once to seed the glossary collection with starter terms.
 // Usage: node seedGlossary.js
 
+require('dotenv').config();
 const { MongoClient } = require('mongodb');
 
-const MONGO_URI = process.env.CONNECTION_URI || process.env.MONGO_URI || 'mongodb+srv://taguicanachristellamarie_db_user:UOtwmmHxWYbQMQqu@povertylenscluster.nnimjxi.mongodb.net/povertylens';
+const MONGO_URI = process.env.CONNECTION_URI;
 const DB_NAME   = 'povertylensapp';
 
 const TERMS = [
@@ -93,4 +94,3 @@ async function seed() {
 }
 
 seed().catch(console.error);
-// End of creation by Christella - 03/17/2026
