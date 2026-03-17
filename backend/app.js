@@ -20,6 +20,7 @@ const donationsRouter = require('./routes/donations');
 const pledgesRouter = require('./routes/pledges'); // Added by Christella - 03/06/2026
 const timelineRouter = require('./routes/timeline'); // Added by Christella - 03/13/2026
 const { router: activityLogRouter } = require('./routes/activitylog'); // Added by Marisol - 03/05/2026
+const glossaryRoutes = require('./routes/glossaryRoutes'); // Added by Christella - 03/17/2026
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
@@ -45,6 +46,7 @@ app.use('/api/donations', donationsRouter);
 app.use('/api/pledges', pledgesRouter); // Added by Christella - 03/06/2026
 app.use('/api/activity-log', activityLogRouter); // Added by Marisol - 03/05/2026
 app.use('/api/timeline', timelineRouter); // Added by Christella - 03/13/2026
+app.use('/api/glossary', glossaryRoutes); // Added by Christella - 03/17/2026
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint

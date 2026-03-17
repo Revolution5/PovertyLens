@@ -1,0 +1,479 @@
+// Created by Christella - 03/17/2026
+// Poverty Glossary page — alphabetical + searchable
+// Public: view terms. Logged-in: bookmark, mark as learned, add notes.
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Bookmark, BookmarkCheck, CheckCircle, Circle, ChevronDown, ChevronUp, X } from 'lucide-react';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
+  Economic:     { color: '#8CE4FF', bg: 'rgba(140,228,255,0.12)' },
+  Social:       { color: '#4CAF50', bg: 'rgba(76,175,80,0.12)'   },
+  Policy:       { color: '#FFA239', bg: 'rgba(255,162,57,0.12)'  },
+  Humanitarian: { color: '#FF5656', bg: 'rgba(255,86,86,0.12)'   },
+};
+
+type GlossaryTerm = {
+  _id: string;
+  term: string;
+  definition: string;
+  category: string;
+  letter: string;
+  relatedTerms?: string[];
+};
+
+type UserData = {
+  termId: string;
+  bookmarked: boolean;
+  learned: boolean;
+  note: string;
+};
+
+export default function GlossaryPage() {
+  const [terms, setTerms]           = useState<GlossaryTerm[]>([]);
+  const [filtered, setFiltered]     = useState<GlossaryTerm[]>([]);
+  const [search, setSearch]         = useState('');
+  const [activeLetter, setActiveLetter] = useState<string>('all');
+  const [loading, setLoading]       = useState(true);
+  const [isDark, setIsDark]         = useState(false);
+  const [userEmail, setUserEmail]   = useState<string | null>(null);
+  const [userData, setUserData]     = useState<Record<string, UserData>>({});
+  const [expandedNote, setExpandedNote] = useState<string | null>(null);
+  const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+  }, []);
+
+  // Fetch all terms on mount
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        const res  = await fetch(`${BACKEND_URL}/api/glossary`);
+        const data = await res.json();
+        if (data.success) {
+          setTerms(data.terms);
+          setFiltered(data.terms);
+        }
+      } catch (err) {
+        console.error('Error fetching glossary:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTerms();
+  }, []);
+
+  // Fetch user's saved data if logged in
+  useEffect(() => {
+    if (!userEmail) return;
+    const fetchUserData = async () => {
+      try {
+        const res  = await fetch(`${BACKEND_URL}/api/glossary/userdata/${encodeURIComponent(userEmail)}`);
+        const data = await res.json();
+        if (data.success) {
+          const map: Record<string, UserData> = {};
+          data.data.forEach((d: UserData) => { map[d.termId] = d; });
+          setUserData(map);
+        }
+      } catch (err) {
+        console.error('Error fetching user glossary data:', err);
+      }
+    };
+    fetchUserData();
+  }, [userEmail]);
+
+  // Filter terms whenever search or letter changes
+  useEffect(() => {
+    let result = [...terms];
+    if (activeLetter !== 'all') {
+      result = result.filter(t => t.letter === activeLetter);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(t =>
+        t.term.toLowerCase().includes(q) || t.definition.toLowerCase().includes(q)
+      );
+    }
+    setFiltered(result);
+  }, [search, activeLetter, terms]);
+
+  // Save a user action (bookmark, learned, or note) to the backend
+  const saveUserAction = async (termId: string, patch: Partial<UserData>) => {
+    if (!userEmail) return;
+    try {
+      await fetch(`${BACKEND_URL}/api/glossary/${termId}/userdata`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail, ...patch }),
+      });
+      setUserData(prev => ({
+        ...prev,
+        [termId]: { ...{ termId, bookmarked: false, learned: false, note: '' }, ...prev[termId], ...patch },
+      }));
+    } catch (err) {
+      console.error('Error saving user glossary action:', err);
+    }
+  };
+
+  const toggleBookmark = (termId: string) => {
+    const current = userData[termId]?.bookmarked ?? false;
+    saveUserAction(termId, { bookmarked: !current });
+  };
+
+  const toggleLearned = (termId: string) => {
+    const current = userData[termId]?.learned ?? false;
+    saveUserAction(termId, { learned: !current });
+  };
+
+  const saveNote = (termId: string) => {
+    saveUserAction(termId, { note: noteInputs[termId] ?? '' });
+    setExpandedNote(null);
+  };
+
+  // Group filtered terms by letter for the alphabetical display
+  const grouped = LETTERS.reduce<Record<string, GlossaryTerm[]>>((acc, l) => {
+    const group = filtered.filter(t => t.letter === l);
+    if (group.length) acc[l] = group;
+    return acc;
+  }, {});
+
+  // Stats for logged-in users
+  const bookmarkedCount = Object.values(userData).filter(d => d.bookmarked).length;
+  const learnedCount    = Object.values(userData).filter(d => d.learned).length;
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--background)', paddingTop: 40, paddingLeft: 80, paddingRight: 80 }}>
+
+      {/* Header */}
+      <header style={{ marginBottom: 32, paddingLeft: 24 }}>
+        <h1 className="text-4xl sm:text-5xl font-bold" style={{ margin: '0 0 16px 0', color: 'var(--foreground)' }}>
+          Poverty Glossary
+        </h1>
+        <div style={{ height: 4, width: 80, borderRadius: 'var(--radius-full)', background: 'var(--gradient-cyan-yellow)', margin: '0 0 24px 0' }} />
+        <p style={{ margin: 0, fontSize: 20, lineHeight: 1.7, color: 'var(--color-gray-dark)' }}>
+          Definitions for key terms related to poverty, economic inequality, and global development.
+        </p>
+        {!userEmail && (
+          <p style={{ margin: '8px 0 0 0', fontSize: 16, color: 'var(--color-gray)' }}>
+            <a href="/signin" style={{ color: 'var(--color-cyan)', fontWeight: 600, textDecoration: 'none' }}>Sign in</a>
+            {' '}to bookmark terms, mark them as learned, and add personal notes.
+          </p>
+        )}
+      </header>
+
+      {/* Logged-in stats bar */}
+      {userEmail && (
+        <div style={{ paddingLeft: 24, marginBottom: 32, display: 'flex', gap: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--color-gray)' }}>
+            <BookmarkCheck style={{ width: 16, height: 16, color: 'var(--color-cyan)' }} />
+            <span><strong style={{ color: 'var(--foreground)' }}>{bookmarkedCount}</strong> bookmarked</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--color-gray)' }}>
+            <CheckCircle style={{ width: 16, height: 16, color: '#4CAF50' }} />
+            <span><strong style={{ color: 'var(--foreground)' }}>{learnedCount}</strong> learned</span>
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--color-gray)' }}>
+            <strong style={{ color: 'var(--foreground)' }}>{terms.length}</strong> total terms
+          </div>
+        </div>
+      )}
+
+      {/* Search bar */}
+      <div style={{ paddingLeft: 24, marginBottom: 24 }}>
+        <div style={{ position: 'relative', maxWidth: 480 }}>
+          <Search style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--color-gray)', pointerEvents: 'none' }} />
+          <input
+            ref={searchRef}
+            type="text"
+            placeholder="Search terms or definitions…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setActiveLetter('all'); }}
+            style={{
+              width: '100%',
+              paddingLeft: 40, paddingRight: search ? 36 : 16,
+              paddingTop: '0.55rem', paddingBottom: '0.55rem',
+              borderRadius: 'var(--radius-full)',
+              border: `1.5px solid ${search ? 'var(--color-cyan)' : 'var(--color-gray-light)'}`,
+              background: 'var(--color-gray-light)',
+              color: 'var(--foreground)',
+              fontSize: 14,
+              outline: 'none',
+              transition: 'border-color var(--transition-base)',
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-gray)', padding: 0 }}
+            >
+              <X style={{ width: 14, height: 14 }} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* A–Z letter nav */}
+      <div style={{ paddingLeft: 24, marginBottom: 40, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <button
+          onClick={() => setActiveLetter('all')}
+          style={{
+            padding: '0.25rem 0.6rem', borderRadius: 'var(--radius-sm)',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            background: activeLetter === 'all' ? 'var(--color-orange)' : 'var(--color-gray-light)',
+            color: activeLetter === 'all' ? 'white' : 'var(--foreground)',
+            border: `1.5px solid ${activeLetter === 'all' ? 'var(--color-orange)' : 'var(--color-gray-light)'}`,
+            transition: 'all var(--transition-fast)',
+          }}
+        >
+          All
+        </button>
+        {LETTERS.map(l => {
+          const hasTerms = terms.some(t => t.letter === l);
+          return (
+            <button
+              key={l}
+              onClick={() => hasTerms ? setActiveLetter(l) : undefined}
+              disabled={!hasTerms}
+              style={{
+                padding: '0.25rem 0.6rem', borderRadius: 'var(--radius-sm)',
+                fontSize: 13, fontWeight: 600, cursor: hasTerms ? 'pointer' : 'default',
+                background: activeLetter === l ? 'var(--color-cyan)' : 'var(--color-gray-light)',
+                color: activeLetter === l ? 'var(--background)' : hasTerms ? 'var(--foreground)' : 'var(--color-gray)',
+                border: `1.5px solid ${activeLetter === l ? 'var(--color-cyan)' : 'var(--color-gray-light)'}`,
+                opacity: hasTerms ? 1 : 0.35,
+                transition: 'all var(--transition-fast)',
+              }}
+            >
+              {l}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Results count */}
+      {search && (
+        <p style={{ paddingLeft: 24, marginBottom: 20, fontSize: 14, color: 'var(--color-gray)' }}>
+          {filtered.length} result{filtered.length !== 1 ? 's' : ''} for &ldquo;{search}&rdquo;
+        </p>
+      )}
+
+      {/* Terms */}
+      {loading ? (
+        <div style={{ paddingLeft: 24, color: 'var(--color-gray)', fontSize: 16 }}>Loading glossary…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ paddingLeft: 24, color: 'var(--color-gray)', fontSize: 16 }}>No terms found.</div>
+      ) : (
+        <div style={{ paddingLeft: 24, paddingBottom: 80 }}>
+          {Object.entries(grouped).map(([letter, letterTerms]) => (
+            <div key={letter} style={{ marginBottom: 40 }}>
+              {/* Letter heading */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                <span style={{
+                  fontSize: 28, fontWeight: 900, color: 'var(--color-orange)',
+                  lineHeight: 1, minWidth: 28,
+                }}>
+                  {letter}
+                </span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-gray-light)' }} />
+              </div>
+
+              {/* Term cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+                {letterTerms.map(term => {
+                  const ud        = userData[term._id];
+                  const isBookmarked = ud?.bookmarked ?? false;
+                  const isLearned    = ud?.learned    ?? false;
+                  const noteOpen     = expandedNote === term._id;
+                  const catCfg       = CATEGORY_COLORS[term.category] || CATEGORY_COLORS['Economic'];
+
+                  return (
+                    <div
+                      key={term._id}
+                      style={{
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '1.1rem 1.2rem',
+                        background: isDark
+                          ? isLearned ? 'rgba(76,175,80,0.06)' : 'rgba(255,255,255,0.03)'
+                          : isLearned ? 'rgba(76,175,80,0.04)' : 'white',
+                        border: `1.5px solid ${isLearned ? '#4CAF5040' : isBookmarked ? 'var(--color-cyan)' : (isDark ? 'rgba(255,255,255,0.08)' : 'var(--color-gray-light)')}`,
+                        boxShadow: 'var(--shadow-sm)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.6rem',
+                        transition: 'border-color var(--transition-base)',
+                      }}
+                    >
+                      {/* Top row: term + actions */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
+                            {term.term}
+                          </h3>
+                          {/* Category badge */}
+                          <span style={{
+                            fontSize: '0.6rem', fontWeight: 600,
+                            padding: '0.1rem 0.5rem', borderRadius: 'var(--radius-full)',
+                            background: catCfg.bg, color: catCfg.color,
+                            border: `1px solid ${catCfg.color}30`,
+                          }}>
+                            {term.category}
+                          </span>
+                          {/* Learned badge */}
+                          {isLearned && (
+                            <span style={{
+                              fontSize: '0.6rem', fontWeight: 600,
+                              padding: '0.1rem 0.5rem', borderRadius: 'var(--radius-full)',
+                              background: 'rgba(76,175,80,0.12)', color: '#4CAF50',
+                              border: '1px solid rgba(76,175,80,0.3)',
+                            }}>
+                              ✓ Learned
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Logged-in action buttons */}
+                        {userEmail && (
+                          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                            {/* Bookmark */}
+                            <button
+                              onClick={() => toggleBookmark(term._id)}
+                              title={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+                              style={{
+                                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                                color: isBookmarked ? 'var(--color-cyan)' : 'var(--color-gray)',
+                                transition: 'color var(--transition-fast)',
+                              }}
+                            >
+                              {isBookmarked
+                                ? <BookmarkCheck style={{ width: 16, height: 16 }} />
+                                : <Bookmark      style={{ width: 16, height: 16 }} />}
+                            </button>
+                            {/* Learned */}
+                            <button
+                              onClick={() => toggleLearned(term._id)}
+                              title={isLearned ? 'Mark as not learned' : 'Mark as learned'}
+                              style={{
+                                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                                color: isLearned ? '#4CAF50' : 'var(--color-gray)',
+                                transition: 'color var(--transition-fast)',
+                              }}
+                            >
+                              {isLearned
+                                ? <CheckCircle style={{ width: 16, height: 16 }} />
+                                : <Circle      style={{ width: 16, height: 16 }} />}
+                            </button>
+                            {/* Note toggle */}
+                            <button
+                              onClick={() => {
+                                setExpandedNote(noteOpen ? null : term._id);
+                                setNoteInputs(prev => ({ ...prev, [term._id]: ud?.note ?? '' }));
+                              }}
+                              title="Add note"
+                              style={{
+                                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                                color: ud?.note ? 'var(--color-orange)' : 'var(--color-gray)',
+                                transition: 'color var(--transition-fast)',
+                              }}
+                            >
+                              {noteOpen
+                                ? <ChevronUp   style={{ width: 15, height: 15 }} />
+                                : <ChevronDown style={{ width: 15, height: 15 }} />}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Definition */}
+                      <p style={{ fontSize: '0.82rem', lineHeight: 1.6, color: 'var(--foreground)', opacity: 0.82, margin: 0 }}>
+                        {term.definition}
+                      </p>
+
+                      {/* Related terms */}
+                      {term.relatedTerms && term.relatedTerms.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--color-gray)', marginRight: 2 }}>See also:</span>
+                          {term.relatedTerms.map(r => (
+                            <button
+                              key={r}
+                              onClick={() => { setSearch(r); setActiveLetter('all'); }}
+                              style={{
+                                fontSize: '0.65rem', fontWeight: 500,
+                                padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)',
+                                background: 'var(--color-gray-light)', color: 'var(--color-gray-dark)',
+                                border: '1px solid var(--color-gray-light)',
+                                cursor: 'pointer', transition: 'all var(--transition-fast)',
+                              }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-cyan)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-cyan)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-gray-light)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-gray-dark)'; }}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Expandable note input (logged-in only) */}
+                      {userEmail && noteOpen && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <textarea
+                            placeholder="Add a personal note…"
+                            rows={3}
+                            value={noteInputs[term._id] ?? ''}
+                            onChange={e => setNoteInputs(prev => ({ ...prev, [term._id]: e.target.value }))}
+                            style={{
+                              width: '100%', padding: '0.5rem 0.7rem',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1.5px solid var(--color-cyan)',
+                              background: isDark ? 'rgba(255,255,255,0.05)' : '#f9f9f9',
+                              color: 'var(--foreground)', fontSize: '0.78rem',
+                              resize: 'none', outline: 'none',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                          <button
+                            onClick={() => saveNote(term._id)}
+                            style={{
+                              alignSelf: 'flex-end', padding: '0.3rem 0.9rem',
+                              borderRadius: 'var(--radius-full)',
+                              background: 'var(--color-cyan)', color: 'var(--background)',
+                              border: 'none', cursor: 'pointer',
+                              fontSize: '0.75rem', fontWeight: 600,
+                              transition: 'opacity var(--transition-fast)',
+                            }}
+                          >
+                            Save note
+                          </button>
+                          {ud?.note && (
+                            <p style={{ fontSize: '0.72rem', color: 'var(--color-gray)', fontStyle: 'italic', margin: 0 }}>
+                              Saved: {ud.note}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+// End of creation by Christella - 03/17/2026
