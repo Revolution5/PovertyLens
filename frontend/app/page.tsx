@@ -6,7 +6,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart
+import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart, Globe } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart
 
 // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
@@ -322,7 +322,14 @@ export default function Home() {
             bgColor: "#FFE5E5",
             href: "/donationspages",
             tourId: "donate-now" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 5
-        }
+        },
+        { // added - daniel q. 3/17/36 start
+            title: "Currency Calculator",
+            description: "Convert between world currencies instantly",
+            icon: Globe,
+            bgColor: "#E5F8FF",
+            href: "/currencycalculator"
+        } // added - daniel q. 3/17/36 end
     ];
 
     if (isLoggedIn) {

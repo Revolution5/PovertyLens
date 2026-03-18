@@ -39,6 +39,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+// added -daniel q. 3/7/26 start
 router.delete('/clear', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -63,5 +64,6 @@ router.delete('/clear', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// added -daniel q. 3/7/26 end
 
 module.exports = router;
