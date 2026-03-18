@@ -19,6 +19,7 @@ const storiesRouter = require('./routes/stories');
 const donationsRouter = require('./routes/donations');
 const pledgesRouter = require('./routes/pledges'); // Added by Christella - 03/06/2026
 const timelineRouter = require('./routes/timeline'); // Added by Christella - 03/13/2026
+const currencyRouter = require('./routes/currency'); // added by daniel q. - 3/17/36
 const { router: activityLogRouter } = require('./routes/activitylog'); // Added by Marisol - 03/05/2026
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
@@ -45,6 +46,7 @@ app.use('/api/donations', donationsRouter);
 app.use('/api/pledges', pledgesRouter); // Added by Christella - 03/06/2026
 app.use('/api/activity-log', activityLogRouter); // Added by Marisol - 03/05/2026
 app.use('/api/timeline', timelineRouter); // Added by Christella - 03/13/2026
+app.use('/api/currency', currencyRouter); // added by daniel q. - 3/17/36
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint
