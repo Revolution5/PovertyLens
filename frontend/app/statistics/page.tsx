@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react"; // Added by Christella - 1/30/2026
 import StatisticsMapClient from "../../components/StatisticsMapClient";
 import MapFilters, { RateType } from "../../components/mapfilters"; // Added by Reymes 3/2/26
+import PoiFilters from "../../components/PoiFilters"; // Added by Damon 3/19/26
 // Added by Reymes 3/2/26 - import rate data files for filter support
 import { NATIONAL_POVERTY_RATES, getNationalPovertyLine } from "../../data/nationalRates";
 import { INTERNATIONAL_FALLBACK_RATES } from "../../data/internationalRates"; // Added by Reymes 3/7/26
@@ -693,6 +694,10 @@ export default function StatisticsPage() {
   // Added by Reymes 3/2/26 - toggle between national and international poverty rates on map
   const [rateType, setRateType] = useState<RateType>("national");
   
+  // Added by Damon 3/19/26 - toggle for school and hospital facility pins on map
+  const [showSchools, setShowSchools] = useState(false);
+  const [showHospitals, setShowHospitals] = useState(false);
+  
   /* user profile cache - daniel q. 2/4 */
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
 
@@ -1242,6 +1247,17 @@ useEffect(() => {
             <div className="mb-4">
               <MapFilters value={rateType} onChange={setRateType} />
             </div>
+            {/* START Added by Damon 3/19/26 - POI filter toggle for schools and hospitals */}
+            <div className="mb-4">
+              <PoiFilters 
+                showSchools={showSchools}
+                onShowSchoolsChange={setShowSchools}
+                showHospitals={showHospitals}
+                onShowHospitalsChange={setShowHospitals}
+                hasSelection={selectedCountry !== null}
+              />
+            </div>
+            {/* END Added by Damon 3/19/26 - POI filter toggle for schools and hospitals */}
             <div className="mb-4 relative z-0">
               <StatisticsMapClient
                 selectedGeoId={selectedGeoId}
@@ -1249,6 +1265,10 @@ useEffect(() => {
                 mapRows={mapRows}
                 showMarkers={false}
                 rateType={rateType}
+                /* START Added by Damon 3/19/26 - POI filter toggle for schools and hospitals */
+                showSchools={showSchools}
+                showHospitals={showHospitals}
+                /* END Added by Damon 3/19/26 - POI filter toggle for schools and hospitals */
               />
               <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
                 The map shows a baselayer only. Pick a country from the panel to the right.
