@@ -1,3 +1,4 @@
+// edited - daniel q. 3/20/26 start
 "use client";
 import { useState, useEffect } from 'react';
 
@@ -116,7 +117,7 @@ const countryNames: Record<string, string> = {
   LTU: "Lithuania",
   ALB: "Albania",
   MKD: "North Macedonia",
-  BIH: "Bosnia",
+  BIH: "Bosnia and Herzegovina",
   MNE: "Montenegro",
   MDA: "Moldova",
   BLR: "Belarus",
@@ -138,7 +139,7 @@ const countryNames: Record<string, string> = {
   HTI: "Haiti",
   DOM: "Dominican Republic",
   JAM: "Jamaica",
-  TTO: "Trinidad",
+  TTO: "Trinidad and Tobago",
   BHS: "Bahamas",
   BRB: "Barbados",
   
@@ -169,16 +170,76 @@ const countryNames: Record<string, string> = {
   FSM: "Micronesia",
 };
 
+// Map country codes to currency codes (ISO 3166-1 alpha-3 to ISO 4217)
+const countryToCurrency: Record<string, string> = {
+  // AFRICA
+  "DZA": "DZD", "AGO": "AOA", "BEN": "XOF", "BWA": "BWP", "BFA": "XOF",
+  "BDI": "BIF", "CMR": "XAF", "CAF": "XAF", "TCD": "XAF", "COG": "XAF",
+  "COD": "CDF", "CIV": "XOF", "EGY": "EGP", "ETH": "ETB", "SWZ": "SZL",
+  "GAB": "XAF", "GMB": "GMD", "GHA": "GHS", "GIN": "GNF", "KEN": "KES",
+  "LSO": "LSL", "LBR": "LRD", "MDG": "MGA", "MWI": "MWK", "MLI": "XOF",
+  "MRT": "MRU", "MAR": "MAD", "MOZ": "MZN", "NAM": "NAD", "NER": "XOF",
+  "NGA": "NGN", "RWA": "RWF", "SEN": "XOF", "SLE": "SLL", "ZAF": "ZAR",
+  "SDN": "SDG", "TZA": "TZS", "TGO": "XOF", "TUN": "TND", "UGA": "UGX",
+  "ZMB": "ZMW", "ZWE": "ZWL",
+  
+  // ASIA
+  "BGD": "BDT", "IND": "INR", "JPN": "JPY", "KOR": "KRW", "CHN": "CNY",
+  "IDN": "IDR", "PAK": "PKR", "PHL": "PHP", "VNM": "VND", "THA": "THB",
+  "MMR": "MMK", "KHM": "KHR", "LAO": "LAK", "NPL": "NPR", "LKA": "LKR",
+  "KAZ": "KZT", "UZB": "UZS", "AZE": "AZN", "GEO": "GEL", "ARM": "AMD",
+  "IRQ": "IQD", "IRN": "IRR", "SAU": "SAR", "ARE": "AED", "TUR": "TRY",
+  "ISR": "ILS", "JOR": "JOD", "LBN": "LBP", "YEM": "YER", "SYR": "SYP",
+  "OMN": "OMR", "KWT": "KWD", "QAT": "QAR", "BHR": "BHD", "AFG": "AFN",
+  "MNG": "MNT",
+  
+  // EUROPE
+  "AUT": "EUR", "BEL": "EUR", "FRA": "EUR", "DEU": "EUR", "ITA": "EUR",
+  "NLD": "EUR", "ESP": "EUR", "PRT": "EUR", "GRC": "EUR", "IRL": "EUR",
+  "FIN": "EUR", "EST": "EUR", "LVA": "EUR", "LTU": "EUR", "SVK": "EUR",
+  "SVN": "EUR", "HRV": "EUR", "NOR": "NOK", "SWE": "SEK", "DNK": "DKK",
+  "GBR": "GBP", "CHE": "CHF", "POL": "PLN", "CZE": "CZK", "HUN": "HUF",
+  "ROU": "RON", "BGR": "BGN", "RUS": "RUB", "UKR": "UAH", "BLR": "BYN",
+  "ALB": "ALL", "MKD": "MKD", "BIH": "BAM", "MNE": "EUR", "MDA": "MDL",
+  
+  // NORTH AMERICA
+  "CAN": "CAD", "MEX": "MXN", "USA": "USD", "GTM": "GTQ", "BLZ": "BZD",
+  "HND": "HNL", "SLV": "USD", "NIC": "NIO", "CRI": "CRC", "PAN": "PAB",
+  "CUB": "CUP", "HTI": "HTG", "DOM": "DOP", "JAM": "JMD", "TTO": "TTD",
+  "BHS": "BSD", "BRB": "BBD",
+  
+  // SOUTH AMERICA
+  "BRA": "BRL", "ARG": "ARS", "CHL": "CLP", "COL": "COP", "PER": "PEN",
+  "VEN": "VES", "ECU": "USD", "BOL": "BOB", "PRY": "PYG", "URY": "UYU",
+  "GUY": "GYD", "SUR": "SRD",
+  
+  // OCEANIA
+  "AUS": "AUD", "NZL": "NZD", "PNG": "PGK", "FJI": "FJD", "SLB": "SBD",
+  "VUT": "VUV", "WSM": "WST", "TON": "TOP", "KIR": "AUD", "FSM": "USD"
+};
+
+// Helper function to get currency code from country code
+function getCurrencyCode(countryCode: string): string {
+  // If it's already a currency code (common ones), return as is
+  const currencyCodes = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'MXN', 'BRL', 'ZAR', 'NZD', 'SGD', 'HKD', 'KRW', 'RUB'];
+  if (currencyCodes.includes(countryCode)) {
+    return countryCode;
+  }
+  // Otherwise try to map from country code
+  return countryToCurrency[countryCode] || countryCode;
+}
+
 export default function CurrencyCalculator() {
     const [amount, setAmount] = useState('1');
-    const [from, setFrom] = useState('USD');
-    const [to, setTo] = useState('EUR');
+    const [fromCountry, setFromCountry] = useState('USA');
+    const [toCountry, setToCountry] = useState('GBR');
     const [result, setResult] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const [isDark, setIsDark] = useState(false);
 
-    // Get all currency codes from countryNames
-    const currencies = Object.keys(countryNames).sort();
+    // Get all country codes from countryNames
+    const countries = Object.keys(countryNames).sort();
 
     useEffect(() => {
         setIsDark(document.documentElement.classList.contains('dark'));
@@ -191,15 +252,29 @@ export default function CurrencyCalculator() {
 
     const convert = async () => {
         setLoading(true);
+        setError('');
+        setResult(null);
+        
+        // Convert country codes to currency codes
+        const fromCurrency = getCurrencyCode(fromCountry);
+        const toCurrency = getCurrencyCode(toCountry);
+        
+        console.log(`Converting ${amount} ${fromCountry} (${fromCurrency}) to ${toCountry} (${toCurrency})`);
+        
         try {
             const res = await fetch(
-                `http://localhost:4000/api/currency/convert?from=${from}&to=${to}&amount=${amount}`
+                `http://localhost:4000/api/currency/convert?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`
             );
+            
             const data = await res.json();
+            
             if (data.success) {
                 setResult(data.convertedAmount);
+            } else {
+                setError(data.error || 'Conversion failed');
             }
-        } catch (error) {
+        } catch (error: any) {
+            setError(error.message || 'Failed to connect to backend');
             console.error('Error:', error);
         }
         setLoading(false);
@@ -231,8 +306,8 @@ export default function CurrencyCalculator() {
                 <div className="flex gap-2">
                     <div className="flex-1">
                         <select 
-                            value={from} 
-                            onChange={(e) => setFrom(e.target.value)}
+                            value={fromCountry} 
+                            onChange={(e) => setFromCountry(e.target.value)}
                             className="w-full p-3 border rounded-lg"
                             style={{ 
                                 backgroundColor: isDark ? '#2d2d2d' : 'white',
@@ -240,17 +315,20 @@ export default function CurrencyCalculator() {
                                 color: isDark ? 'white' : '#1f2937'
                             }}
                         >
-                            {currencies.map(c => (
+                            {countries.map(c => (
                                 <option key={c} value={c}>
-                                    {c} - {countryNames[c]}
+                                    {countryNames[c]} ({c}) → {getCurrencyCode(c)}
                                 </option>
                             ))}
                         </select>
+                        <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                            Currency: {getCurrencyCode(fromCountry)}
+                        </div>
                     </div>
 
                     <button 
-                        onClick={() => { setFrom(to); setTo(from); }}
-                        className="px-4 py-2 rounded-lg"
+                        onClick={() => { setFromCountry(toCountry); setToCountry(fromCountry); }}
+                        className="px-4 py-2 rounded-lg self-center"
                         style={{ 
                             backgroundColor: isDark ? '#404040' : '#e5e7eb',
                             color: isDark ? 'white' : '#1f2937'
@@ -261,8 +339,8 @@ export default function CurrencyCalculator() {
 
                     <div className="flex-1">
                         <select 
-                            value={to} 
-                            onChange={(e) => setTo(e.target.value)}
+                            value={toCountry} 
+                            onChange={(e) => setToCountry(e.target.value)}
                             className="w-full p-3 border rounded-lg"
                             style={{ 
                                 backgroundColor: isDark ? '#2d2d2d' : 'white',
@@ -270,12 +348,15 @@ export default function CurrencyCalculator() {
                                 color: isDark ? 'white' : '#1f2937'
                             }}
                         >
-                            {currencies.map(c => (
+                            {countries.map(c => (
                                 <option key={c} value={c}>
-                                    {c} - {countryNames[c]}
+                                    {countryNames[c]} ({c}) → {getCurrencyCode(c)}
                                 </option>
                             ))}
                         </select>
+                        <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                            Currency: {getCurrencyCode(toCountry)}
+                        </div>
                     </div>
                 </div>
 
@@ -290,16 +371,27 @@ export default function CurrencyCalculator() {
                     {loading ? 'Converting...' : 'Convert'}
                 </button>
 
-                {result !== null && (
+                {error && (
+                    <div className="mt-4 p-4 rounded-lg text-center" style={{ 
+                        backgroundColor: isDark ? '#2d2d2d' : '#fee2e2',
+                        border: isDark ? '1px solid #404040' : '1px solid #fecaca',
+                        color: '#dc2626'
+                    }}>
+                        {error}
+                    </div>
+                )}
+
+                {result !== null && !error && (
                     <div className="mt-4 p-4 rounded-lg text-center" style={{ 
                         backgroundColor: isDark ? '#2d2d2d' : '#f3f4f6',
                         border: isDark ? '1px solid #404040' : '1px solid #e5e7eb'
                     }}>
                         <p className="text-lg" style={{ color: isDark ? 'white' : '#1f2937' }}>
-                            {amount} {from} = <span className="font-bold text-xl">{result.toFixed(2)} {to}</span>
+                            {amount} {getCurrencyCode(fromCountry)} = 
+                            <span className="font-bold text-xl ml-2">{result.toFixed(2)} {getCurrencyCode(toCountry)}</span>
                         </p>
                         <p className="text-xs mt-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-                            {countryNames[from]} → {countryNames[to]}
+                            {countryNames[fromCountry]} → {countryNames[toCountry]}
                         </p>
                     </div>
                 )}
@@ -307,3 +399,4 @@ export default function CurrencyCalculator() {
         </div>
     );
 }
+// edited - daniel q. 3/20/26 end
