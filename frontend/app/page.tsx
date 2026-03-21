@@ -20,6 +20,10 @@ import { AppTour } from '@/components/AppTour'; // Tour for non-logged-in users 
 import { UserAppTour } from '@/components/UserAppTour'; // Separate tour specifically for logged-in users on the dashboard - kept separate from AppTour intentionally
 // ============== End User App Tour Import ==============
 
+// Added by Christella - 03/17/2026 - public bento pledge wall for the landing page
+import PledgeWallPublic from '@/components/PledgeWallPublic';
+// End of addition by Christella - 03/17/2026
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000' // Added by Marisol for easier backend URL management 2/3/2025
 
 // ActionCard Component (integrated)
@@ -329,7 +333,17 @@ export default function Home() {
             icon: Globe,
             bgColor: "#E5F8FF",
             href: "/currencycalculator"
-        } // added - daniel q. 3/17/36 end
+        }, // added - daniel q. 3/17/36 end
+        // Modified by Christella - 03/20/2026 - moved Pledge Wall into actionCards array so it sits next to Currency Calculator
+        {
+            title: "Pledge Wall",
+            description: "Make a public commitment to take action against poverty and see what others are pledging.",
+            icon: HandHeart,
+            bgColor: "#FFFCEB",
+            href: "/pledgewalluser",
+            tourId: "pledge-wall" // Added by Marisol 3/5/2026 - matches data-tour target in UserAppTour step 7
+        },
+        // End of modification by Christella - 03/20/2026
     ];
 
     if (isLoggedIn) {
@@ -372,6 +386,7 @@ export default function Home() {
                             {/* ============== End User App Tour Button ============== */}
                         </div>
                     </div>
+
                     {/* Action Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 mb-16">
                         {actionCards.map((card, index) => (
@@ -385,21 +400,8 @@ export default function Home() {
                                 tourId={card.tourId} // Added by Marisol 2/25/2026 - passes tourId so each card gets its data-tour attribute for UserAppTour
                             />
                         ))}
-
-                        {/* Pledge Wall - spans full width - added by Christella - 03/06/2026 */}
-                        <div className="md:col-span-2">
-                            <ActionCard
-                                title="Pledge Wall"
-                                description="Make a public commitment to take action against poverty and see what others are pledging."
-                                icon={HandHeart}
-                                bgColor="#E5F8FF"
-                                href="/pledgewalluser"
-                                tourId="pledge-wall" // Added by Marisol 3/5/2026 - matches data-tour target in UserAppTour step 7
-                            />
-                        </div>
-                        {/* End of Pledge Wall - spans full width addition by Christella - 03/06/2026 */}
-
                     </div>
+                    {/* Pledge Wall card is now part of actionCards array above - Modified by Christella 03/20/2026 */}
 
                     {/* Quick Stats Section */}
                     <div className="stats-section grid grid-cols-1 sm:grid-cols-3 gap-6" data-tour="bottom-cards"> {/* ============== data-tour added by Marisol 2/25/2026 - targets step 6 of UserAppTour ============== */}
@@ -535,6 +537,7 @@ export default function Home() {
     }
 
     // display this for if the user is not logged in
+    // Modified by Christella - 03/20/2026 - moved daily facts under logo, logo moved up, equal columns, responsive gap
     return (
         <div className="min-h-screen pb-12 flex flex-col" style={{ background: 'var(--background)' }}>
             <div className="flex-1">
@@ -546,11 +549,12 @@ export default function Home() {
                     Welcome To PovertyLens!
                 </h1>
                 
-                {/* Creating the columns*/}
-                <div className="flex gap-8 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto">
+                {/* Creating the columns - equal flex-1 on both sides, responsive gap */}
+                <div className="flex gap-8 md:gap-10 lg:gap-16 px-8 md:px-12 lg:px-16 flex-wrap lg:flex-nowrap max-w-7xl mx-auto items-stretch">
+
                     {/* Left column - Introductory text */}
                     <div 
-                        className="flex-[11] card card-cyan p-8 md:p-10 transition-colors"
+                        className="flex-1 card card-cyan p-8 md:p-12 transition-colors flex flex-col"
                         style={{
                             backgroundColor: 'var(--background)',
                             border: '2px solid var(--color-cyan)'
@@ -574,7 +578,7 @@ export default function Home() {
                         {/* ============== App Tour Button - Added by Marisol 2/10/2026 ============== */}
                         <button
                             onClick={() => setIsTourOpen(true)}
-                            className="mt-6 w-full group px-6 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center gap-3"
+                            className="mt-8 w-full group px-6 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center gap-3"
                             style={{
                                 background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
                                 color: 'white'
@@ -587,48 +591,59 @@ export default function Home() {
                         {/* ============== End App Tour Button ============== */}
                     </div>
 
-                    {/* Right column - Logo */}
-                    <div className="flex-[9] flex justify-center items-center">
-                        <Image
-                            src="/logo vertical.png" 
-                            alt="PovertyLens Logo" 
-                            width={450} 
-                            height={450}
-                            className="object-contain drop-shadow-2xl"/>
+                    {/* Right column - Logo at top, daily facts below, equal width to left column */}
+                    <div className="flex-1 flex flex-col justify-start gap-6">
+
+                        {/* Logo - sits at top of column */}
+                        <div className="flex justify-center pt-2">
+                            <Image
+                                src="/logo vertical.png" 
+                                alt="PovertyLens Logo" 
+                                width={420} 
+                                height={420}
+                                className="object-contain drop-shadow-2xl"/>
+                        </div>
+
+                        {/*Daily Facts added by Damon */}
+                        {/* Daily fact moved here under the logo - Modified by Christella 03/20/2026 */}
+                        {!loadingFact && dailyFact && (
+                            <div data-tour="daily-fact">
+                                <h3 
+                                    className="font-semibold text-xl md:text-2xl mb-3"
+                                    style={{ color: 'var(--foreground)' }}
+                                >
+                                    {dailyFact.title || 'Daily Fact'}
+                                </h3>
+                                <p 
+                                    className="text-base md:text-lg leading-relaxed"
+                                    style={{ color: 'var(--color-gray-dark)' }}
+                                >
+                                    {dailyFact.text}
+                                </p>
+                                <p 
+                                    className="text-sm mt-3"
+                                    style={{ color: 'var(--color-gray)' }}
+                                >
+                                    Learn more by signing in to PovertyLens
+                                </p>
+                            </div>
+                        )}
+                        {/* End of daily fact move - Christella 03/20/2026 */}
                     </div>
+
                 </div>
             </div>
 
-            {/*Daily Facts added by Damon */}
-            {/* Notifications section at bottom - only visible when not logged in */}
-            {!loadingFact && dailyFact && (
-                <div className="mt-16 px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full" data-tour="daily-fact">
-                    <div className="">
-                        <h3 
-                            className="font-semibold text-2xl md:text-3xl mb-3"
-                            style={{ color: 'var(--foreground)' }}
-                        >
-                            {dailyFact.title || 'Daily Fact'}
-                        </h3>
-                        <p 
-                            className="text-lg md:text-xl leading-relaxed"
-                            style={{ color: 'var(--color-gray-dark)' }}
-                        >
-                            {dailyFact.text}
-                        </p>
-                        <p 
-                            className="text-sm mt-4"
-                            style={{ color: 'var(--color-gray)' }}
-                        >
-                            Learn more by signing in to PovertyLens
-                        </p>
-                    </div>
-                </div>
-            )}
+            {/* Added by Christella - 03/17/2026 - public bento pledge wall, wrapped to match mission section margins */}
+            <div className="px-8 md:px-12 lg:px-16 max-w-7xl mx-auto w-full mt-12">
+                <PledgeWallPublic />
+            </div>
+            {/* End of addition by Christella - 03/17/2026 */}
 
             {/* ============== App Tour Component - Added by Marisol 2/10/2026 ============== */}
             <AppTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
             {/* ============== End App Tour Component ============== */}
         </div>
     );
+    // End of modification by Christella - 03/20/2026
 }

@@ -205,21 +205,24 @@ export default function PledgeWallPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
 
-      {/* Header */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
-        <h1
-          className="text-4xl sm:text-5xl lg:text-6xl mb-4"
-          style={{ fontWeight: 700, color: 'var(--foreground)' }}
-        >
-          Pledge Wall
-        </h1>
-        <div style={{ height: 4, width: 80, borderRadius: 9999, background: 'var(--gradient-cyan-yellow)', marginBottom: '1.5rem' }} />
-        <p className="text-lg mb-4" style={{ color: 'var(--color-gray)' }}>
-          Make a public commitment to take action against poverty. Every pledge counts.
-        </p>
+      {/* ===== Edited by Christella - 3/17/2026: Updated header to match Poverty Timeline style ===== */}
+      <div style={{ paddingTop: 40, paddingLeft: 80, paddingRight: 80 }}>
+        <header style={{ marginBottom: 32, paddingLeft: 24 }}>
+          <h1
+            className="text-4xl sm:text-5xl font-bold"
+            style={{ margin: '0 0 16px 0', color: 'var(--foreground)' }}
+          >
+            Pledge Wall
+          </h1>
+          <div style={{ height: 4, width: 80, borderRadius: 'var(--radius-full)', background: 'var(--gradient-cyan-yellow)', margin: '0 0 24px 0' }} />
+          <p style={{ margin: 0, fontSize: 20, lineHeight: 1.7, color: 'var(--color-gray-dark)' }}>
+            Make a public commitment to take action against poverty. Every pledge counts.
+          </p>
+        </header>
       </div>
+      {/* ===== End of edit by Christella - 3/17/2026 ===== */}
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div style={{ paddingLeft: 80, paddingRight: 80, paddingBottom: 64 }}>
 
         {message && (
           <div
