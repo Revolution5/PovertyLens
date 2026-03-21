@@ -278,9 +278,7 @@ export default function Navbar() {
                                                     >
                                                         Poverty Glossary
                                                         <span
-                                                            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"
-                                                            style={{ background: 'rgba(255,162,57,0.15)', color: '#FFA239' }}
-                                                        >
+                                                            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"                                                        >
                                                         </span>
                                                     </Link>
                                                 </div>
@@ -526,7 +524,6 @@ export default function Navbar() {
                                                     onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
                                                 >
                                                     Poverty Glossary
-                                                    <span className="ml-1 text-xs" style={{ color: '#FFA239' }}>(Soon)</span>
                                                 </Link>
                                             </div>
                                         )}
