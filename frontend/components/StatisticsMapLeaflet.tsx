@@ -5,9 +5,15 @@ import { MapContainer, TileLayer, useMap } from "react-leaflet"
 import L from "leaflet"
 import * as GeoJSON from "geojson"
 import "leaflet/dist/leaflet.css"
+// Added by Damon 3/19/26 - import marker clustering for facility pins
+import "leaflet.markercluster/dist/MarkerCluster.css"
+import "leaflet.markercluster/dist/MarkerCluster.Default.css"
+import "leaflet.markercluster"
 // Added by Reymes 3/2/26 - import rate data files for filter support
 import { NATIONAL_POVERTY_RATES } from "../data/nationalRates"
 import { normalizeRate, INTERNATIONAL_FALLBACK_RATES } from "../data/internationalRates"
+// Added by Damon 3/19/26 - import facility data and helpers for school/hospital pins
+import { FACILITIES, getSchoolsByCountry, getHospitalsByCountry } from "../data/facilityData"
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
 //Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
@@ -41,6 +47,8 @@ type Props = {
   mapRows: MapRow[]
   showMarkers?: boolean
   rateType?: "national" | "international"; // Added by Reymes 3/2/26
+  showSchools?: boolean; // Added by Damon 3/19/26 - show school pins
+  showHospitals?: boolean; // Added by Damon 3/19/26 - show hospital pins
 }
 
 // National rates now imported from data/nationalRates.ts - Reymes 3/2/26
@@ -512,6 +520,8 @@ export default function StatisticsMapLeaflet({
   onCountryClick,
   mapRows,
   rateType = "national",
+  showSchools = false,
+  showHospitals = false,
 }: Props) {
   const [geojsonData, setGeojsonData] = useState<{ features: Record<string, unknown>[] } | null>(null)
   const [map, setMap] = useState<L.Map | null>(null)
@@ -678,6 +688,75 @@ export default function StatisticsMapLeaflet({
     }
   }, [geojsonData, map, povertyRateMap, onCountryClick, rateType])
 
+  // Added by Damon 3/19/26 - render school and hospital pins on map with clustering
+  useEffect(() => {
+    if (!map || !selectedGeoId) return
+
+    // Get ISO3 code for selected country
+    const iso3 = COUNTRY_CODE_MAP[selectedGeoId]?.iso3
+    if (!iso3) return
+
+    // Create a marker cluster group - added by Damon 3/19/26 for spiderfication on zoom
+    const clusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 60, // Pixels - clusters spread out more aggressively
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+    })
+
+    // Helper function to create custom icon
+    const createFacilityIcon = (type: "school" | "hospital") => {
+      const iconColor = type === "school" ? "#3B82F6" : "#EF4444" // Blue for schools, red for hospitals
+      const emoji = type === "school" ? "🏫" : "🏥"
+      return L.divIcon({
+        className: "facility-icon",
+        html: `<div style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          background-color: white;
+          border: 2px solid ${iconColor};
+          border-radius: 50%;
+          font-size: 16px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        ">${emoji}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      })
+    }
+
+    // Add school markers if enabled
+    if (showSchools) {
+      const schools = getSchoolsByCountry(iso3)
+      schools.forEach((school) => {
+        const marker = L.marker([school.lat, school.lng], {
+          icon: createFacilityIcon("school"),
+        }).bindTooltip(`<div style="font-weight: bold; font-size: 0.85rem;">${school.name}</div><div style="font-size: 0.75rem; color: #3B82F6;">📚 School</div>`)
+        clusterGroup.addLayer(marker)
+      })
+    }
+
+    // Add hospital markers if enabled
+    if (showHospitals) {
+      const hospitals = getHospitalsByCountry(iso3)
+      hospitals.forEach((hospital) => {
+        const marker = L.marker([hospital.lat, hospital.lng], {
+          icon: createFacilityIcon("hospital"),
+        }).bindTooltip(`<div style="font-weight: bold; font-size: 0.85rem;">${hospital.name}</div><div style="font-size: 0.75rem; color: #EF4444;">🏥 Hospital</div>`)
+        clusterGroup.addLayer(marker)
+      })
+    }
+
+    // Add cluster group to map
+    map.addLayer(clusterGroup)
+
+    // Cleanup: remove cluster group from map
+    return () => {
+      map.removeLayer(clusterGroup)
+    }
+  }, [map, selectedGeoId, showSchools, showHospitals])
+
   return (
     <div className="relative w-full h-[360px] rounded-lg overflow-hidden">
       <MapContainer
@@ -712,6 +791,15 @@ export default function StatisticsMapLeaflet({
         <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFD700" }} />5% - 10%</div>
         <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#90EE90" }} />0% - 5%</div>
         <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#9370DB" }} />Untracked, missing data</div>
+        
+        {/* Added by Damon 3/19/26 - POI legend entries */}
+        {(showSchools || showHospitals) && (
+          <>
+            <div className="font-semibold mb-1 mt-3 border-t border-gray-300 pt-2">Points of Interest</div>
+            {showSchools && <div className="flex items-center gap-2"><span style={{ fontSize: "14px" }}>🏫</span> School</div>}
+            {showHospitals && <div className="flex items-center gap-2"><span style={{ fontSize: "14px" }}>🏥</span> Hospital</div>}
+          </>
+        )}
       </div>
     </div>
   )

@@ -23,9 +23,11 @@ type Props = {
   //end of initial props - added by Reymes Olide 1/31/26
   showMarkers?: boolean; // Added by Christella, 02/03/2026
   rateType?: "national" | "international"; // Added by Reymes 3/2/26 - toggle between national and international rates
+  showSchools?: boolean; // Added by Damon 3/19/26 - show school facility pins
+  showHospitals?: boolean; // Added by Damon 3/19/26 - show hospital facility pins
 }
 //Initial add Reymes Olide 1/31/26 - Dynamic import wrapper for Leaflet map component
-export default function StatisticsMapClient({ selectedGeoId, onCountryClick, mapRows, showMarkers = true, rateType = "national" }: Props) {
+export default function StatisticsMapClient({ selectedGeoId, onCountryClick, mapRows, showMarkers = true, rateType = "national", showSchools = false, showHospitals = false }: Props) {
   const [Component, setComponent] = useState<any>(null)
   // Added by Marisol for Dark Mode Start - 2/8/2026
   const [isDark, setIsDark] = useState(false);
@@ -63,7 +65,7 @@ export default function StatisticsMapClient({ selectedGeoId, onCountryClick, map
   return (
     <div>
       {Component ? (
-        <Component selectedGeoId={selectedGeoId} onCountryClick={onCountryClick} mapRows={mapRows} showMarkers={showMarkers} rateType={rateType}/>
+        <Component selectedGeoId={selectedGeoId} onCountryClick={onCountryClick} mapRows={mapRows} showMarkers={showMarkers} rateType={rateType} showSchools={showSchools} showHospitals={showHospitals}/>
       ) : (
         <div 
           className="w-full h-[360px] rounded-lg flex items-center justify-center"
