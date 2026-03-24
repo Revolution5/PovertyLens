@@ -697,6 +697,7 @@ export default function StatisticsPage() {
   // Added by Damon 3/19/26 - toggle for school and hospital facility pins on map
   const [showSchools, setShowSchools] = useState(false);
   const [showHospitals, setShowHospitals] = useState(false);
+  const [selectedFacilityDistanceKm, setSelectedFacilityDistanceKm] = useState<number | null>(null);
   
   /* user profile cache - daniel q. 2/4 */
   const [userProfilesCache, setUserProfilesCache] = useState<Record<string, UserProfile>>({});
@@ -732,6 +733,19 @@ export default function StatisticsPage() {
       )?.[0] || null
     );
   }, [selectedCountry]);
+
+  const selectedFacilityDistanceLabel = useMemo(() => {
+    if (!showSchools && !showHospitals) return "";
+    if (showSchools && showHospitals) return "Avg distance to schools/hospitals";
+    if (showSchools) return "Avg distance to schools";
+    return "Avg distance to hospitals";
+  }, [showSchools, showHospitals]);
+
+  useEffect(() => {
+    if (!selectedCountry || (!showSchools && !showHospitals)) {
+      setSelectedFacilityDistanceKm(null);
+    }
+  }, [selectedCountry, showSchools, showHospitals]);
 
   /* fetch user profile - daniel q. 2/4 */
   const fetchUserProfile = useCallback(async (email: string): Promise<UserProfile | null> => {
@@ -1242,7 +1256,25 @@ useEffect(() => {
             className="lg:col-span-2 rounded-lg shadow-md p-6 relative z-0"
             style={{ backgroundColor: 'var(--background)' }}
           >
-            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Map</h2>
+             {/* START Added by Damon 3/24/26 */}
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>Map</h2>
+              {selectedCountry && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectCountry(null)}
+                  className="rounded-md border px-3 py-1.5 text-sm font-medium transition-colors"
+                  style={{
+                    borderColor: 'var(--color-gray-light)',
+                    color: 'var(--foreground)',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgb(249,250,251)',
+                  }}
+                >
+                  Clear selection
+                </button>
+              )}
+            </div>
+            {/* END Added by Damon 3/24/26 */}
             {/* Added by Reymes 3/2/26 - rate type toggle */}
             <div className="mb-4">
               <MapFilters value={rateType} onChange={setRateType} />
@@ -1268,10 +1300,11 @@ useEffect(() => {
                 /* START Added by Damon 3/19/26 - POI filter toggle for schools and hospitals */
                 showSchools={showSchools}
                 showHospitals={showHospitals}
+                onSelectedFacilityDistanceChange={setSelectedFacilityDistanceKm}
                 /* END Added by Damon 3/19/26 - POI filter toggle for schools and hospitals */
               />
               <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
-                The map shows a baselayer only. Pick a country from the panel to the right.
+                Toggle Schools or Hospitals to view global pins, or pick a country to focus pins locally.
               </div>
               {mapLoading && (
                 <div className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
@@ -1461,9 +1494,31 @@ useEffect(() => {
                     </div>
                   ))}
                 </div>
+
               </div>
             )}
 
+            {/* START Added by Damon 3/24/26 */}
+            {(showSchools || showHospitals) && selectedCountry && (
+              <div
+                className="flex flex-col gap-1 px-4 py-3 rounded-lg border"
+                style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgb(249,250,251)',
+                  borderColor: 'var(--color-gray-light)',
+                }}
+              >
+                <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                  {selectedFacilityDistanceLabel}
+                </div>
+                <div className="text-base font-semibold" style={{ color: 'var(--foreground)' }}>
+                  {selectedFacilityDistanceKm !== null
+                    ? `${selectedFacilityDistanceKm.toFixed(0)} km`
+                    : <span style={{ color: 'var(--color-gray)' }}>N/A</span>}
+                </div>
+              </div>
+            )}
+            {/* END Added by Damon 3/24/26 */}
+            
             {/* Empty / prompt state */}
             {!loading && !liveResult?.metric && !error && (
               <div
