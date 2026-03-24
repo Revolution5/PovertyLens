@@ -153,7 +153,7 @@ export default function PledgeWallPage() {
         setPledges(prev => [data.pledge, ...prev]);
       }
       setPledgeText('');
-      setMessage({ text: '🎉 Your pledge has been added to the wall!', type: 'success' });
+      setMessage({ text: 'Your pledge has been added to the wall!', type: 'success' });
       fetchCounts();
     } catch (err) {
       console.error(err);
