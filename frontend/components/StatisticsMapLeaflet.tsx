@@ -14,6 +14,9 @@ import { NATIONAL_POVERTY_RATES } from "../data/nationalRates"
 import { normalizeRate, INTERNATIONAL_FALLBACK_RATES } from "../data/internationalRates"
 // Added by Damon 3/19/26 - import facility data and helpers for school/hospital pins
 import { FACILITIES, getSchoolsByCountry, getHospitalsByCountry } from "../data/facilityData"
+// Added by Reymes 3/24/2026 - colorblind palette support for map colors and legend
+import { useColorblind } from './ColorblindProvider'
+import { getPovertyColorForMode, getNoDataColorForMode, getLegendEntriesForMode } from './colorblindPalette'
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
 //Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
@@ -525,6 +528,7 @@ export default function StatisticsMapLeaflet({
 }: Props) {
   const [geojsonData, setGeojsonData] = useState<{ features: Record<string, unknown>[] } | null>(null)
   const [map, setMap] = useState<L.Map | null>(null)
+  const { colorblindMode } = useColorblind() // Added by Reymes 3/24/2026
 
   // Load GeoJSON data
   useEffect(() => {
@@ -619,12 +623,12 @@ export default function StatisticsMapLeaflet({
 
       // Get poverty rate if this is a tracked country, otherwise use default
       const povertyRate = matchingGeoId ? povertyRateMap[matchingGeoId] : null
-      // Use purple for tracked countries with no data, grey for untracked countries - Reymes 2/20/26
+      // Use colorblind-safe color for tracked countries with no data, grey for untracked - Reymes 3/24/2026
       let baseColor;
       if (matchingGeoId && (povertyRate === null || povertyRate === undefined)) {
-        baseColor = "#9370DB"; // Purple for tracked but no data available
+        baseColor = getNoDataColorForMode(colorblindMode); // Was "#9370DB" - now colorblind-safe
       } else {
-        baseColor = getPovertyColor(povertyRate);
+        baseColor = getPovertyColorForMode(povertyRate, colorblindMode); // Was getPovertyColor() - now colorblind-safe
       }
 
       if (matchingGeoId && povertyRate !== null && povertyRate !== undefined) {
@@ -686,7 +690,7 @@ export default function StatisticsMapLeaflet({
     return () => {
       layers.forEach((layer) => map.removeLayer(layer))
     }
-  }, [geojsonData, map, povertyRateMap, onCountryClick, rateType])
+  }, [geojsonData, map, povertyRateMap, onCountryClick, rateType, colorblindMode])
 
   // Added by Damon 3/19/26 - render school and hospital pins on map with clustering
   useEffect(() => {
@@ -784,13 +788,13 @@ export default function StatisticsMapLeaflet({
         style={{ backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#222" }}
       >
         <div className="font-semibold mb-1">Poverty rate key</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#8B0000" }} />&gt; 40%</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC143C" }} />30% - 40%</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FF6347" }} />20% - 30%</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFA500" }} />10% - 20%</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFD700" }} />5% - 10%</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#90EE90" }} />0% - 5%</div>
-        <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#9370DB" }} />Untracked, missing data</div>
+        {/* Added by Reymes 3/24/2026 - dynamic colorblind-safe legend */}
+        {getLegendEntriesForMode(colorblindMode).map((entry) => (
+          <div key={entry.label} className="flex items-center gap-2">
+            <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
+            {entry.label}
+          </div>
+        ))}
         
         {/* Added by Damon 3/19/26 - POI legend entries */}
         {(showSchools || showHospitals) && (

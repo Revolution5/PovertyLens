@@ -5,6 +5,8 @@ import Navbar from "../components/Navbar";
 // ============== Marisol Morales Code 2/9/2026 for Dark mode start ============== //
 import { ThemeProvider } from "../components/ThemeProvider";
 // ============== Marisol Morales code 2/9/2026 End ============== //
+// Added by Reymes 3/24/2026 - colorblind mode provider
+import { ColorblindProvider } from "../components/ColorblindProvider";
 
 // daniel q. 2/28/26 start
 import BackendStatus from "../components/BackendStatus";
@@ -40,8 +42,11 @@ export default function RootLayout({
         {/* daniel q. 2/28/26 end */}
 
         <ThemeProvider>
-          <Navbar />
-          {children}
+          {/* Added by Reymes 3/24/2026 – ColorblindProvider applies CSS class + supplies context */}
+          <ColorblindProvider>
+            <Navbar />
+            {children}
+          </ColorblindProvider>
         </ThemeProvider>
         {/* ============== Marisol Morales Code 2/9/2026 end ============== */}
       </body>
