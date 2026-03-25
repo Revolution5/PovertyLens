@@ -652,6 +652,8 @@ export default function ProfilePage() {
                     <ChevronRight className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                   </div>
                 </Link>
+
+
               </div>
             </div>
           </div>

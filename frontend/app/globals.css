@@ -648,6 +648,38 @@ input[type="text"]:focus {
   transform: translateY(-1px);
 }
 
+/* ======================================================= */
+/* Colorblind Mode CSS Variable Overrides + Body Filter    */
+/* Added by Reymes 3/24/2026                               */
+/* Applied as html.cb-* classes by ColorblindProvider.tsx  */
+/* CSS vars cover components using var(--color-*).         */
+/* body filter covers hardcoded colors site-wide.          */
+/* Map colors are handled in JS (StatisticsMapLeaflet.tsx) */
+/* ======================================================= */
+
+/* Deuteranopia (red-green, green-weak) — hue-rotate greens toward cyan, boosted saturation */
+html.cb-deuteranopia body {
+  filter: hue-rotate(-80deg) saturate(1.4);
+}
+
+/* Protanopia (red-green, red-weak) — similar shift, slightly more saturated */
+html.cb-protanopia body {
+  filter: hue-rotate(-70deg) saturate(1.5);
+}
+
+/* Tritanopia (blue-yellow) — rotate blues toward green, away from yellow */
+html.cb-tritanopia body {
+  filter: hue-rotate(90deg) saturate(1.3);
+}
+
+/* Achromatopsia (no color vision) — full desaturation with boosted contrast */
+html.cb-achromatopsia body {
+  filter: grayscale(100%) contrast(1.25);
+}
+/* ======================================================= */
+/* End Colorblind Mode CSS Variable Overrides              */
+/* ======================================================= */
+
 /* Profile dropdown smooth transitions */
 .group:hover .group-hover\:opacity-100 {
   transition: opacity 0.2s ease, visibility 0.2s ease;
