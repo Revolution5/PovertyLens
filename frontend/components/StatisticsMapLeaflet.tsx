@@ -42,7 +42,6 @@ function getPovertyColor(povertyRate: number | null | undefined): string {
 }
 
 // START Added by Damon 3/24/26
-  onSelectedFacilityDistanceChange?: (distanceKm: number | null) => void 
 function getDistanceColor(distanceKm: number | null | undefined): string {
   if (distanceKm === null || distanceKm === undefined) return "#E8E8E8"
   if (distanceKm > 1200) return "#8B0000"
