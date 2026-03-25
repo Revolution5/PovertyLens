@@ -34,9 +34,10 @@ interface ActionCardProps {
   bgColor: string;
   href: string;
   tourId?: string; // Added by Marisol 2/25/2026 - optional prop for data-tour attribute, used by UserAppTour to highlight this card
+  className?: string; // Edited by Christella - 03/24/2026 - allows specific cards to span full grid width
 }
 
-function ActionCard({ title, description, icon: Icon, bgColor, href, tourId }: ActionCardProps) {
+function ActionCard({ title, description, icon: Icon, bgColor, href, tourId, className = '' }: ActionCardProps) {
   // Derive a darker accent color from the light background
   const accentColor = bgColor === "#E5F8FF" ? "#8CE4FF" 
     : bgColor === "#FFFCEB" ? "#F5D547"
@@ -70,7 +71,7 @@ function ActionCard({ title, description, icon: Icon, bgColor, href, tourId }: A
   return (
     <Link
       href={href}
-      className="dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left w-full block"
+      className={`dashboard-card group relative rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-left w-full block ${className}`}
       data-tour={tourId} // Added by Marisol 2/25/2026 - applies the data-tour attribute so UserAppTour can locate and highlight this card
       style={{ 
         backgroundColor: isDark ? darkBgColor : bgColor, //  ============== Marisol Morales Code 1/9/2026 - Dark Mode Support ============== //
@@ -295,56 +296,50 @@ export default function Home() {
 
     // Action cards configuration
     const actionCards = [
-        {
-            title: "Upload a Story",
-            description: "Share your experience or insights about poverty and help build awareness in the community",
-            icon: FileText,
-            bgColor: "#E5F8FF",
-            href: "/uploadstory",
-            tourId: "upload-story" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 2
-        },
-        {
-            title: "View Stories",
-            description: "Browse your contributions and explore stories shared by others in the community",
-            icon: BookOpen,
-            bgColor: "#FFFCEB",
-            href: "/viewstories",
-            tourId: "view-stories" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 3
-        },
-        {
-            title: "Play FreeRice",
-            description: "Answer trivia & donate rice to help fight hunger. Every correct answer makes a difference!",
-            icon: Gamepad2,
-            bgColor: "#FFE8D6",
-            href: "/freerice",
-            tourId: "play-freeRice" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 4
-        },
-        {
-            title: "Donate Now",
-            description: "Discover and contribute to verified causes working to alleviate poverty worldwide",
-            icon: Heart,
-            bgColor: "#FFE5E5",
-            href: "/donationspages",
-            tourId: "donate-now" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 5
-        },
-        { // added - daniel q. 3/17/36 start
-            title: "Currency Calculator",
-            description: "Convert between world currencies instantly",
-            icon: Globe,
-            bgColor: "#E5F8FF",
-            href: "/currencycalculator"
-        }, // added - daniel q. 3/17/36 end
-        // Modified by Christella - 03/20/2026 - moved Pledge Wall into actionCards array so it sits next to Currency Calculator
-        {
-            title: "Pledge Wall",
-            description: "Make a public commitment to take action against poverty and see what others are pledging.",
-            icon: HandHeart,
-            bgColor: "#FFFCEB",
-            href: "/pledgewalluser",
-            tourId: "pledge-wall" // Added by Marisol 3/5/2026 - matches data-tour target in UserAppTour step 7
-        },
-        // End of modification by Christella - 03/20/2026
-    ];
+    {
+        title: "Upload a Story",
+        description: "Share your experience or insights about poverty and help build awareness in the community",
+        icon: FileText,
+        bgColor: "#E5F8FF",
+        href: "/uploadstory",
+        tourId: "upload-story" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 2
+    },
+    {
+        title: "View Stories",
+        description: "Browse your contributions and explore stories shared by others in the community",
+        icon: BookOpen,
+        bgColor: "#FFFCEB",
+        href: "/viewstories",
+        tourId: "view-stories" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 3
+    },
+    {
+        title: "Play FreeRice",
+        description: "Answer trivia & donate rice to help fight hunger. Every correct answer makes a difference!",
+        icon: Gamepad2,
+        bgColor: "#FFE8D6",
+        href: "/freerice",
+        tourId: "play-freeRice" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 4
+    },
+    {
+        title: "Donate Now",
+        description: "Discover and contribute to verified causes working to alleviate poverty worldwide",
+        icon: Heart,
+        bgColor: "#FFE5E5",
+        href: "/donationspages",
+        tourId: "donate-now" // Added by Marisol 2/25/2026 - matches data-tour target in UserAppTour step 5
+    },
+    // Modified by Christella - 03/20/2026 - moved Pledge Wall into actionCards array so it sits next to Currency Calculator
+    {
+        title: "Pledge Wall",
+        description: "Make a public commitment to take action against poverty and see what others are pledging.",
+        icon: HandHeart,
+        bgColor: "#E5F8FF",
+        href: "/pledgewalluser",
+        tourId: "pledge-wall", // Added by Marisol 3/5/2026 - matches data-tour target in UserAppTour step 7
+        className: "md:col-span-2" // Edited by Christella - 03/24/2026 - makes Pledge Wall span the full row
+    },
+    // End of modification by Christella - 03/20/2026
+];
 
     if (isLoggedIn) {
         // display this for is the user is logged in
@@ -398,6 +393,7 @@ export default function Home() {
                                 bgColor={card.bgColor}
                                 href={card.href}
                                 tourId={card.tourId} // Added by Marisol 2/25/2026 - passes tourId so each card gets its data-tour attribute for UserAppTour
+                                className={card.className} // Edited by Christella - 03/24/2026 - supports full-width cards like Pledge Wall
                             />
                         ))}
                     </div>
