@@ -19,6 +19,7 @@ export function ThemeToggle({ showContrast = true }: ThemeToggleProps) {
         onClick={toggleTheme}
         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         aria-label="Toggle theme"
+        suppressHydrationWarning
       >
         {theme === 'dark' ? (
           <Sun className="w-5 h-5 text-yellow-500" />
@@ -33,6 +34,7 @@ export function ThemeToggle({ showContrast = true }: ThemeToggleProps) {
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300 high-contrast-label">High Contrast</span>
           <button
             onClick={toggleContrast}
+            suppressHydrationWarning
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 high-contrast:focus:ring-black dark:high-contrast:focus:ring-white ${
               contrast === 'high'
                 ? 'bg-black dark:bg-white'

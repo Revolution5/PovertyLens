@@ -33,7 +33,10 @@ export default function RootLayout({
     // This prevents console warnings when the theme class is added to <html>
     <html lang="en" suppressHydrationWarning>
     {/* ============== Marisol Morales Code 2/9/2026 - end ============== */}
-      <body className={`${inter.className} antialiased`}>
+      {/* suppressHydrationWarning added by Reymes 3/24/2026 — prevents hydration mismatch
+           caused by browser extensions (Grammarly, autofill) injecting attributes like
+           data-gr-ext-installed and fdprocessedid before React hydrates */}
+      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         {/* ============== Marisol Morales Code 2/9/2026 start ============== */}
         {/* ThemeProvider manages theme state and persists it to localStorage */}
         
