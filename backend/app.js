@@ -22,6 +22,7 @@ const timelineRouter = require('./routes/timeline'); // Added by Christella - 03
 const currencyRouter = require('./routes/currency'); // added by daniel q. - 3/17/36
 const { router: activityLogRouter } = require('./routes/activitylog'); // Added by Marisol - 03/05/2026
 const glossaryRoutes = require('./routes/glossaryRoutes'); // Added by Christella - 03/17/2026
+const chatRouter = require('./routes/chat'); // Added by Reymes - 03/24/2026
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
@@ -49,6 +50,7 @@ app.use('/api/activity-log', activityLogRouter); // Added by Marisol - 03/05/202
 app.use('/api/timeline', timelineRouter); // Added by Christella - 03/13/2026
 app.use('/api/glossary', glossaryRoutes); // Added by Christella - 03/17/2026
 app.use('/api/currency', currencyRouter); // added by daniel q. - 3/17/36
+app.use('/api/chat', chatRouter); // Added by Reymes - 03/24/2026
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint
