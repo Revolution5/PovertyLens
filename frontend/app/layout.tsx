@@ -11,6 +11,7 @@ import { ColorblindProvider } from "../components/ColorblindProvider";
 // daniel q. 2/28/26 start
 import BackendStatus from "../components/BackendStatus";
 // daniel q. 2/28/26 end
+import AIChatBot from "../components/AIChatBot"; // Added by Reymes - 03/24/2026
 
 const inter = Inter({
   subsets: ["latin"],
@@ -49,6 +50,8 @@ export default function RootLayout({
           <ColorblindProvider>
             <Navbar />
             {children}
+            {/* Added by Reymes - 03/24/2026 - AI Chat Bot */}
+            <AIChatBot />
           </ColorblindProvider>
         </ThemeProvider>
         {/* ============== Marisol Morales Code 2/9/2026 end ============== */}
