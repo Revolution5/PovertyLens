@@ -169,6 +169,63 @@ body {
   /* ============== Marisol Morales Code 2/9/2026 -END ADDED TRANSITION ============== */
 }
 
+/* ============== Simple UI Mode (Reduced Overstimulation) — Added by Reymes 3/24/2026 ============== */
+/* Strips animations, gradients, shadows, and saturated colors for a calmer experience */
+.simple-ui {
+  /* Remove all decorative shadows */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+
+  /* Replace gradients with flat neutral tones */
+  --gradient-light: var(--color-gray-light);
+  --gradient-cyan-yellow: #c8ecf8;
+  --gradient-orange-red: #f5d0aa;
+
+  /* Softer, more muted brand colors */
+  --color-cyan: #a8d8ea;
+  --color-yellow: #f0e6b0;
+  --color-orange: #e8c49a;
+  --color-red: #e8aaaa;
+
+  /* Remove all transition durations */
+  --transition-fast: 0s;
+  --transition-base: 0s;
+  --transition-slow: 0s;
+
+  /* Slightly less rounded corners for a flatter, cleaner look */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}
+
+/* Dark + Simple UI — Reymes 3/24/2026 */
+.dark.simple-ui {
+  --gradient-light: var(--color-gray-light);
+  --gradient-cyan-yellow: #1a3a45;
+  --gradient-orange-red: #3a2510;
+  --color-cyan: #6faec8;
+  --color-yellow: #c8b870;
+  --color-orange: #b07848;
+  --color-red: #b06060;
+}
+
+/* Reymes 3/24/2026 - Kill ALL animations, transitions, and gradient background-images on every element.
+   Using the shorthand `animation: none` and `transition: none` is more reliable than
+   setting individual sub-properties. background-image: none strips CSS gradients even
+   when they are applied via Tailwind utility classes or hardcoded inline styles,
+   because !important in a stylesheet overrides inline styles without !important. */
+.simple-ui *,
+.simple-ui *::before,
+.simple-ui *::after {
+  animation: none !important;
+  transition: none !important;
+  background-image: none !important;
+}
+/* ============== END SIMPLE UI MODE — Reymes 3/24/2026 ============== */
+
 /* High contrast mode added by Damon 3/4/2026 */
 /* ============== High Contrast Text Styles ============== */
 /* Ensure all heading and text elements use high contrast foreground colors */
