@@ -5,6 +5,7 @@
 import { useTheme } from '@/components/ThemeProvider';
 import { useColorblind } from '@/components/ColorblindProvider'; // Added by Reymes 3/24/2026
 import { COLORBLIND_MODES, type ColorblindMode } from '@/components/colorblindPalette'; // Added by Reymes 3/24/2026
+import SimpleUIToggle from '@/components/SimpleUIToggle'; // Added by Reymes 3/24/2026 - Simple UI mode
 import Link from 'next/link';
 import { ArrowLeft, Moon, Sun, Contrast, Sparkles, Eye } from 'lucide-react';
 
@@ -298,6 +299,9 @@ export default function AccessibilityPage() {
             </div>
           </div>
           {/* ===== End Colorblind Mode ===== */}
+
+          {/* Simple UI - Added by Reymes 3/24/2026 */}
+          <SimpleUIToggle />
 
           {/* Coming Soon Section */}
           <div 
