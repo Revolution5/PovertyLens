@@ -48,10 +48,9 @@ export default function PoiFilters({
         {/* Schools toggle */}
         <button
           onClick={() => onShowSchoolsChange(!showSchools)}
-          disabled={!hasSelection}
-          className="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150"
           style={
-            showSchools && hasSelection
+            showSchools
               ? {
                   backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "#ffffff",
                   color: "var(--foreground)",
@@ -60,7 +59,7 @@ export default function PoiFilters({
                 }
               : {
                   background: "transparent",
-                  color: hasSelection ? "var(--color-gray)" : "var(--color-gray-light)",
+                  color: "var(--color-gray)",
                 }
           }
         >
@@ -70,10 +69,9 @@ export default function PoiFilters({
         {/* Hospitals toggle */}
         <button
           onClick={() => onShowHospitalsChange(!showHospitals)}
-          disabled={!hasSelection}
-          className="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150"
           style={
-            showHospitals && hasSelection
+            showHospitals
               ? {
                   backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "#ffffff",
                   color: "var(--foreground)",
@@ -82,7 +80,7 @@ export default function PoiFilters({
                 }
               : {
                   background: "transparent",
-                  color: hasSelection ? "var(--color-gray)" : "var(--color-gray-light)",
+                  color: "var(--color-gray)",
                 }
           }
         >
@@ -90,15 +88,6 @@ export default function PoiFilters({
         </button>
       </div>
 
-      {/* Hint text when no country is selected */}
-      {!hasSelection && (
-        <div
-          className="text-xs italic"
-          style={{ color: "var(--color-gray-light)" }}
-        >
-          (select a country to activate)
-        </div>
-      )}
     </div>
   )
 }

@@ -17,6 +17,7 @@ import { FACILITIES, getSchoolsByCountry, getHospitalsByCountry } from "../data/
 // Added by Reymes 3/24/2026 - colorblind palette support for map colors and legend
 import { useColorblind } from './ColorblindProvider'
 import { getPovertyColorForMode, getNoDataColorForMode, getLegendEntriesForMode } from './colorblindPalette'
+import type { ColorblindMode } from './colorblindPalette'
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
 //Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
@@ -44,6 +45,35 @@ function getPovertyColor(povertyRate: number | null | undefined): string {
   return "#90EE90" // Light green - very low poverty
 }
 
+// START Added by Damon 3/24/26
+function getDistanceColor(distanceKm: number | null | undefined, mode: ColorblindMode): string {
+  const legendColors = getLegendEntriesForMode(mode)
+  if (distanceKm === null || distanceKm === undefined) return legendColors[6].color
+  if (distanceKm > 1200) return legendColors[0].color
+  if (distanceKm > 900) return legendColors[1].color
+  if (distanceKm > 600) return legendColors[2].color
+  if (distanceKm > 300) return legendColors[3].color
+  if (distanceKm > 150) return legendColors[4].color
+  return legendColors[5].color
+}
+
+function haversineDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180
+  const earthRadiusKm = 6371
+  const dLat = toRadians(lat2 - lat1)
+  const dLng = toRadians(lng2 - lng1)
+  const startLat = toRadians(lat1)
+  const endLat = toRadians(lat2)
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(startLat) * Math.cos(endLat) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return earthRadiusKm * c
+}
+// END Added by Damon 3/24/26
+
 type Props = {
   selectedGeoId: string | null
   onCountryClick: (geoId: string) => void
@@ -52,6 +82,7 @@ type Props = {
   rateType?: "national" | "international"; // Added by Reymes 3/2/26
   showSchools?: boolean; // Added by Damon 3/19/26 - show school pins
   showHospitals?: boolean; // Added by Damon 3/19/26 - show hospital pins
+  onSelectedFacilityDistanceChange?: (distanceKm: number | null) => void // Added by Copilot 3/24/26 - sync right panel metric with map overlay
 }
 
 // National rates now imported from data/nationalRates.ts - Reymes 3/2/26
@@ -505,7 +536,13 @@ function MapFlyTo({ selectedGeoId, onMapReady }: { selectedGeoId: string | null;
   }, [map, onMapReady])
 
   useEffect(() => {
-    if (!selectedGeoId) return
+    if (!selectedGeoId) {
+      if (lastFlownGeoIdRef.current !== null) {
+        lastFlownGeoIdRef.current = null
+        map.flyTo([20, 0], 2, { duration: 0.8 })
+      }
+      return
+    }
     // Added by Reymes 3/2/26 - skip flyTo if selection did not change
     if (lastFlownGeoIdRef.current === selectedGeoId) return
     const c = COORDS[selectedGeoId]
@@ -525,11 +562,20 @@ export default function StatisticsMapLeaflet({
   rateType = "national",
   showSchools = false,
   showHospitals = false,
+  onSelectedFacilityDistanceChange,
 }: Props) {
+  //START added by Damon 3/24/26
   const [geojsonData, setGeojsonData] = useState<{ features: Record<string, unknown>[] } | null>(null)
   const [map, setMap] = useState<L.Map | null>(null)
-  const { colorblindMode } = useColorblind() // Added by Reymes 3/24/2026
+  const showFacilityDistanceOverlay = showSchools || showHospitals
+  const facilityDistanceLabel = showSchools && showHospitals
+    ? "Avg distance to school/hospital"
+    : showSchools
+      ? "Avg distance to school"
+      : "Avg distance to hospital"
+//END added by Damon 3/24/26
 
+  const { colorblindMode } = useColorblind() // Added by Reymes 3/24/2026
   // Load GeoJSON data
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson")
@@ -589,6 +635,55 @@ export default function StatisticsMapLeaflet({
     return rates
   }, [mapRows, rateType])
 
+  //START added by Damon 3/24/26 - create a map of country geoId to average distance to nearest facility (school/hospital) based on selected filters
+  const facilityDistanceMap = React.useMemo(() => {
+    const distances: Record<string, number> = {}
+
+    if (!showFacilityDistanceOverlay) {
+      return distances
+    }
+
+    Object.entries(COUNTRY_CODE_MAP).forEach(([geoId, mapping]) => {
+      const countryCenter = COORDS[geoId]
+      if (!countryCenter) return
+
+      const relevantFacilities = FACILITIES.filter((facility) => {
+        if (facility.country !== mapping.iso3) return false
+        if (showSchools && showHospitals) return true
+        if (showSchools) return facility.type === "school"
+        return facility.type === "hospital"
+      })
+
+      if (relevantFacilities.length === 0) {
+        return
+      }
+
+      const averageDistanceKm =
+        relevantFacilities.reduce((totalDistance, facility) => {
+          return totalDistance + haversineDistanceKm(countryCenter.lat, countryCenter.lng, facility.lat, facility.lng)
+        }, 0) / relevantFacilities.length
+
+      distances[geoId] = averageDistanceKm
+    })
+
+    return distances
+  }, [showFacilityDistanceOverlay, showSchools, showHospitals])
+
+  useEffect(() => {
+    if (!onSelectedFacilityDistanceChange) return
+    if (!showFacilityDistanceOverlay || !selectedGeoId) {
+      onSelectedFacilityDistanceChange(null)
+      return
+    }
+    onSelectedFacilityDistanceChange(facilityDistanceMap[selectedGeoId] ?? null)
+  }, [
+    facilityDistanceMap,
+    onSelectedFacilityDistanceChange,
+    selectedGeoId,
+    showFacilityDistanceOverlay,
+  ])
+  //END added by Damon 3/24/26 - create a map of country geoId to average distance to nearest facility (school/hospital) based on selected filters
+  
   // Add countries to map
   useEffect(() => {
     if (!geojsonData?.features || !map) {
@@ -621,18 +716,27 @@ export default function StatisticsMapLeaflet({
         unmatchedCountries.push(countryName) // Add to unmatched list for logging - Reymes
       }
 
+      const overlayValue = matchingGeoId
+        ? (showFacilityDistanceOverlay ? facilityDistanceMap[matchingGeoId] : povertyRateMap[matchingGeoId])
+        : null
       // Get poverty rate if this is a tracked country, otherwise use default
       const povertyRate = matchingGeoId ? povertyRateMap[matchingGeoId] : null
-      // Use colorblind-safe color for tracked countries with no data, grey for untracked - Reymes 3/24/2026
-      let baseColor;
-      if (matchingGeoId && (povertyRate === null || povertyRate === undefined)) {
-        baseColor = getNoDataColorForMode(colorblindMode); // Was "#9370DB" - now colorblind-safe
+      // Use distance scale for facility overlay and poverty scale otherwise.
+      // Keep untracked countries gray in both modes.
+      let baseColor: string
+      if (!matchingGeoId) {
+        baseColor = "#E8E8E8"
+      } else if (showFacilityDistanceOverlay) {
+        const distanceKm = facilityDistanceMap[matchingGeoId]
+        baseColor = getDistanceColor(distanceKm, colorblindMode)
+      } else if (povertyRate === null || povertyRate === undefined) {
+        baseColor = getNoDataColorForMode(colorblindMode)
       } else {
-        baseColor = getPovertyColorForMode(povertyRate, colorblindMode); // Was getPovertyColor() - now colorblind-safe
+        baseColor = getPovertyColorForMode(povertyRate, colorblindMode)
       }
 
-      if (matchingGeoId && povertyRate !== null && povertyRate !== undefined) {
-        console.log(`${countryName} (geoId: ${matchingGeoId}): povertyRate=${povertyRate?.toFixed(2)}%, color=${baseColor}`) // Debug log to check poverty rates and colors for matched countries - Reymes
+      if (matchingGeoId && overlayValue !== null && overlayValue !== undefined) {
+        console.log(`${countryName} (geoId: ${matchingGeoId}): overlayValue=${overlayValue.toFixed(2)}${showFacilityDistanceOverlay ? " km" : "%"}, color=${baseColor}`)
       } else if (matchingGeoId) {
         console.log(`${countryName} (geoId: ${matchingGeoId}): NO DATA AVAILABLE (purple)`) // Log tracked countries with no data - Reymes
       }
@@ -652,17 +756,21 @@ export default function StatisticsMapLeaflet({
         if (matchingGeoId) {
           // Added by Reymes 3/2/26 - include national poverty line in tooltip when available
           let tooltipContent: string;
-          if (povertyRate !== null && povertyRate !== undefined) {
-            const countryIso = COUNTRY_CODE_MAP[matchingGeoId]?.iso3;
-            const nationalData = countryIso ? NATIONAL_POVERTY_RATES[countryIso] : null;
-            let povLineInfo = "";
-            // Added by Reymes 3/2/26 - only show national poverty line when in national filter mode
-            if (rateType === "national" && nationalData && typeof nationalData === "object" && "povLine" in nationalData) {
-              povLineInfo = `<div style="font-size: 0.7rem; color: #555;">Line: ${nationalData.povLine.toLocaleString()} ${nationalData.currency}/yr</div>`;
+          if (overlayValue !== null && overlayValue !== undefined) {
+            if (showFacilityDistanceOverlay) {
+              tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem;">${facilityDistanceLabel}: ${overlayValue.toFixed(0)} km</div>`;
+            } else {
+              const countryIso = COUNTRY_CODE_MAP[matchingGeoId]?.iso3;
+              const nationalData = countryIso ? NATIONAL_POVERTY_RATES[countryIso] : null;
+              let povLineInfo = "";
+              // Added by Reymes 3/2/26 - only show national poverty line when in national filter mode
+              if (rateType === "national" && nationalData && typeof nationalData === "object" && "povLine" in nationalData) {
+                povLineInfo = `<div style="font-size: 0.7rem; color: #555;">Line: ${nationalData.povLine.toLocaleString()} ${nationalData.currency}/yr</div>`;
+              }
+              tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem;">Poverty Rate: ${overlayValue.toFixed(2)}%</div>${povLineInfo}`;
             }
-            tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem;">Poverty Rate: ${povertyRate.toFixed(2)}%</div>${povLineInfo}`;
           } else {
-            tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem; color: #9370DB;">No data available</div>`;
+            tooltipContent = `<div style="font-weight: bold;">${countryName}</div><div style="font-size: 0.75rem; color: #9370DB;">No ${showFacilityDistanceOverlay ? "distance" : "poverty"} data available</div>`;
           }
           (subLayer as L.Path).bindTooltip(tooltipContent)
           subLayer.on("click", () => {
@@ -690,15 +798,26 @@ export default function StatisticsMapLeaflet({
     return () => {
       layers.forEach((layer) => map.removeLayer(layer))
     }
-  }, [geojsonData, map, povertyRateMap, onCountryClick, rateType, colorblindMode])
+  }, [
+    geojsonData,
+    map,
+    povertyRateMap,
+    facilityDistanceMap,
+    onCountryClick,
+    rateType,
+    colorblindMode,
+    showFacilityDistanceOverlay,
+    facilityDistanceLabel,
+  ])
 
   // Added by Damon 3/19/26 - render school and hospital pins on map with clustering
   useEffect(() => {
-    if (!map || !selectedGeoId) return
+    if (!map) return
+    if (!showSchools && !showHospitals) return
 
-    // Get ISO3 code for selected country
-    const iso3 = COUNTRY_CODE_MAP[selectedGeoId]?.iso3
-    if (!iso3) return
+    // Get ISO3 code for selected country; if none selected, render global pins.
+    const selectedIso3 = selectedGeoId ? COUNTRY_CODE_MAP[selectedGeoId]?.iso3 : null
+    if (selectedGeoId && !selectedIso3) return
 
     // Create a marker cluster group - added by Damon 3/19/26 for spiderfication on zoom
     const clusterGroup = L.markerClusterGroup({
@@ -732,7 +851,9 @@ export default function StatisticsMapLeaflet({
 
     // Add school markers if enabled
     if (showSchools) {
-      const schools = getSchoolsByCountry(iso3)
+      const schools = selectedIso3
+        ? getSchoolsByCountry(selectedIso3)
+        : FACILITIES.filter((facility) => facility.type === "school")
       schools.forEach((school) => {
         const marker = L.marker([school.lat, school.lng], {
           icon: createFacilityIcon("school"),
@@ -743,7 +864,9 @@ export default function StatisticsMapLeaflet({
 
     // Add hospital markers if enabled
     if (showHospitals) {
-      const hospitals = getHospitalsByCountry(iso3)
+      const hospitals = selectedIso3
+        ? getHospitalsByCountry(selectedIso3)
+        : FACILITIES.filter((facility) => facility.type === "hospital")
       hospitals.forEach((hospital) => {
         const marker = L.marker([hospital.lat, hospital.lng], {
           icon: createFacilityIcon("hospital"),
@@ -787,21 +910,26 @@ export default function StatisticsMapLeaflet({
         className="absolute bottom-3 left-3 z-[1000] rounded-md px-3 py-2 text-xs shadow-md map-legend" //Modified for High contrast mode added by Damon 3/4/2026
         style={{ backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#222" }}
       >
-        <div className="font-semibold mb-1">Poverty rate key</div>
-        {/* Added by Reymes 3/24/2026 - dynamic colorblind-safe legend */}
-        {getLegendEntriesForMode(colorblindMode).map((entry) => (
-          <div key={entry.label} className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
-            {entry.label}
-          </div>
-        ))}
-        
-        {/* Added by Damon 3/19/26 - POI legend entries */}
-        {(showSchools || showHospitals) && (
+        <div className="font-semibold mb-1">{showFacilityDistanceOverlay ? `${facilityDistanceLabel} key` : "Poverty rate key"}</div>
+        {showFacilityDistanceOverlay ? (
           <>
-            <div className="font-semibold mb-1 mt-3 border-t border-gray-300 pt-2">Points of Interest</div>
-            {showSchools && <div className="flex items-center gap-2"><span style={{ fontSize: "14px" }}>🏫</span> School</div>}
-            {showHospitals && <div className="flex items-center gap-2"><span style={{ fontSize: "14px" }}>🏥</span> Hospital</div>}
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[0].color }} />&gt; 1200 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[1].color }} />900 - 1200 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[2].color }} />600 - 900 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[3].color }} />300 - 600 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[4].color }} />150 - 300 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[5].color }} />0 - 150 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[6].color }} />Missing facility data</div>
+          </>
+        ) : (
+          <>
+            {/* Added by Reymes 3/24/2026 - dynamic colorblind-safe legend */}
+            {getLegendEntriesForMode(colorblindMode).map((entry) => (
+              <div key={entry.label} className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
+                {entry.label}
+              </div>
+            ))}
           </>
         )}
       </div>
