@@ -3,8 +3,11 @@
 "use client"
 
 import { useTheme } from '@/components/ThemeProvider';
+import { useColorblind } from '@/components/ColorblindProvider'; // Added by Reymes 3/24/2026
+import { COLORBLIND_MODES, type ColorblindMode } from '@/components/colorblindPalette'; // Added by Reymes 3/24/2026
+import SimpleUIToggle from '@/components/SimpleUIToggle'; // Added by Reymes 3/24/2026 - Simple UI mode
 import Link from 'next/link';
-import { ArrowLeft, Moon, Sun, Contrast, Sparkles } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Contrast, Sparkles, Eye } from 'lucide-react';
 
 export default function AccessibilityPage() {
   const { 
@@ -13,6 +16,8 @@ export default function AccessibilityPage() {
     toggleTheme, 
     toggleContrast
   } = useTheme();
+  // Added by Reymes 3/24/2026
+  const { colorblindMode, setColorblindMode } = useColorblind();
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
@@ -195,9 +200,108 @@ export default function AccessibilityPage() {
                     {contrast === 'high' ? "Enabled" : "Disabled"}
                   </span>
                 </div>
+
               </div>
             </div>
           </div>
+
+          {/* ===== Colorblind Mode - Added by Reymes 3/24/2026 ===== */}
+          <div
+            className="card"
+            style={{
+              padding: '1.5rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--background)',
+              boxShadow: 'var(--shadow-md)',
+              border: '2px solid var(--color-orange)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '3rem',
+                  height: '3rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--gradient-orange-red)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <Eye className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--foreground)' }}>
+                  Colorblind Mode
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', marginBottom: '1rem' }}>
+                  Adjusts map colors and UI accents so every poverty level is clearly distinguishable
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {(Object.keys(COLORBLIND_MODES) as ColorblindMode[]).map((mode) => {
+                    const info = COLORBLIND_MODES[mode];
+                    return (
+                      <label
+                        key={mode}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '0.625rem 0.75rem',
+                          borderRadius: 'var(--radius-md)',
+                          border: colorblindMode === mode
+                            ? '2px solid var(--color-orange)'
+                            : '2px solid var(--color-gray-light)',
+                          cursor: 'pointer',
+                          transition: 'var(--transition-base)',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="colorblindMode"
+                          value={mode}
+                          checked={colorblindMode === mode}
+                          onChange={() => setColorblindMode(mode)}
+                          style={{ marginTop: '0.25rem', accentColor: 'var(--color-orange)', flexShrink: 0 }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: '500', color: 'var(--foreground)', fontSize: '0.9rem' }}>
+                              {info.label}
+                            </span>
+                            {/* Color preview swatches */}
+                            <span style={{ display: 'flex', gap: '3px' }}>
+                              {info.preview.map((color, i) => (
+                                <span
+                                  key={i}
+                                  style={{
+                                    display: 'inline-block',
+                                    width: '14px',
+                                    height: '14px',
+                                    borderRadius: '3px',
+                                    backgroundColor: color,
+                                    border: '1px solid rgba(0,0,0,0.18)',
+                                  }}
+                                />
+                              ))}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '0.78rem', color: 'var(--color-gray)', marginTop: '0.15rem' }}>
+                            {info.description}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* ===== End Colorblind Mode ===== */}
+
+          {/* Simple UI - Added by Reymes 3/24/2026 */}
+          <SimpleUIToggle />
 
           {/* Coming Soon Section */}
           <div 

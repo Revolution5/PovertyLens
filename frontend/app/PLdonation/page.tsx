@@ -1,9 +1,7 @@
-// Created by Christella - 02/04/2026
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Heart, Gift, Users, Sparkles, Check, ArrowRight } from 'lucide-react';
-// ===== Addition by Christella - 03/03/2026 =====
 import { loadStripe } from '@stripe/stripe-js';
 import {
   Elements,
@@ -11,9 +9,435 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-// ===== End of Addition by Christella - 03/03/2026 =====
 
-// Quick-select buttons
+// Edited by Christella - 03/24/2026: Inlined CurrencyCalculator from '@/components/currencycalculator'
+// instead of importing it, so the full page is self-contained.
+// Original component authored by daniel q. 3/20/26 (see edited block below).
+
+// edited - daniel q. 3/20/26 start
+const countryNames: Record<string, string> = {
+  // AFRICA
+  DZA: "Algeria",
+  AGO: "Angola",
+  BEN: "Benin",
+  BWA: "Botswana",
+  BFA: "Burkina Faso",
+  BDI: "Burundi",
+  CMR: "Cameroon",
+  CAF: "Central African Republic",
+  TCD: "Chad",
+  COG: "Congo",
+  COD: "Democratic Republic of the Congo",
+  CIV: "Côte d'Ivoire",
+  EGY: "Egypt",
+  ETH: "Ethiopia",
+  SWZ: "Eswatini",
+  GAB: "Gabon",
+  GMB: "Gambia",
+  GHA: "Ghana",
+  GIN: "Guinea",
+  KEN: "Kenya",
+  LSO: "Lesotho",
+  LBR: "Liberia",
+  MDG: "Madagascar",
+  MWI: "Malawi",
+  MLI: "Mali",
+  MRT: "Mauritania",
+  MAR: "Morocco",
+  MOZ: "Mozambique",
+  NAM: "Namibia",
+  NER: "Niger",
+  NGA: "Nigeria",
+  RWA: "Rwanda",
+  SEN: "Senegal",
+  SLE: "Sierra Leone",
+  ZAF: "South Africa",
+  SDN: "Sudan",
+  TZA: "Tanzania",
+  TGO: "Togo",
+  TUN: "Tunisia",
+  UGA: "Uganda",
+  ZMB: "Zambia",
+  ZWE: "Zimbabwe",
+
+  // ASIA
+  BGD: "Bangladesh",
+  IND: "India",
+  JPN: "Japan",
+  KOR: "South Korea",
+  CHN: "China",
+  IDN: "Indonesia",
+  PAK: "Pakistan",
+  PHL: "Philippines",
+  VNM: "Vietnam",
+  THA: "Thailand",
+  MMR: "Myanmar",
+  KHM: "Cambodia",
+  LAO: "Laos",
+  NPL: "Nepal",
+  LKA: "Sri Lanka",
+  KAZ: "Kazakhstan",
+  UZB: "Uzbekistan",
+  AZE: "Azerbaijan",
+  GEO: "Georgia",
+  ARM: "Armenia",
+  IRQ: "Iraq",
+  IRN: "Iran",
+  SAU: "Saudi Arabia",
+  ARE: "UAE",
+  TUR: "Turkey",
+  ISR: "Israel",
+  JOR: "Jordan",
+  LBN: "Lebanon",
+  YEM: "Yemen",
+  SYR: "Syria",
+  OMN: "Oman",
+  KWT: "Kuwait",
+  QAT: "Qatar",
+  BHR: "Bahrain",
+  AFG: "Afghanistan",
+  MNG: "Mongolia",
+
+  // EUROPE
+  AUT: "Austria",
+  BEL: "Belgium",
+  FRA: "France",
+  DEU: "Germany",
+  ITA: "Italy",
+  NLD: "Netherlands",
+  NOR: "Norway",
+  ESP: "Spain",
+  SWE: "Sweden",
+  CHE: "Switzerland",
+  GBR: "United Kingdom",
+  POL: "Poland",
+  PRT: "Portugal",
+  GRC: "Greece",
+  HUN: "Hungary",
+  CZE: "Czech Republic",
+  ROU: "Romania",
+  BGR: "Bulgaria",
+  HRV: "Croatia",
+  SRB: "Serbia",
+  SVK: "Slovakia",
+  SVN: "Slovenia",
+  FIN: "Finland",
+  DNK: "Denmark",
+  IRL: "Ireland",
+  LUX: "Luxembourg",
+  EST: "Estonia",
+  LVA: "Latvia",
+  LTU: "Lithuania",
+  ALB: "Albania",
+  MKD: "North Macedonia",
+  BIH: "Bosnia and Herzegovina",
+  MNE: "Montenegro",
+  MDA: "Moldova",
+  BLR: "Belarus",
+  UKR: "Ukraine",
+  RUS: "Russia",
+
+  // NORTH AMERICA
+  CAN: "Canada",
+  MEX: "Mexico",
+  USA: "United States",
+  GTM: "Guatemala",
+  BLZ: "Belize",
+  HND: "Honduras",
+  SLV: "El Salvador",
+  NIC: "Nicaragua",
+  CRI: "Costa Rica",
+  PAN: "Panama",
+  CUB: "Cuba",
+  HTI: "Haiti",
+  DOM: "Dominican Republic",
+  JAM: "Jamaica",
+  TTO: "Trinidad and Tobago",
+  BHS: "Bahamas",
+  BRB: "Barbados",
+
+  // SOUTH AMERICA
+  BRA: "Brazil",
+  ARG: "Argentina",
+  CHL: "Chile",
+  COL: "Colombia",
+  PER: "Peru",
+  VEN: "Venezuela",
+  ECU: "Ecuador",
+  BOL: "Bolivia",
+  PRY: "Paraguay",
+  URY: "Uruguay",
+  GUY: "Guyana",
+  SUR: "Suriname",
+
+  // OCEANIA
+  AUS: "Australia",
+  NZL: "New Zealand",
+  PNG: "Papua New Guinea",
+  FJI: "Fiji",
+  SLB: "Solomon Islands",
+  VUT: "Vanuatu",
+  WSM: "Samoa",
+  TON: "Tonga",
+  KIR: "Kiribati",
+  FSM: "Micronesia",
+};
+
+// Map country codes to currency codes (ISO 3166-1 alpha-3 to ISO 4217)
+const countryToCurrency: Record<string, string> = {
+  // AFRICA
+  "DZA": "DZD", "AGO": "AOA", "BEN": "XOF", "BWA": "BWP", "BFA": "XOF",
+  "BDI": "BIF", "CMR": "XAF", "CAF": "XAF", "TCD": "XAF", "COG": "XAF",
+  "COD": "CDF", "CIV": "XOF", "EGY": "EGP", "ETH": "ETB", "SWZ": "SZL",
+  "GAB": "XAF", "GMB": "GMD", "GHA": "GHS", "GIN": "GNF", "KEN": "KES",
+  "LSO": "LSL", "LBR": "LRD", "MDG": "MGA", "MWI": "MWK", "MLI": "XOF",
+  "MRT": "MRU", "MAR": "MAD", "MOZ": "MZN", "NAM": "NAD", "NER": "XOF",
+  "NGA": "NGN", "RWA": "RWF", "SEN": "XOF", "SLE": "SLL", "ZAF": "ZAR",
+  "SDN": "SDG", "TZA": "TZS", "TGO": "XOF", "TUN": "TND", "UGA": "UGX",
+  "ZMB": "ZMW", "ZWE": "ZWL",
+
+  // ASIA
+  "BGD": "BDT", "IND": "INR", "JPN": "JPY", "KOR": "KRW", "CHN": "CNY",
+  "IDN": "IDR", "PAK": "PKR", "PHL": "PHP", "VNM": "VND", "THA": "THB",
+  "MMR": "MMK", "KHM": "KHR", "LAO": "LAK", "NPL": "NPR", "LKA": "LKR",
+  "KAZ": "KZT", "UZB": "UZS", "AZE": "AZN", "GEO": "GEL", "ARM": "AMD",
+  "IRQ": "IQD", "IRN": "IRR", "SAU": "SAR", "ARE": "AED", "TUR": "TRY",
+  "ISR": "ILS", "JOR": "JOD", "LBN": "LBP", "YEM": "YER", "SYR": "SYP",
+  "OMN": "OMR", "KWT": "KWD", "QAT": "QAR", "BHR": "BHD", "AFG": "AFN",
+  "MNG": "MNT",
+
+  // EUROPE
+  "AUT": "EUR", "BEL": "EUR", "FRA": "EUR", "DEU": "EUR", "ITA": "EUR",
+  "NLD": "EUR", "ESP": "EUR", "PRT": "EUR", "GRC": "EUR", "IRL": "EUR",
+  "FIN": "EUR", "EST": "EUR", "LVA": "EUR", "LTU": "EUR", "SVK": "EUR",
+  "SVN": "EUR", "HRV": "EUR", "NOR": "NOK", "SWE": "SEK", "DNK": "DKK",
+  "GBR": "GBP", "CHE": "CHF", "POL": "PLN", "CZE": "CZK", "HUN": "HUF",
+  "ROU": "RON", "BGR": "BGN", "RUS": "RUB", "UKR": "UAH", "BLR": "BYN",
+  "ALB": "ALL", "MKD": "MKD", "BIH": "BAM", "MNE": "EUR", "MDA": "MDL",
+
+  // NORTH AMERICA
+  "CAN": "CAD", "MEX": "MXN", "USA": "USD", "GTM": "GTQ", "BLZ": "BZD",
+  "HND": "HNL", "SLV": "USD", "NIC": "NIO", "CRI": "CRC", "PAN": "PAB",
+  "CUB": "CUP", "HTI": "HTG", "DOM": "DOP", "JAM": "JMD", "TTO": "TTD",
+  "BHS": "BSD", "BRB": "BBD",
+
+  // SOUTH AMERICA
+  "BRA": "BRL", "ARG": "ARS", "CHL": "CLP", "COL": "COP", "PER": "PEN",
+  "VEN": "VES", "ECU": "USD", "BOL": "BOB", "PRY": "PYG", "URY": "UYU",
+  "GUY": "GYD", "SUR": "SRD",
+
+  // OCEANIA
+  "AUS": "AUD", "NZL": "NZD", "PNG": "PGK", "FJI": "FJD", "SLB": "SBD",
+  "VUT": "VUV", "WSM": "WST", "TON": "TOP", "KIR": "AUD", "FSM": "USD"
+};
+
+// Helper function to get currency code from country code
+function getCurrencyCode(countryCode: string): string {
+  // If it's already a currency code (common ones), return as is
+  const currencyCodes = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'MXN', 'BRL', 'ZAR', 'NZD', 'SGD', 'HKD', 'KRW', 'RUB'];
+  if (currencyCodes.includes(countryCode)) {
+    return countryCode;
+  }
+  // Otherwise try to map from country code
+  return countryToCurrency[countryCode] || countryCode;
+}
+
+// Edited by Christella - 03/24/2026: Changed country selector layout from horizontal (side-by-side
+// with ⇄ swap button) to vertical (stacked top-to-bottom with a vertical ↕ swap button in between).
+// Also removed the standalone card wrapper — the card shell is provided by the parent in PLDonationPage.
+function CurrencyCalculator() {
+    const [amount, setAmount] = useState('1');
+    const [fromCountry, setFromCountry] = useState('USA');
+    const [toCountry, setToCountry] = useState('GBR');
+    const [result, setResult] = useState<number | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [isDark, setIsDark] = useState(false);
+
+    // Get all country codes from countryNames
+    const countries = Object.keys(countryNames).sort();
+
+    useEffect(() => {
+        setIsDark(document.documentElement.classList.contains('dark'));
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.classList.contains('dark'));
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
+
+    const convert = async () => {
+        setLoading(true);
+        setError('');
+        setResult(null);
+
+        // Convert country codes to currency codes
+        const fromCurrency = getCurrencyCode(fromCountry);
+        const toCurrency = getCurrencyCode(toCountry);
+
+        console.log(`Converting ${amount} ${fromCountry} (${fromCurrency}) to ${toCountry} (${toCurrency})`);
+
+        try {
+            const res = await fetch(
+                `http://localhost:4000/api/currency/convert?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`
+            );
+
+            const data = await res.json();
+
+            if (data.success) {
+                setResult(data.convertedAmount);
+            } else {
+                setError(data.error || 'Conversion failed');
+            }
+        } catch (error: any) {
+            setError(error.message || 'Failed to connect to backend');
+            console.error('Error:', error);
+        }
+        setLoading(false);
+    };
+
+    const selectStyle: React.CSSProperties = {
+        width: '100%',
+        padding: '0.6rem 0.75rem',
+        borderRadius: '0.5rem',
+        border: isDark ? '1px solid #404040' : '1px solid #d1d5db',
+        backgroundColor: isDark ? '#2d2d2d' : 'white',
+        color: isDark ? 'white' : '#1f2937',
+        fontSize: '0.875rem',
+    };
+
+    return (
+        <div className="space-y-4">
+            <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full p-3 border rounded-lg"
+                style={{
+                    backgroundColor: isDark ? '#2d2d2d' : 'white',
+                    borderColor: isDark ? '#404040' : '#d1d5db',
+                    color: isDark ? 'white' : '#1f2937'
+                }}
+                placeholder="Amount"
+            />
+
+            {/* Edited by Christella - 03/24/2026: Replaced horizontal flex row (From | ⇄ | To)
+                with a vertical stack: From dropdown on top, swap button in the middle, To dropdown below. */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+
+                {/* From */}
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
+                        From
+                    </label>
+                    <select
+                        value={fromCountry}
+                        onChange={(e) => setFromCountry(e.target.value)}
+                        style={selectStyle}
+                    >
+                        {countries.map(c => (
+                            <option key={c} value={c}>
+                                {countryNames[c]} ({c}) → {getCurrencyCode(c)}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                        Currency: {getCurrencyCode(fromCountry)}
+                    </div>
+                </div>
+
+                {/* Vertical swap button — replaces the original horizontal ⇄ button */}
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <button
+                        onClick={() => { setFromCountry(toCountry); setToCountry(fromCountry); setResult(null); }}
+                        title="Swap countries"
+                        style={{
+                            width: '2.25rem',
+                            height: '2.25rem',
+                            borderRadius: '50%',
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
+                            color: 'white',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.1rem',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            transition: 'transform 0.2s',
+                            flexShrink: 0,
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(180deg) scale(1.1)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg) scale(1)'; }}
+                    >
+                        ↕
+                    </button>
+                </div>
+
+                {/* To */}
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
+                        To
+                    </label>
+                    <select
+                        value={toCountry}
+                        onChange={(e) => setToCountry(e.target.value)}
+                        style={selectStyle}
+                    >
+                        {countries.map(c => (
+                            <option key={c} value={c}>
+                                {countryNames[c]} ({c}) → {getCurrencyCode(c)}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                        Currency: {getCurrencyCode(toCountry)}
+                    </div>
+                </div>
+            </div>
+
+            <button
+                onClick={convert}
+                disabled={loading}
+                className="w-full p-3 text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-all"
+                style={{
+                    background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)'
+                }}
+            >
+                {loading ? 'Converting...' : 'Convert'}
+            </button>
+
+            {error && (
+                <div className="mt-4 p-4 rounded-lg text-center" style={{
+                    backgroundColor: isDark ? '#2d2d2d' : '#fee2e2',
+                    border: isDark ? '1px solid #404040' : '1px solid #fecaca',
+                    color: '#dc2626'
+                }}>
+                    {error}
+                </div>
+            )}
+
+            {result !== null && !error && (
+                <div className="mt-4 p-4 rounded-lg text-center" style={{
+                    backgroundColor: isDark ? '#2d2d2d' : '#f3f4f6',
+                    border: isDark ? '1px solid #404040' : '1px solid #e5e7eb'
+                }}>
+                    <p className="text-lg" style={{ color: isDark ? 'white' : '#1f2937' }}>
+                        {amount} {getCurrencyCode(fromCountry)} =
+                        <span className="font-bold text-xl ml-2">{result.toFixed(2)} {getCurrencyCode(toCountry)}</span>
+                    </p>
+                    <p className="text-xs mt-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                        {countryNames[fromCountry]} → {countryNames[toCountry]}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+// edited - daniel q. 3/20/26 end
+
+// ─── Donation page ────────────────────────────────────────────────────────────
+
 const donationAmounts = [
   { amount: 25, color: 'cyan', impact: 'Provides meals for a family' },
   { amount: 50, color: 'yellow', impact: 'Supports educational programs' },
@@ -21,7 +445,6 @@ const donationAmounts = [
   { amount: 250, color: 'red', impact: 'Sponsors a child for a month' },
 ];
 
-// Temporary display-only stats - will implement counters later
 const impactStats = [
   { icon: Heart, value: '10,000+', label: 'Lives Impacted', gradient: 'cyan-yellow' },
   { icon: Gift, value: '$250K', label: 'Raised This Year', gradient: 'orange-red' },
@@ -29,16 +452,9 @@ const impactStats = [
   { icon: Sparkles, value: '50+', label: 'Communities Served', gradient: 'orange-red' },
 ];
 
-// Backend base URL 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-
-// ===== Addition by Christella - 03/03/2026 =====
-// Load Stripe with publishable key from environment variable
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-// ===== End of Addition by Christella - 03/03/2026 =====
 
-// ===== Addition by Christella - 03/03/2026 =====
-// Inner form component that uses Stripe hooks - must be inside <Elements> provider
 function StripePaymentForm({
   amount,
   isMonthly,
@@ -63,11 +479,11 @@ function StripePaymentForm({
 
     if (!stripe || !elements) return;
 
-    // Basic client-side validation
     if (!Number.isFinite(amount) || amount <= 0) {
       setErrorMessage('Please enter a valid donation amount.');
       return;
     }
+
     if (!formData.name.trim() || !formData.email.trim()) {
       setErrorMessage('Please enter your name and email.');
       return;
@@ -76,7 +492,6 @@ function StripePaymentForm({
     try {
       setIsSubmitting(true);
 
-      // Step 1: Ask backend to create a Stripe PaymentIntent and return the clientSecret
       const res = await fetch(`${API_BASE}/api/donations/create-payment-intent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,15 +511,12 @@ function StripePaymentForm({
         return;
       }
 
-      // Step 2a: Submit Elements form first (required by Stripe before confirmPayment)
       const { error: submitError } = await elements.submit();
       if (submitError) {
         setErrorMessage(submitError.message || 'Please check your card details.');
         return;
       }
 
-      // Step 2b: Confirm the payment using the clientSecret from Stripe
-      // redirect: 'if_required' keeps card payments on the page instead of redirecting
       const { error } = await stripe.confirmPayment({
         elements,
         clientSecret: data.clientSecret,
@@ -120,11 +532,9 @@ function StripePaymentForm({
         redirect: 'if_required',
       });
 
-      // If confirmPayment returns an error
       if (error) {
         setErrorMessage(error.message || 'Payment failed. Please try again.');
       } else {
-        // Card payment succeeded without redirect - trigger success screen
         onSuccess();
       }
     } catch (err) {
@@ -137,11 +547,14 @@ function StripePaymentForm({
 
   return (
     <div>
-      {/* Stripe's PaymentElement renders the card input fields securely */}
       <div className="mb-6">
-        <label className="block text-lg mb-3" style={{ fontWeight: 600, color: 'var(--foreground)' }}>
+        <label
+          className="block text-lg mb-3"
+          style={{ fontWeight: 600, color: 'var(--foreground)' }}
+        >
           Payment Details
         </label>
+
         <div
           className="p-4 rounded-xl border"
           style={{
@@ -155,13 +568,12 @@ function StripePaymentForm({
             }}
           />
         </div>
-        {/* Test mode helper text */}
+
         <p className="text-xs mt-2" style={{ color: 'var(--color-gray)' }}>
-          🧪 Test mode: use card <strong>4242 4242 4242 4242</strong>, any future date, any CVC.
+          Test mode: use card <strong>4242 4242 4242 4242</strong>, any future date, any CVC.
         </p>
       </div>
 
-      {/* Error message */}
       {errorMessage && (
         <div
           className="mb-4 p-3 rounded-lg text-sm"
@@ -171,7 +583,6 @@ function StripePaymentForm({
         </div>
       )}
 
-      {/* Submit button */}
       <button
         type="button"
         onClick={handleSubmit}
@@ -197,7 +608,6 @@ function StripePaymentForm({
     </div>
   );
 }
-// ===== End of Addition by Christella - 03/03/2026 =====
 
 export default function PLDonationPage() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
@@ -210,47 +620,37 @@ export default function PLDonationPage() {
     message: '',
   });
 
-  // ===== Addition by Christella - 03/03/2026 =====
-  // clientSecret is returned by the backend after creating a PaymentIntent
-  // It is required by Stripe's Elements provider to render the payment form
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentStep, setPaymentStep] = useState<'form' | 'payment' | 'success'>('form');
   const [isCreatingIntent, setIsCreatingIntent] = useState(false);
   const [intentError, setIntentError] = useState('');
-  // Saves the donation amount before resetting form so success screen shows correct amount
   const [paidAmount, setPaidAmount] = useState<number>(0);
-  // Saves the monthly/one-time choice before resetting so success screen shows correct label
   const [paidIsMonthly, setPaidIsMonthly] = useState(false);
-  // ===== End of Addition by Christella - 03/03/2026 =====
-
-  // Added by Marisol Morales 2/11/2026 for dark mode support - listens for changes to the document's class list to detect theme changes
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     const checkTheme = () => {
       setIsDark(document.documentElement.classList.contains('dark'));
     };
-    
+
     checkTheme();
-    
+
     const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
     return () => observer.disconnect();
   }, []);
-  // End of dark mode support code
 
-  // Update inputs by name
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ===== Addition by Christella - 03/03/2026 =====
-  // Step 1: Validate form and create a PaymentIntent on the backend
-  // This gives us the clientSecret needed to render Stripe's PaymentElement
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIntentError('');
@@ -261,6 +661,7 @@ export default function PLDonationPage() {
       setIntentError('Please enter a valid donation amount.');
       return;
     }
+
     if (!formData.name.trim() || !formData.email.trim()) {
       setIntentError('Please enter your name and email.');
       return;
@@ -288,7 +689,6 @@ export default function PLDonationPage() {
         return;
       }
 
-      // Store clientSecret and move to payment step
       setClientSecret(data.clientSecret);
       setPaymentStep('payment');
     } catch (err) {
@@ -299,10 +699,11 @@ export default function PLDonationPage() {
     }
   };
 
-  // Called after successful payment - saves amount before resetting form
+  const donationAmount = selectedAmount === null ? Number(customAmount) : Number(selectedAmount);
+
   const handlePaymentSuccess = () => {
-    setPaidAmount(donationAmount); // Save before resetting so success screen shows correct value
-    setPaidIsMonthly(isMonthly); // Save before resetting so success screen shows correct label
+    setPaidAmount(donationAmount);
+    setPaidIsMonthly(isMonthly);
     setPaymentStep('success');
     setSelectedAmount(100);
     setCustomAmount('');
@@ -311,44 +712,41 @@ export default function PLDonationPage() {
     setClientSecret(null);
   };
 
-  // Derive the actual donation amount for display
-  const donationAmount = selectedAmount === null ? Number(customAmount) : Number(selectedAmount);
-  // ===== End of Addition by Christella - 03/03/2026 =====
-
   return (
-    <div className="min-h-screen" style={{backgroundColor: 'var(--background)'}}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+      {/* Edited by Christella - 03/24/2026: changed centered hero header to left-aligned section header with decorative divider */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <header style={{ marginBottom: 32 }}>
+          <h1
+            className="text-4xl sm:text-5xl font-bold"
+            style={{
+              margin: '0 0 16px 0',
+              color: 'var(--foreground)',
+              lineHeight: 1.2,
+            }}
+          >
+            Your Generosity Changes Lives
+          </h1>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-12">
-          <div className="text-center">
+          <div
+            style={{
+              height: 4,
+              width: 80,
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--gradient-cyan-yellow)',
+              margin: '0 0 24px 0',
+            }}
+          />
 
-            <h1
-              className="text-4xl sm:text-5xl lg:text-6xl mb-6"
-              style={{ fontWeight: 700, lineHeight: 1.2, color: 'var(--foreground)' }}
-            >
-              Your Generosity{' '}
-              <span
-                style={{
-                  background: 'var(--gradient-orange-red)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                Changes Lives
-              </span>
-            </h1>
+          <p
+            className="text-lg sm:text-xl whitespace-nowrap"
+            style={{ color: 'var(--color-gray)' }}
+          >
+            Join thousands of donors making a real impact in communities around the world. Every contribution matters.
+          </p>
+        </header>
+      </div>
 
-            <p
-              className="text-lg sm:text-xl max-w-2xl mx-auto"
-              style={{ color: 'var(--color-gray)' }}
-            >
-              Join thousands of donors making a real impact in communities around the world. Every
-              contribution matters.
-            </p>
-          </div>
-        </div>
-
-      {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {impactStats.map((stat, index) => (
@@ -371,7 +769,10 @@ export default function PLDonationPage() {
                   <stat.icon className="w-7 h-7 text-white" />
                 </div>
                 <div>
-                  <div className="text-2xl" style={{ fontWeight: 700, color: 'var(--foreground)' }}>
+                  <div
+                    className="text-2xl"
+                    style={{ fontWeight: 700, color: 'var(--foreground)' }}
+                  >
                     {stat.value}
                   </div>
                   <div className="text-sm" style={{ color: 'var(--color-gray)' }}>
@@ -384,300 +785,355 @@ export default function PLDonationPage() {
         </div>
       </section>
 
-      {/* Donation Form */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-        <div 
-          className="card" 
-          style={{ 
-            boxShadow: 'var(--shadow-xl)', 
-            background: 'var(--background)',
-            border: '1px solid var(--color-gray-light)',
-          }}
-        >
-          {/* ===== Addition by Christella - 03/03/2026 ===== */}
-          {/* Success screen shown after payment completes */}
-          {paymentStep === 'success' ? (
-            <div className="text-center py-12">
-              <div
-                className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-                style={{ background: 'var(--gradient-orange-red)' }}
-              >
-                <Check className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
-                Thank You!
-              </h2>
-              <p className="text-lg mb-6" style={{ color: 'var(--color-gray)' }}>
-                Your {paidIsMonthly ? 'monthly' : 'one-time'} donation of{' '}
-                <strong>${paidAmount}</strong> is being processed.
-              </p>
-              <button
-                onClick={() => setPaymentStep('form')}
-                className="px-6 py-3 rounded-xl font-semibold"
-                style={{ background: 'var(--gradient-cyan-yellow)', color: '#000' }}
-              >
-                Make Another Donation
-              </button>
-            </div>
-
-          ) : paymentStep === 'payment' && clientSecret ? (
-            // Payment step: Stripe Elements renders the card input
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <button
-                  onClick={() => { setPaymentStep('form'); setClientSecret(null); }}
-                  className="text-sm underline"
-                  style={{ color: 'var(--color-gray)' }}
-                >
-                  ← Back
-                </button>
-                <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
-                  Complete Your ${donationAmount} Donation
-                </h2>
-              </div>
-
-              {/* Elements provider scopes Stripe context to just this section */}
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  appearance: {
-                    theme: isDark ? 'night' : 'stripe',
-                    variables: {
-                      colorPrimary: '#FFA239',
-                      borderRadius: '8px',
-                    },
-                  },
-                }}
-              >
-                <StripePaymentForm
-                  amount={donationAmount}
-                  isMonthly={isMonthly}
-                  formData={formData}
-                  isDark={isDark}
-                  onSuccess={handlePaymentSuccess}
-                />
-              </Elements>
-            </div>
-          // ===== End of Addition by Christella - 03/03/2026 =====
-
-          ) : (
-            // Submit donation to backend logging endpoint
-            <form onSubmit={handleProceedToPayment}>
-              {/* One-time vs Monthly */}
-              <div className="flex justify-center mb-8">
-                <div className="inline-flex rounded-full p-1" style={{ background: 'var(--color-gray-light)' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsMonthly(false)}
-                    className="px-6 py-2 rounded-full transition-all"
-                    style={{
-                      background: !isMonthly ? 'var(--gradient-cyan-yellow)' : 'transparent',
-                      fontWeight: 600,
-                      boxShadow: !isMonthly ? 'var(--shadow-md)' : 'none',
-                      color: !isMonthly ? (isDark ? '#000' : '#000') : 'var(--foreground)',
-                    }}
+      {/* Donation + Currency Calculator side by side */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          {/* Left: Donation box (75%) */}
+          <div className="lg:col-span-3">
+            <div
+              className="card"
+              style={{
+                boxShadow: 'var(--shadow-xl)',
+                background: 'var(--background)',
+                border: '1px solid var(--color-gray-light)',
+              }}
+            >
+              {paymentStep === 'success' ? (
+                <div className="text-center py-12">
+                  <div
+                    className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
+                    style={{ background: 'var(--gradient-orange-red)' }}
                   >
-                    One-time
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsMonthly(true)}
-                    className="px-6 py-2 rounded-full transition-all"
-                    style={{
-                      background: isMonthly ? 'var(--gradient-orange-red)' : 'transparent',
-                      color: isMonthly ? 'white' : 'var(--foreground)',
-                      fontWeight: 600,
-                      boxShadow: isMonthly ? 'var(--shadow-md)' : 'none',
-                    }}
+                    <Check className="w-10 h-10 text-white" />
+                  </div>
+
+                  <h2
+                    className="text-3xl font-bold mb-3"
+                    style={{ color: 'var(--foreground)' }}
                   >
-                    Monthly
+                    Thank You!
+                  </h2>
+
+                  <p className="text-lg mb-6" style={{ color: 'var(--color-gray)' }}>
+                    Your {paidIsMonthly ? 'monthly' : 'one-time'} donation of{' '}
+                    <strong>${paidAmount}</strong> is being processed.
+                  </p>
+
+                  <button
+                    onClick={() => setPaymentStep('form')}
+                    className="px-6 py-3 rounded-xl font-semibold"
+                    style={{ background: 'var(--gradient-cyan-yellow)', color: '#000' }}
+                  >
+                    Make Another Donation
                   </button>
                 </div>
-              </div>
-
-              {/* Amount selection */}
-              <div className="mb-8">
-                <label className="block text-lg mb-4" style={{ fontWeight: 600, color: 'var(--foreground)' }}>
-                  Select Amount
-                </label>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {donationAmounts.map(option => (
+              ) : paymentStep === 'payment' && clientSecret ? (
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
                     <button
-                      key={option.amount}
-                      type="button"
                       onClick={() => {
-                        setSelectedAmount(option.amount);
-                        setCustomAmount('');
+                        setPaymentStep('form');
+                        setClientSecret(null);
                       }}
-                      className="card relative overflow-hidden group"
-                      style={{
-                        borderColor:
-                          selectedAmount === option.amount ? `var(--color-${option.color})` : 'transparent',
-                        borderWidth: '2px',
-                        padding: '1.5rem 1rem',
-                        boxShadow: selectedAmount === option.amount ? 'var(--shadow-lg)' : 'var(--shadow-md)',
-                        transform: selectedAmount === option.amount ? 'scale(1.05)' : 'scale(1)',
-                        background: 'var(--background)',
-                      }}
-                    >
-                      {selectedAmount === option.amount && (
-                        <div
-                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
-                          style={{ background: `var(--color-${option.color})` }}
-                        >
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                      <div className="text-3xl mb-2" style={{ fontWeight: 700, color: 'var(--foreground)' }}>
-                        ${option.amount}
-                      </div>
-                      <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                        {option.impact}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom amount */}
-                <div className="mt-4">
-                  <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
-                    Or enter custom amount
-                  </label>
-                  <div className="relative">
-                    <span
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg"
+                      className="text-sm underline"
                       style={{ color: 'var(--color-gray)' }}
                     >
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      value={customAmount}
-                      onChange={(e) => {
-                        setCustomAmount(e.target.value);
-                        setSelectedAmount(null);
-                      }}
-                      placeholder="Enter amount"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all"
-                      style={{
-                        background: 'var(--color-gray-light)',
-                        borderColor: customAmount ? 'var(--color-cyan)' : 'transparent',
-                        color: 'var(--foreground)',
-                      }}
-                      min="1"
-                    />
+                      ← Back
+                    </button>
+
+                    <h2
+                      className="text-xl font-semibold"
+                      style={{ color: 'var(--foreground)' }}
+                    >
+                      Complete Your ${donationAmount} Donation
+                    </h2>
                   </div>
-                </div>
-              </div>
 
-              {/* Donor info */}
-              <div className="space-y-4 mb-8">
-                <h3 className="text-lg" style={{ fontWeight: 600, color: 'var(--foreground)' }}>
-                  Your Information
-                </h3>
-
-                <div>
-                  <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all"
-                    style={{
-                      background: 'var(--color-gray-light)',
-                      borderColor: formData.name ? 'var(--color-cyan)' : 'transparent',
-                      color: 'var(--foreground)',
+                  <Elements
+                    stripe={stripePromise}
+                    options={{
+                      clientSecret,
+                      appearance: {
+                        theme: isDark ? 'night' : 'stripe',
+                        variables: {
+                          colorPrimary: '#FFA239',
+                          borderRadius: '8px',
+                        },
+                      },
                     }}
-                    placeholder="John Doe"
-                  />
+                  >
+                    <StripePaymentForm
+                      amount={donationAmount}
+                      isMonthly={isMonthly}
+                      formData={formData}
+                      isDark={isDark}
+                      onSuccess={handlePaymentSuccess}
+                    />
+                  </Elements>
                 </div>
+              ) : (
+                <form onSubmit={handleProceedToPayment}>
+                  <div className="flex justify-center mb-8">
+                    <div
+                      className="inline-flex rounded-full p-1"
+                      style={{ background: 'var(--color-gray-light)' }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setIsMonthly(false)}
+                        className="px-6 py-2 rounded-full transition-all"
+                        style={{
+                          background: !isMonthly ? 'var(--gradient-cyan-yellow)' : 'transparent',
+                          fontWeight: 600,
+                          boxShadow: !isMonthly ? 'var(--shadow-md)' : 'none',
+                          color: !isMonthly ? '#000' : 'var(--foreground)',
+                        }}
+                      >
+                        One-time
+                      </button>
 
-                <div>
-                  <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all"
+                      <button
+                        type="button"
+                        onClick={() => setIsMonthly(true)}
+                        className="px-6 py-2 rounded-full transition-all"
+                        style={{
+                          background: isMonthly ? 'var(--gradient-orange-red)' : 'transparent',
+                          color: isMonthly ? 'white' : 'var(--foreground)',
+                          fontWeight: 600,
+                          boxShadow: isMonthly ? 'var(--shadow-md)' : 'none',
+                        }}
+                      >
+                        Monthly
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <label
+                      className="block text-lg mb-4"
+                      style={{ fontWeight: 600, color: 'var(--foreground)' }}
+                    >
+                      Select Amount
+                    </label>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {donationAmounts.map((option) => (
+                        <button
+                          key={option.amount}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAmount(option.amount);
+                            setCustomAmount('');
+                          }}
+                          className="card relative overflow-hidden group"
+                          style={{
+                            borderColor:
+                              selectedAmount === option.amount
+                                ? `var(--color-${option.color})`
+                                : 'transparent',
+                            borderWidth: '2px',
+                            padding: '1.5rem 1rem',
+                            boxShadow:
+                              selectedAmount === option.amount
+                                ? 'var(--shadow-lg)'
+                                : 'var(--shadow-md)',
+                            transform:
+                              selectedAmount === option.amount ? 'scale(1.05)' : 'scale(1)',
+                            background: 'var(--background)',
+                          }}
+                        >
+                          {selectedAmount === option.amount && (
+                            <div
+                              className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
+                              style={{ background: `var(--color-${option.color})` }}
+                            >
+                              <Check className="w-4 h-4 text-white" />
+                            </div>
+                          )}
+
+                          <div
+                            className="text-3xl mb-2"
+                            style={{ fontWeight: 700, color: 'var(--foreground)' }}
+                          >
+                            ${option.amount}
+                          </div>
+
+                          <div className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                            {option.impact}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-4">
+                      <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
+                        Or enter custom amount
+                      </label>
+
+                      <div className="relative">
+                        <span
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg"
+                          style={{ color: 'var(--color-gray)' }}
+                        >
+                          $
+                        </span>
+
+                        <input
+                          type="number"
+                          value={customAmount}
+                          onChange={(e) => {
+                            setCustomAmount(e.target.value);
+                            setSelectedAmount(null);
+                          }}
+                          placeholder="Enter amount"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all"
+                          style={{
+                            background: 'var(--color-gray-light)',
+                            borderColor: customAmount ? 'var(--color-cyan)' : 'transparent',
+                            color: 'var(--foreground)',
+                          }}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    <h3
+                      className="text-lg"
+                      style={{ fontWeight: 600, color: 'var(--foreground)' }}
+                    >
+                      Your Information
+                    </h3>
+
+                    <div>
+                      <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all"
+                        style={{
+                          background: 'var(--color-gray-light)',
+                          borderColor: formData.name ? 'var(--color-cyan)' : 'transparent',
+                          color: 'var(--foreground)',
+                        }}
+                        placeholder="John Doe"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all"
+                        style={{
+                          background: 'var(--color-gray-light)',
+                          borderColor: formData.email ? 'var(--color-cyan)' : 'transparent',
+                          color: 'var(--foreground)',
+                        }}
+                        placeholder="john@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
+                        Message (Optional)
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        rows={4}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all resize-none"
+                        style={{
+                          background: 'var(--color-gray-light)',
+                          borderColor: formData.message ? 'var(--color-cyan)' : 'transparent',
+                          color: 'var(--foreground)',
+                        }}
+                        placeholder="Share your reason for giving..."
+                      />
+                    </div>
+                  </div>
+
+                  {intentError && (
+                    <div
+                      className="mb-4 p-3 rounded-lg text-sm"
+                      style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}
+                    >
+                      {intentError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isCreatingIntent}
+                    className="w-full py-4 rounded-xl flex items-center justify-center gap-2 group hover:shadow-xl transition-all"
                     style={{
-                      background: 'var(--color-gray-light)',
-                      borderColor: formData.email ? 'var(--color-cyan)' : 'transparent',
-                      color: 'var(--foreground)',
+                      background: 'var(--gradient-orange-red)',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: '1.125rem',
+                      opacity: isCreatingIntent ? 0.8 : 1,
+                      cursor: isCreatingIntent ? 'not-allowed' : 'pointer',
                     }}
-                    placeholder="john@example.com"
-                  />
-                </div>
+                  >
+                    <Heart className="w-5 h-5" />
+                    {isCreatingIntent ? 'Setting up payment...' : 'Continue to Payment'}
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </button>
 
-                <div>
-                  <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
-                    Message (Optional)
-                  </label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-transparent focus:border-opacity-100 transition-all resize-none"
-                    style={{
-                      background: 'var(--color-gray-light)',
-                      borderColor: formData.message ? 'var(--color-cyan)' : 'transparent',
-                      color: 'var(--foreground)',
-                    }}
-                    placeholder="Share your reason for giving..."
-                  />
-                </div>
-              </div>
-
-              {/* ===== Addition by Christella - 03/03/2026 ===== */}
-              {/* Error message shown if payment intent creation fails */}
-              {intentError && (
-                <div
-                  className="mb-4 p-3 rounded-lg text-sm"
-                  style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}
-                >
-                  {intentError}
-                </div>
+                  <p className="text-center text-sm mt-4" style={{ color: 'var(--color-gray)' }}>
+                    Your donation is securely logged. You&apos;ll receive a confirmation message
+                    on-screen.
+                  </p>
+                </form>
               )}
-              {/* ===== End of Addition by Christella - 03/03/2026 ===== */}
+            </div>
+          </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isCreatingIntent}
-                className="w-full py-4 rounded-xl flex items-center justify-center gap-2 group hover:shadow-xl transition-all"
-                style={{
-                  background: 'var(--gradient-orange-red)',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '1.125rem',
-                  opacity: isCreatingIntent ? 0.8 : 1,
-                  cursor: isCreatingIntent ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Heart className="w-5 h-5" />
-                {isCreatingIntent ? 'Setting up payment...' : 'Continue to Payment'}
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+          {/* Right: Currency calculator (25%) */}
+          {/* Edited by Christella - 03/24/2026: Replaced <CurrencyConverter /> import with the
+              inlined CurrencyCalculator component. Card shell kept from original donation page. */}
+          <div className="lg:col-span-1">
+            <div
+              className="card"
+              style={{
+                boxShadow: 'var(--shadow-xl)',
+                background: 'var(--background)',
+                border: '1px solid var(--color-gray-light)',
+                position: 'sticky',
+                top: '1.5rem',
+              }}
+            >
+              <div className="mb-6">
+                <h2
+                  className="text-2xl"
+                  style={{ fontWeight: 700, color: 'var(--foreground)' }}
+                >
+                  Currency Calculator
+                </h2>
+                <p className="mt-2 text-sm" style={{ color: 'var(--color-gray)' }}>
+                  Convert your donation amount before giving.
+                </p>
+              </div>
 
-              <p className="text-center text-sm mt-4" style={{ color: 'var(--color-gray)' }}>
-                Your donation is securely logged. You&apos;ll receive a confirmation message on-screen.
-              </p>
-            </form>
-          )}
+              <CurrencyCalculator />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Trust Indicators */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
           <div>

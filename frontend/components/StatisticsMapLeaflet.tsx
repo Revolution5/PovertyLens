@@ -14,6 +14,10 @@ import { NATIONAL_POVERTY_RATES } from "../data/nationalRates"
 import { normalizeRate, INTERNATIONAL_FALLBACK_RATES } from "../data/internationalRates"
 // Added by Damon 3/19/26 - import facility data and helpers for school/hospital pins
 import { FACILITIES, getSchoolsByCountry, getHospitalsByCountry } from "../data/facilityData"
+// Added by Reymes 3/24/2026 - colorblind palette support for map colors and legend
+import { useColorblind } from './ColorblindProvider'
+import { getPovertyColorForMode, getNoDataColorForMode, getLegendEntriesForMode } from './colorblindPalette'
+import type { ColorblindMode } from './colorblindPalette'
 //Reymes Olide 1/31/26 - Leaflet map component with country coloring
 //Reymes Olide 2/10/26 - Added poverty rate coloring, names on hover, and poverty rates on hover.
 // Rows returned from /api/poverty/pip-map - added by Christella, 02/03/2026
@@ -42,14 +46,15 @@ function getPovertyColor(povertyRate: number | null | undefined): string {
 }
 
 // START Added by Damon 3/24/26
-function getDistanceColor(distanceKm: number | null | undefined): string {
-  if (distanceKm === null || distanceKm === undefined) return "#E8E8E8"
-  if (distanceKm > 1200) return "#8B0000"
-  if (distanceKm > 900) return "#DC143C"
-  if (distanceKm > 600) return "#FF6347"
-  if (distanceKm > 300) return "#FFA500"
-  if (distanceKm > 150) return "#FFD700"
-  return "#90EE90"
+function getDistanceColor(distanceKm: number | null | undefined, mode: ColorblindMode): string {
+  const legendColors = getLegendEntriesForMode(mode)
+  if (distanceKm === null || distanceKm === undefined) return legendColors[6].color
+  if (distanceKm > 1200) return legendColors[0].color
+  if (distanceKm > 900) return legendColors[1].color
+  if (distanceKm > 600) return legendColors[2].color
+  if (distanceKm > 300) return legendColors[3].color
+  if (distanceKm > 150) return legendColors[4].color
+  return legendColors[5].color
 }
 
 function haversineDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -569,6 +574,8 @@ export default function StatisticsMapLeaflet({
       ? "Avg distance to school"
       : "Avg distance to hospital"
 //END added by Damon 3/24/26
+
+  const { colorblindMode } = useColorblind() // Added by Reymes 3/24/2026
   // Load GeoJSON data
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson")
@@ -712,12 +719,20 @@ export default function StatisticsMapLeaflet({
       const overlayValue = matchingGeoId
         ? (showFacilityDistanceOverlay ? facilityDistanceMap[matchingGeoId] : povertyRateMap[matchingGeoId])
         : null
-      // Use purple for tracked countries with no data, grey for untracked countries - Reymes 2/20/26
-      let baseColor;
-      if (matchingGeoId && (overlayValue === null || overlayValue === undefined)) {
-        baseColor = "#9370DB"; // Purple for tracked but no data available
+      // Get poverty rate if this is a tracked country, otherwise use default
+      const povertyRate = matchingGeoId ? povertyRateMap[matchingGeoId] : null
+      // Use distance scale for facility overlay and poverty scale otherwise.
+      // Keep untracked countries gray in both modes.
+      let baseColor: string
+      if (!matchingGeoId) {
+        baseColor = "#E8E8E8"
+      } else if (showFacilityDistanceOverlay) {
+        const distanceKm = facilityDistanceMap[matchingGeoId]
+        baseColor = getDistanceColor(distanceKm, colorblindMode)
+      } else if (povertyRate === null || povertyRate === undefined) {
+        baseColor = getNoDataColorForMode(colorblindMode)
       } else {
-        baseColor = showFacilityDistanceOverlay ? getDistanceColor(overlayValue) : getPovertyColor(overlayValue);
+        baseColor = getPovertyColorForMode(povertyRate, colorblindMode)
       }
 
       if (matchingGeoId && overlayValue !== null && overlayValue !== undefined) {
@@ -783,7 +798,17 @@ export default function StatisticsMapLeaflet({
     return () => {
       layers.forEach((layer) => map.removeLayer(layer))
     }
-  }, [geojsonData, map, povertyRateMap, facilityDistanceMap, onCountryClick, rateType, showFacilityDistanceOverlay, facilityDistanceLabel])
+  }, [
+    geojsonData,
+    map,
+    povertyRateMap,
+    facilityDistanceMap,
+    onCountryClick,
+    rateType,
+    colorblindMode,
+    showFacilityDistanceOverlay,
+    facilityDistanceLabel,
+  ])
 
   // Added by Damon 3/19/26 - render school and hospital pins on map with clustering
   useEffect(() => {
@@ -888,23 +913,23 @@ export default function StatisticsMapLeaflet({
         <div className="font-semibold mb-1">{showFacilityDistanceOverlay ? `${facilityDistanceLabel} key` : "Poverty rate key"}</div>
         {showFacilityDistanceOverlay ? (
           <>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#8B0000" }} />&gt; 1200 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC143C" }} />900 - 1200 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FF6347" }} />600 - 900 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFA500" }} />300 - 600 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFD700" }} />150 - 300 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#90EE90" }} />0 - 150 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#9370DB" }} />Missing facility data</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[0].color }} />&gt; 1200 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[1].color }} />900 - 1200 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[2].color }} />600 - 900 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[3].color }} />300 - 600 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[4].color }} />150 - 300 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[5].color }} />0 - 150 km</div>
+            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[6].color }} />Missing facility data</div>
           </>
         ) : (
           <>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#8B0000" }} />&gt; 40%</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#DC143C" }} />30% - 40%</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FF6347" }} />20% - 30%</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFA500" }} />10% - 20%</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#FFD700" }} />5% - 10%</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#90EE90" }} />0% - 5%</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "#9370DB" }} />Untracked, missing data</div>
+            {/* Added by Reymes 3/24/2026 - dynamic colorblind-safe legend */}
+            {getLegendEntriesForMode(colorblindMode).map((entry) => (
+              <div key={entry.label} className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
+                {entry.label}
+              </div>
+            ))}
           </>
         )}
       </div>
