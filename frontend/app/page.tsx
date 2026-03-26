@@ -580,6 +580,7 @@ export default function Home() {
                                 color: 'white'
                             }}
                             data-tour="tour-button"
+                            suppressHydrationWarning
                         >
                             <Compass className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
                             <span>Take the App Tour</span>

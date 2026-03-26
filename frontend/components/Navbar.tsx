@@ -182,7 +182,7 @@ export default function Navbar() {
                             
                             {/* Resources Dropdown */}
                             <div className="relative resources-dropdown">
-                                <button
+                                <button suppressHydrationWarning
                                     onClick={() => { setResourcesOpen(!resourcesOpen); setEduOpen(false); }} // Modified by Christella - 03/13/2026 - also close edu submenu
                                     className={`flex items-center gap-1 font-medium text-sm transition-colors pb-1 border-b-2 whitespace-nowrap ${
                                         (isActive('/eduresource') || isActive('/donationspages'))
@@ -333,7 +333,7 @@ export default function Navbar() {
                     <div className="hidden lg:flex items-center ml-auto space-x-3">
                         {/* Search Bar */}
                         <form onSubmit={handleSearch} className="relative">
-                            <input
+                            <input suppressHydrationWarning
                                 type="text"
                                 placeholder="Search..."
                                 value={searchQuery}
@@ -353,7 +353,7 @@ export default function Navbar() {
 
                         {/* User Profile Menu */}
                         <div className="relative user-menu">
-                            <button
+                            <button suppressHydrationWarning
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                                 className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFA239] to-[#FF5656] flex items-center justify-center hover:shadow-lg transition-shadow"
                             >
@@ -409,7 +409,7 @@ export default function Navbar() {
                                             </Link>
                                             {/*Added by Marisol to keep track of user activity - End */}
                                             <hr style={{ borderColor: 'var(--color-gray-light)' }} className="my-2" />
-                                            <button
+                                            <button suppressHydrationWarning
                                                 onClick={handleLogout}
                                                 className="block w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 transition-all duration-200"
                                                 onMouseEnter={(e) => {
@@ -444,7 +444,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Mobile Menu Button */}
-                        <button 
+                        <button suppressHydrationWarning
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="lg:hidden p-2 text-gray-700 dark:text-gray-200 hover:text-[#FFA239] transition-colors"
                         >
@@ -479,7 +479,7 @@ export default function Navbar() {
 
                             {/* Mobile Resources Section */}
                             <div>
-                                <button
+                                <button suppressHydrationWarning
                                     onClick={() => setResourcesOpen(!resourcesOpen)}
                                     className="flex items-center justify-between w-full font-medium text-sm text-gray-700 dark:text-gray-200 px-2 py-2"
                                 >
@@ -493,7 +493,7 @@ export default function Navbar() {
                                 {resourcesOpen && (
                                     <div className="ml-4 mt-2 space-y-2">
                                         {/* ===== Added by Christella - 03/13/2026 - mobile edu accordion ===== */}
-                                        <button
+                                        <button suppressHydrationWarning
                                             onClick={() => setMobileEduOpen(!mobileEduOpen)}
                                             className="flex items-center justify-between w-full px-2 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-[#FFA239]"
                                         >
@@ -565,7 +565,7 @@ export default function Navbar() {
 
                             {/* Mobile Search */}
                             <form onSubmit={handleSearch} className="relative px-2 md:hidden">
-                                <input
+                                <input suppressHydrationWarning
                                     type="text"
                                     placeholder="Search..."
                                     value={searchQuery}
