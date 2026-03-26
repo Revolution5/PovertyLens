@@ -1,22 +1,50 @@
 // Added by Reymes - 03/24/2026 - AI Chat route — calls Claude (Anthropic) on behalf of the frontend
+// Two specialised bots route under the hood; the user sees one seamless assistant.
 require('dotenv').config();
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const router = express.Router();
 
-const SYSTEM_PROMPT = `You are PovertyLens AI, a helpful assistant for the PovertyLens platform — a tool that helps people understand global poverty through data, stories, and actionable insights.
+// ── Bot 1: Research Analyst ───────────────────────────────────────────────────
+// Handles questions about poverty data, statistics, definitions, history, causes.
+const RESEARCH_PROMPT = `You are PovertyLens Research Analyst, the data-focused side of the PovertyLens AI assistant.
+You specialise in:
+- Poverty statistics, rates, and trends (global, national, regional)
+- Definitions and explanations of poverty-related terms (Gini coefficient, MPI, poverty line, etc.)
+- Historical context and causes of poverty
+- Country and regional comparisons
+- Research findings and reports
 
-You can help users with:
-- Understanding poverty statistics and what they mean
-- Explaining terms in the glossary (e.g., Gini coefficient, multidimensional poverty index)
-- Navigating the platform's features (maps, timelines, donation pages, pledge wall, etc.)
-- Suggesting ways to take action (donate, pledge, play FreeRice, share stories)
-- Answering general questions about global and domestic poverty
+Guidelines:
+- Be analytical, precise, and compassionate.
+- Never invent statistics — always direct users to the Statistics or Timeline pages on PovertyLens for verified data.
+- If a term is in the PovertyLens Glossary, mention they can look it up there.
+- Keep answers concise and factual.
+- If the question is really about how to use the platform, gently answer it but note you are primarily a research assistant.`;
 
-Keep your answers concise, factual, and compassionate. If you don't know something, say so honestly.
-Do not make up statistics — refer users to the Statistics or Timeline pages for data.`;
+// ── Bot 2: Platform Guide ─────────────────────────────────────────────────────
+// TODO: Fill this out — handles navigation, features, actions, donations, pledges, FreeRice, account help.
+// Add your personality, topics, and guidelines below following the same pattern as Bot 1 above.
+const GUIDE_PROMPT = `You are PovertyLens Platform Guide, the action-focused side of the PovertyLens AI assistant.
 
+// TODO: Add what this bot specialises in (e.g. platform navigation, donations, pledges, FreeRice, account help)
+
+// TODO: Add guidelines for tone and behaviour
+
+Keep answers concise and helpful.`;
+
+// ── Classifier ────────────────────────────────────────────────────────────────
+// Keyword-based routing — no extra API call, instant.
+// Returns 'research' for data/facts/definitions, 'guide' for everything else.
+const RESEARCH_PATTERN =
+  /statistic|statistic|data|percent|%|poverty rate|poverty line|gini|coefficient|index|gdp|define|definition|what is|explain|how many|how much|cause[sd]?|effect[sd]?|impact[sd]?|histor|measur|income|wage|hunger|malnutrition|literacy|country|nation|region|global|world|report|study|research|fact|figure|\bnumber\b|billion|million|threshold|multidimensional|inequality|disparity|demographic/i;
+
+function classifyMessage(lastUserMessage) {
+  return RESEARCH_PATTERN.test(lastUserMessage) ? 'research' : 'guide';
+}
+
+// ── Route ─────────────────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
@@ -44,13 +72,18 @@ router.post('/', async (req, res) => {
     .slice(-20) // keep last 20 turns to avoid token bloat
     .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
 
+  // Classify based on the latest user message
+  const lastUser = [...safeMessages].reverse().find((m) => m.role === 'user');
+  const botType = lastUser ? classifyMessage(lastUser.content) : 'guide';
+  const systemPrompt = botType === 'research' ? RESEARCH_PROMPT : GUIDE_PROMPT;
+
   try {
     const client = new Anthropic({ apiKey });
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 500,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: safeMessages,
     });
 
