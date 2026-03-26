@@ -97,7 +97,7 @@ export default function NotificationBell() {
   return (
     <div className="relative">
       {/* Bell Icon */}
-      <button
+      <button suppressHydrationWarning
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full transition-colors"
         style={{

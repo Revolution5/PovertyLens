@@ -1,6 +1,6 @@
 // Added by Reymes - 03/24/2026 - AI Chat route — calls Google Gemini (free tier) on behalf of the frontend
 // Two specialised bots route under the hood; the user sees one seamless assistant.
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
@@ -24,15 +24,10 @@ Guidelines:
 - If the question is really about how to use the platform, gently answer it but note you are primarily a research assistant.`;
 
 // ── Bot 2: Platform Guide ─────────────────────────────────────────────────────
-// TODO: Fill this out — handles navigation, features, actions, donations, pledges, FreeRice, account help.
-// Add your personality, topics, and guidelines below following the same pattern as Bot 1 above.
-const GUIDE_PROMPT = `You are PovertyLens Platform Guide, the action-focused side of the PovertyLens AI assistant.
-
-// TODO: Add what this bot specialises in (e.g. platform navigation, donations, pledges, FreeRice, account help)
-
-// TODO: Add guidelines for tone and behaviour
-
-Keep answers concise and helpful.`;
+// TODO: expand this prompt with more specific topics and tone guidelines.
+const GUIDE_PROMPT = `You are PovertyLens Platform Guide, a helpful assistant for the PovertyLens platform.
+Help users navigate the platform and take action against poverty.
+Keep answers concise, warm, and encouraging.`;
 
 // ── Classifier ────────────────────────────────────────────────────────────────
 // Keyword-based routing — no extra API call, instant.
@@ -87,7 +82,7 @@ router.post('/', async (req, res) => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
     });
 
@@ -101,6 +96,11 @@ router.post('/', async (req, res) => {
     return res.json({ reply });
   } catch (err) {
     console.error('Chat route error:', err);
+    if (err.status === 429) {
+      return res.status(429).json({
+        error: 'The AI assistant is busy right now. Please wait a moment and try again.',
+      });
+    }
     return res.status(502).json({
       error: 'Unable to reach the AI service. Please try again later.',
     });

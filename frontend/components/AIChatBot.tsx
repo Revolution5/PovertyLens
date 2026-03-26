@@ -191,6 +191,7 @@ export default function AIChatBot() {
                 onClick={sendMessage}
                 disabled={!input.trim() || isLoading}
                 aria-label="Send message"
+                suppressHydrationWarning
                 className="flex-shrink-0 p-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white"
               >
                 <Send className="w-4 h-4" />
@@ -207,6 +208,7 @@ export default function AIChatBot() {
       <button
         onClick={() => setIsOpen((o) => !o)}
         aria-label={isOpen ? "Close AI chat" : "Open AI chat"}
+        suppressHydrationWarning
         className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white"
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
