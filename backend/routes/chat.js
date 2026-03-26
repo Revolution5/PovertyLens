@@ -1,8 +1,8 @@
-// Added by Reymes - 03/24/2026 - AI Chat route — calls Claude (Anthropic) on behalf of the frontend
+// Added by Reymes - 03/24/2026 - AI Chat route — calls Google Gemini (free tier) on behalf of the frontend
 // Two specialised bots route under the hood; the user sees one seamless assistant.
 require('dotenv').config();
 const express = require('express');
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const router = express.Router();
 
@@ -38,7 +38,7 @@ Keep answers concise and helpful.`;
 // Keyword-based routing — no extra API call, instant.
 // Returns 'research' for data/facts/definitions, 'guide' for everything else.
 const RESEARCH_PATTERN =
-  /statistic|statistic|data|percent|%|poverty rate|poverty line|gini|coefficient|index|gdp|define|definition|what is|explain|how many|how much|cause[sd]?|effect[sd]?|impact[sd]?|histor|measur|income|wage|hunger|malnutrition|literacy|country|nation|region|global|world|report|study|research|fact|figure|\bnumber\b|billion|million|threshold|multidimensional|inequality|disparity|demographic/i;
+  /statistic|data|percent|%|poverty rate|poverty line|gini|coefficient|index|gdp|define|definition|what is|explain|how many|how much|cause[sd]?|effect[sd]?|impact[sd]?|histor|measur|income|wage|hunger|malnutrition|literacy|country|nation|region|global|world|report|study|research|fact|figure|\bnumber\b|billion|million|threshold|multidimensional|inequality|disparity|demographic/i;
 
 function classifyMessage(lastUserMessage) {
   return RESEARCH_PATTERN.test(lastUserMessage) ? 'research' : 'guide';
@@ -46,7 +46,7 @@ function classifyMessage(lastUserMessage) {
 
 // ── Route ─────────────────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     return res.status(503).json({
@@ -77,17 +77,27 @@ router.post('/', async (req, res) => {
   const botType = lastUser ? classifyMessage(lastUser.content) : 'guide';
   const systemPrompt = botType === 'research' ? RESEARCH_PROMPT : GUIDE_PROMPT;
 
-  try {
-    const client = new Anthropic({ apiKey });
+  // Gemini expects 'model' instead of 'assistant' for role names
+  const geminiHistory = safeMessages.slice(0, -1).map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
+  const latestMessage = safeMessages[safeMessages.length - 1]?.content ?? '';
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 500,
-      system: systemPrompt,
-      messages: safeMessages,
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemPrompt,
     });
 
-    const reply = response.content?.[0]?.text ?? "Sorry, I couldn't generate a response.";
+    const chat = model.startChat({
+      history: geminiHistory,
+      generationConfig: { maxOutputTokens: 500 },
+    });
+
+    const result = await chat.sendMessage(latestMessage);
+    const reply = result.response.text() ?? "Sorry, I couldn't generate a response.";
     return res.json({ reply });
   } catch (err) {
     console.error('Chat route error:', err);
