@@ -1,30 +1,24 @@
-// Created by Christella - 03/03/2026
+// Created by Christella - 04/01/2026
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
-import { Heart, Home, ArrowRight, Sparkles } from 'lucide-react';
+import { XCircle, Home, RotateCcw, AlertTriangle } from 'lucide-react';
 
-// added by Christella - 04/01/2026: Stripe instance used to verify the
-// returned PaymentIntent status before showing the success message.
+// added by Christella - 04/01/2026: Stripe instance used to verify the returned PaymentIntent status for failed or canceled payments.
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-export default function DonationSuccessPage() {
+export default function DonationFailedPage() {
   const router = useRouter();
-
-  // added by Christella - 04/01/2026: Read Stripe return parameters from URL.
   const searchParams = useSearchParams();
 
-  // Dark mode detection - Added by Christella - 03/03/2026
   const [isDark, setIsDark] = useState(false);
 
-  // added by Christella - 04/01/2026: Track verification state so this page
-  // only shows true success after checking Stripe.
-  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('Checking payment status...');
+  // added by Christella - 04/01/2026: Message shown to donor after checking the Stripe status or reading an immediate error from the URL.
+  const [message, setMessage] = useState('Your payment could not be completed.');
 
-  // added by Christella - 04/01/2026: Prevent duplicate effect runs from causing redirect loops.
+  // added by Christella - 04/01/2026: Prevent duplicate effect runs in dev mode.
   const hasCheckedRef = useRef(false);
 
   useEffect(() => {
@@ -40,77 +34,67 @@ export default function DonationSuccessPage() {
     return () => observer.disconnect();
   }, []);
 
-  // added by Christella - 04/01/2026: Verify PaymentIntent status from Stripe.
+  // added by Christella - 04/01/2026: Read immediate Stripe error message from the URL if present, otherwise verify returned PaymentIntent status.
   useEffect(() => {
     if (hasCheckedRef.current) return;
     hasCheckedRef.current = true;
 
-    const verifyPayment = async () => {
+    const verifyFailure = async () => {
       try {
-        const clientSecret = searchParams.get('payment_intent_client_secret');
+        const directMessage = searchParams.get('message');
+        if (directMessage) {
+          setMessage(directMessage);
+          return;
+        }
 
+        const clientSecret = searchParams.get('payment_intent_client_secret');
         if (!clientSecret) {
-          setStatusMessage('Missing payment information.');
-          setIsCheckingStatus(false);
+          setMessage('Your payment could not be completed.');
           return;
         }
 
         const stripe = await stripePromise;
-
         if (!stripe) {
-          setStatusMessage('Unable to load payment status.');
-          setIsCheckingStatus(false);
+          setMessage('Unable to load payment status.');
           return;
         }
 
         const { paymentIntent, error } = await stripe.retrievePaymentIntent(clientSecret);
 
         if (error) {
-          router.replace(
-            `/donationfailed?message=${encodeURIComponent(
-              error.message || 'Unable to verify payment status.'
-            )}`
-          );
+          setMessage(error.message || 'Unable to verify payment status.');
           return;
         }
 
         if (!paymentIntent) {
-          router.replace(
-            `/donationfailed?message=${encodeURIComponent('Could not verify payment status.')}`
-          );
+          setMessage('Could not verify payment status.');
           return;
         }
 
         switch (paymentIntent.status) {
-          case 'succeeded':
-            setStatusMessage('Your donation was processed successfully.');
-            setIsCheckingStatus(false);
+          case 'requires_payment_method':
+            setMessage('Your payment failed. Please try another card or payment method.');
+            break;
+          case 'canceled':
+            setMessage('Your payment was canceled before completion.');
             break;
           case 'processing':
-            setStatusMessage('Your payment is still processing.');
-            setIsCheckingStatus(false);
+            setMessage('Your payment is still processing. Please wait a moment and try again if needed.');
             break;
-          case 'requires_payment_method':
-          case 'canceled':
-            router.replace(
-              `/donationfailed?payment_intent_client_secret=${encodeURIComponent(clientSecret)}`
-            );
+          case 'succeeded':
+            setMessage('This payment appears to have completed successfully. You can return home or donate again.');
             break;
           default:
-            router.replace(
-              `/donationfailed?message=${encodeURIComponent('Payment could not be completed.')}`
-            );
+            setMessage('Your payment could not be completed.');
         }
       } catch (err) {
         console.error(err);
-        router.replace(
-          `/donationfailed?message=${encodeURIComponent('Unable to verify payment status.')}`
-        );
+        setMessage('Unable to verify payment status.');
       }
     };
 
-    verifyPayment();
-  }, [router, searchParams]);
+    verifyFailure();
+  }, [searchParams]);
 
   return (
     <div
@@ -122,34 +106,30 @@ export default function DonationSuccessPage() {
       <div
         className="w-full max-w-lg text-center rounded-2xl p-10"
         style={{
-          backgroundColor: 'var(--background)',
           border: '1px solid var(--color-gray-light)',
           boxShadow: 'var(--shadow-xl)',
         }}
       >
-        {/* Animated heart icon */}
+        {/* added by Christella - 04/01/2026: Failure status icon */}
         <div
           className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--gradient-orange-red)' }}
+          style={{ background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)' }}
         >
-          <Heart className="w-12 h-12 text-white" fill="white" />
+          <XCircle className="w-12 h-12 text-white" />
         </div>
 
-        {/* Heading */}
         <h1
           className="text-4xl font-bold mb-3"
           style={{ color: 'var(--foreground)' }}
         >
-          {isCheckingStatus ? 'Verifying Payment...' : 'Thank You!'}
+          Payment Failed
         </h1>
 
-        {/* Divider */}
         <div
           style={{
             height: 4,
             width: 80,
             borderRadius: 'var(--radius-full)',
-            background: 'var(--gradient-orange-red)',
             margin: '0 auto 24px',
           }}
         />
@@ -158,39 +138,29 @@ export default function DonationSuccessPage() {
           className="text-lg mb-2"
           style={{ color: 'var(--foreground)' }}
         >
-          {statusMessage}
-        </p>
-        <p
-          className="text-base mb-8"
-          style={{ color: 'var(--color-gray)' }}
-        >
-          You&apos;re making a real difference in the lives of people living in poverty around the
-          world. A confirmation will be sent to your email.
+          {message}
         </p>
 
-        {/* Impact reminder */}
+        {/* added by Christella - 04/01/2026: Helpful retry reminder */}
         <div
           className="rounded-xl p-4 mb-8 flex items-center gap-3"
           style={{
-            backgroundColor: isDark ? 'rgba(255, 162, 57, 0.1)' : '#fff7ed',
-            border: '1px solid var(--color-orange)',
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : '#fef2f2',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
           }}
         >
-          <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-orange)' }} />
           <p className="text-sm text-left" style={{ color: 'var(--color-gray-dark)' }}>
-            95% of every donation goes directly to programs that fight poverty and support
-            communities in need.
+            In Stripe test mode, certain test card numbers are designed to simulate declines or
+            other payment failures.
           </p>
         </div>
 
-        {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => router.push('/')}
             className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all"
             style={{
               border: '1px solid var(--color-gray-light)',
-              backgroundColor: 'var(--background)',
               color: 'var(--foreground)',
             }}
             onMouseEnter={(e) => {
@@ -210,7 +180,7 @@ export default function DonationSuccessPage() {
             onClick={() => router.push('/PLdonation')}
             className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all"
             style={{
-              background: 'var(--gradient-orange-red)',
+              background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',
               color: 'white',
             }}
             onMouseEnter={(e) => {
@@ -220,9 +190,8 @@ export default function DonationSuccessPage() {
               e.currentTarget.style.opacity = '1';
             }}
           >
-            <Heart className="w-4 h-4" />
-            Donate Again
-            <ArrowRight className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" />
+            Try Again
           </button>
         </div>
       </div>
