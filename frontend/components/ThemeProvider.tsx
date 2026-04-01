@@ -8,6 +8,51 @@ import { createContext, useContext, useEffect, useState } from 'react';
 type Theme = 'light' | 'dark';
 type Contrast = 'normal' | 'high'; //Modified for High contrast mode added by Damon 3/4/2026
 const TEXT_SCALE_OPTIONS = [1, 1.15, 1.3, 1.4] as const;
+//START Added by Damon 4/1/2026 - text scaling options for accessibility, defined as a tuple for type safety
+const INLINE_FONT_SIZE_SELECTOR = '[style*="font-size"]';
+
+function scaleFontSizeValue(fontSize: string, scale: number): string | null {
+  const trimmedFontSize = fontSize.trim();
+  const match = trimmedFontSize.match(/^(-?\d*\.?\d+)(px|rem|em|%)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const numericValue = Number(match[1]);
+  const unit = match[2];
+  return `${numericValue * scale}${unit}`;
+}
+
+function applyInlineTextScale(rootNode: ParentNode, scale: number) {
+  const scopedElements: HTMLElement[] = [];
+
+  if (rootNode instanceof HTMLElement && rootNode.matches(INLINE_FONT_SIZE_SELECTOR)) {
+    scopedElements.push(rootNode);
+  }
+
+  if ('querySelectorAll' in rootNode) {
+    scopedElements.push(...Array.from(rootNode.querySelectorAll<HTMLElement>(INLINE_FONT_SIZE_SELECTOR)));
+  }
+
+  scopedElements.forEach((element) => {
+    const currentFontSize = element.style.fontSize.trim();
+    if (!currentFontSize && !element.dataset.baseFontSize) {
+      return;
+    }
+
+    const baseFontSize = element.dataset.baseFontSize ?? currentFontSize;
+    if (!element.dataset.baseFontSize) {
+      element.dataset.baseFontSize = baseFontSize;
+    }
+
+    const scaledFontSize = scale === 1 ? baseFontSize : scaleFontSizeValue(baseFontSize, scale);
+    if (scaledFontSize && element.style.fontSize !== scaledFontSize) {
+      element.style.fontSize = scaledFontSize;
+    }
+  });
+}
+//END Added by Damon 4/1/2026 - text scaling options for accessibility, defined as a tuple for type safety
 
 interface ThemeContextType {
   theme: Theme;
@@ -88,12 +133,43 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('simpleUI', String(simpleUI));
   }, [simpleUI]);
 
-  // Added by Damon 4/1/2026 - apply and persist text scaling globally via root font-size
+  // Added by Damon 4/1/2026 - apply and persist text-only scaling via CSS variables and inline font sizes
   useEffect(() => {
     const root = document.documentElement;
-    root.style.fontSize = `${textScale * 100}%`;
+    root.style.setProperty('--text-scale', String(textScale));
     localStorage.setItem('textScale', String(textScale));
+
+    //START Aded by Damon 4/1/2026 - apply text scaling to all elements with inline font sizes, and set up MutationObserver to handle dynamically added/changed elements
+    applyInlineTextScale(document.body, textScale);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement) {
+              applyInlineTextScale(node, textScale);
+            }
+          });
+        }
+
+        if (mutation.type === 'attributes' && mutation.target instanceof HTMLElement) {
+          applyInlineTextScale(mutation.target, textScale);
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['style'],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
   }, [textScale]);
+    //END Aded by Damon 4/1/2026 - apply text scaling to all elements with inline font sizes, and set up MutationObserver to handle dynamically added/changed elements
 
   const toggleTheme = () => {
     setTheme(prev => {
