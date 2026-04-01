@@ -246,193 +246,193 @@ function getCurrencyCode(countryCode: string): string {
 // with ⇄ swap button) to vertical (stacked top-to-bottom with a vertical ↕ swap button in between).
 // Also removed the standalone card wrapper — the card shell is provided by the parent in PLDonationPage.
 function CurrencyCalculator() {
-    const [amount, setAmount] = useState('1');
-    const [fromCountry, setFromCountry] = useState('USA');
-    const [toCountry, setToCountry] = useState('GBR');
-    const [result, setResult] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [isDark, setIsDark] = useState(false);
+  const [amount, setAmount] = useState('1');
+  const [fromCountry, setFromCountry] = useState('USA');
+  const [toCountry, setToCountry] = useState('GBR');
+  const [result, setResult] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isDark, setIsDark] = useState(false);
 
-    // Get all country codes from countryNames
-    const countries = Object.keys(countryNames).sort();
+  // Get all country codes from countryNames
+  const countries = Object.keys(countryNames).sort();
 
-    useEffect(() => {
-        setIsDark(document.documentElement.classList.contains('dark'));
-        const observer = new MutationObserver(() => {
-            setIsDark(document.documentElement.classList.contains('dark'));
-        });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => observer.disconnect();
-    }, []);
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
-    const convert = async () => {
-        setLoading(true);
-        setError('');
-        setResult(null);
+  const convert = async () => {
+    setLoading(true);
+    setError('');
+    setResult(null);
 
-        // Convert country codes to currency codes
-        const fromCurrency = getCurrencyCode(fromCountry);
-        const toCurrency = getCurrencyCode(toCountry);
+    // Convert country codes to currency codes
+    const fromCurrency = getCurrencyCode(fromCountry);
+    const toCurrency = getCurrencyCode(toCountry);
 
-        console.log(`Converting ${amount} ${fromCountry} (${fromCurrency}) to ${toCountry} (${toCurrency})`);
+    console.log(`Converting ${amount} ${fromCountry} (${fromCurrency}) to ${toCountry} (${toCurrency})`);
 
-        try {
-            const res = await fetch(
-                `http://localhost:4000/api/currency/convert?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`
-            );
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/currency/convert?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`
+      );
 
-            const data = await res.json();
+      const data = await res.json();
 
-            if (data.success) {
-                setResult(data.convertedAmount);
-            } else {
-                setError(data.error || 'Conversion failed');
-            }
-        } catch (error: any) {
-            setError(error.message || 'Failed to connect to backend');
-            console.error('Error:', error);
-        }
-        setLoading(false);
-    };
+      if (data.success) {
+        setResult(data.convertedAmount);
+      } else {
+        setError(data.error || 'Conversion failed');
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to connect to backend');
+      console.error('Error:', error);
+    }
+    setLoading(false);
+  };
 
-    const selectStyle: React.CSSProperties = {
-        width: '100%',
-        padding: '0.6rem 0.75rem',
-        borderRadius: '0.5rem',
-        border: isDark ? '1px solid #404040' : '1px solid #d1d5db',
-        backgroundColor: isDark ? '#2d2d2d' : 'white',
-        color: isDark ? 'white' : '#1f2937',
-        fontSize: '0.875rem',
-    };
+  const selectStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '0.6rem 0.75rem',
+    borderRadius: '0.5rem',
+    border: isDark ? '1px solid #404040' : '1px solid #d1d5db',
+    backgroundColor: isDark ? '#2d2d2d' : 'white',
+    color: isDark ? 'white' : '#1f2937',
+    fontSize: '0.875rem',
+  };
 
-    return (
-        <div className="space-y-4">
-            <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full p-3 border rounded-lg"
-                style={{
-                    backgroundColor: isDark ? '#2d2d2d' : 'white',
-                    borderColor: isDark ? '#404040' : '#d1d5db',
-                    color: isDark ? 'white' : '#1f2937'
-                }}
-                placeholder="Amount"
-            />
+  return (
+    <div className="space-y-4">
+      <input
+        type="number"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        className="w-full p-3 border rounded-lg"
+        style={{
+          backgroundColor: isDark ? '#2d2d2d' : 'white',
+          borderColor: isDark ? '#404040' : '#d1d5db',
+          color: isDark ? 'white' : '#1f2937'
+        }}
+        placeholder="Amount"
+      />
 
-            {/* Edited by Christella - 03/24/2026: Replaced horizontal flex row (From | ⇄ | To)
-                with a vertical stack: From dropdown on top, swap button in the middle, To dropdown below. */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {/* Edited by Christella - 03/24/2026: Replaced horizontal flex row (From | ⇄ | To)
+          with a vertical stack: From dropdown on top, swap button in the middle, To dropdown below. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
 
-                {/* From */}
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
-                        From
-                    </label>
-                    <select
-                        value={fromCountry}
-                        onChange={(e) => setFromCountry(e.target.value)}
-                        style={selectStyle}
-                    >
-                        {countries.map(c => (
-                            <option key={c} value={c}>
-                                {countryNames[c]} ({c}) → {getCurrencyCode(c)}
-                            </option>
-                        ))}
-                    </select>
-                    <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-                        Currency: {getCurrencyCode(fromCountry)}
-                    </div>
-                </div>
-
-                {/* Vertical swap button — replaces the original horizontal ⇄ button */}
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <button
-                        onClick={() => { setFromCountry(toCountry); setToCountry(fromCountry); setResult(null); }}
-                        title="Swap countries"
-                        style={{
-                            width: '2.25rem',
-                            height: '2.25rem',
-                            borderRadius: '50%',
-                            border: 'none',
-                            background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
-                            color: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.1rem',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            transition: 'transform 0.2s',
-                            flexShrink: 0,
-                        }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(180deg) scale(1.1)'; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg) scale(1)'; }}
-                    >
-                        ↕
-                    </button>
-                </div>
-
-                {/* To */}
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
-                        To
-                    </label>
-                    <select
-                        value={toCountry}
-                        onChange={(e) => setToCountry(e.target.value)}
-                        style={selectStyle}
-                    >
-                        {countries.map(c => (
-                            <option key={c} value={c}>
-                                {countryNames[c]} ({c}) → {getCurrencyCode(c)}
-                            </option>
-                        ))}
-                    </select>
-                    <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-                        Currency: {getCurrencyCode(toCountry)}
-                    </div>
-                </div>
-            </div>
-
-            <button
-                onClick={convert}
-                disabled={loading}
-                className="w-full p-3 text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-all"
-                style={{
-                    background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)'
-                }}
-            >
-                {loading ? 'Converting...' : 'Convert'}
-            </button>
-
-            {error && (
-                <div className="mt-4 p-4 rounded-lg text-center" style={{
-                    backgroundColor: isDark ? '#2d2d2d' : '#fee2e2',
-                    border: isDark ? '1px solid #404040' : '1px solid #fecaca',
-                    color: '#dc2626'
-                }}>
-                    {error}
-                </div>
-            )}
-
-            {result !== null && !error && (
-                <div className="mt-4 p-4 rounded-lg text-center" style={{
-                    backgroundColor: isDark ? '#2d2d2d' : '#f3f4f6',
-                    border: isDark ? '1px solid #404040' : '1px solid #e5e7eb'
-                }}>
-                    <p className="text-lg" style={{ color: isDark ? 'white' : '#1f2937' }}>
-                        {amount} {getCurrencyCode(fromCountry)} =
-                        <span className="font-bold text-xl ml-2">{result.toFixed(2)} {getCurrencyCode(toCountry)}</span>
-                    </p>
-                    <p className="text-xs mt-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
-                        {countryNames[fromCountry]} → {countryNames[toCountry]}
-                    </p>
-                </div>
-            )}
+        {/* From */}
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
+            From
+          </label>
+          <select
+            value={fromCountry}
+            onChange={(e) => setFromCountry(e.target.value)}
+            style={selectStyle}
+          >
+            {countries.map(c => (
+              <option key={c} value={c}>
+                {countryNames[c]} ({c}) → {getCurrencyCode(c)}
+              </option>
+            ))}
+          </select>
+          <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+            Currency: {getCurrencyCode(fromCountry)}
+          </div>
         </div>
-    );
+
+        {/* Vertical swap button — replaces the original horizontal ⇄ button */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={() => { setFromCountry(toCountry); setToCountry(fromCountry); setResult(null); }}
+            title="Swap countries"
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '50%',
+              border: 'none',
+              background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.1rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              transition: 'transform 0.2s',
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(180deg) scale(1.1)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'rotate(0deg) scale(1)'; }}
+          >
+            ↕
+          </button>
+        </div>
+
+        {/* To */}
+        <div>
+          <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', color: isDark ? '#9ca3af' : '#6b7280' }}>
+            To
+          </label>
+          <select
+            value={toCountry}
+            onChange={(e) => setToCountry(e.target.value)}
+            style={selectStyle}
+          >
+            {countries.map(c => (
+              <option key={c} value={c}>
+                {countryNames[c]} ({c}) → {getCurrencyCode(c)}
+              </option>
+            ))}
+          </select>
+          <div className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+            Currency: {getCurrencyCode(toCountry)}
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={convert}
+        disabled={loading}
+        className="w-full p-3 text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-all"
+        style={{
+          background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)'
+        }}
+      >
+        {loading ? 'Converting...' : 'Convert'}
+      </button>
+
+      {error && (
+        <div className="mt-4 p-4 rounded-lg text-center" style={{
+          backgroundColor: isDark ? '#2d2d2d' : '#fee2e2',
+          border: isDark ? '1px solid #404040' : '1px solid #fecaca',
+          color: '#dc2626'
+        }}>
+          {error}
+        </div>
+      )}
+
+      {result !== null && !error && (
+        <div className="mt-4 p-4 rounded-lg text-center" style={{
+          backgroundColor: isDark ? '#2d2d2d' : '#f3f4f6',
+          border: isDark ? '1px solid #404040' : '1px solid #e5e7eb'
+        }}>
+          <p className="text-lg" style={{ color: isDark ? 'white' : '#1f2937' }}>
+            {amount} {getCurrencyCode(fromCountry)} =
+            <span className="font-bold text-xl ml-2">{result.toFixed(2)} {getCurrencyCode(toCountry)}</span>
+          </p>
+          <p className="text-xs mt-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+            {countryNames[fromCountry]} → {countryNames[toCountry]}
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 // edited - daniel q. 3/20/26 end
 
@@ -460,19 +460,20 @@ function StripePaymentForm({
   isMonthly,
   formData,
   isDark,
-  onSuccess,
+  clientSecret,
 }: {
   amount: number;
   isMonthly: boolean;
   formData: { name: string; email: string; message: string };
   isDark: boolean;
-  onSuccess: () => void;
+  clientSecret: string;
 }) {
   const stripe = useStripe();
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // edited by Christella - 04/01/2026: Route to dedicated success/failed pages based on actual PaymentIntent outcome instead of old local onSuccess state.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -492,34 +493,15 @@ function StripePaymentForm({
     try {
       setIsSubmitting(true);
 
-      const res = await fetch(`${API_BASE}/api/donations/create-payment-intent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          isMonthly,
-          name: formData.name,
-          email: formData.email,
-          message: formData.message,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setErrorMessage(data.message || 'Payment setup failed. Please try again.');
-        return;
-      }
-
       const { error: submitError } = await elements.submit();
       if (submitError) {
-        setErrorMessage(submitError.message || 'Please check your card details.');
+        setErrorMessage(submitError.message || 'Please check your payment details.');
         return;
       }
 
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-        clientSecret: data.clientSecret,
+        clientSecret,
         confirmParams: {
           return_url: `${window.location.origin}/donationsuccess`,
           payment_method_data: {
@@ -532,10 +514,32 @@ function StripePaymentForm({
         redirect: 'if_required',
       });
 
+      // edited by Christella - 04/01/2026: Immediate Stripe errors should also go to the failed page so failed test payments do not stay on the form.
       if (error) {
-        setErrorMessage(error.message || 'Payment failed. Please try again.');
-      } else {
-        onSuccess();
+        window.location.href = `/donationfailed?message=${encodeURIComponent(
+          error.message || 'Payment failed. Please try again.'
+        )}`;
+        return;
+      }
+
+      if (!paymentIntent) {
+        setErrorMessage('Could not verify payment status.');
+        return;
+      }
+
+      switch (paymentIntent.status) {
+        case 'succeeded':
+          window.location.href = `/donationsuccess?payment_intent_client_secret=${encodeURIComponent(paymentIntent.client_secret!)}`;
+          break;
+        case 'processing':
+          window.location.href = `/donationsuccess?payment_intent_client_secret=${encodeURIComponent(paymentIntent.client_secret!)}`;
+          break;
+        case 'requires_payment_method':
+        case 'canceled':
+          window.location.href = `/donationfailed?payment_intent_client_secret=${encodeURIComponent(paymentIntent.client_secret!)}`;
+          break;
+        default:
+          setErrorMessage('Payment could not be completed.');
       }
     } catch (err) {
       console.error(err);
@@ -621,11 +625,12 @@ export default function PLDonationPage() {
   });
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentStep, setPaymentStep] = useState<'form' | 'payment' | 'success'>('form');
+
+  // edited by Christella - 04/01/2026: Removed old local "success" screen state because successful and failed payments now go to dedicated routes.
+  const [paymentStep, setPaymentStep] = useState<'form' | 'payment'>('form');
+
   const [isCreatingIntent, setIsCreatingIntent] = useState(false);
   const [intentError, setIntentError] = useState('');
-  const [paidAmount, setPaidAmount] = useState<number>(0);
-  const [paidIsMonthly, setPaidIsMonthly] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -700,17 +705,6 @@ export default function PLDonationPage() {
   };
 
   const donationAmount = selectedAmount === null ? Number(customAmount) : Number(selectedAmount);
-
-  const handlePaymentSuccess = () => {
-    setPaidAmount(donationAmount);
-    setPaidIsMonthly(isMonthly);
-    setPaymentStep('success');
-    setSelectedAmount(100);
-    setCustomAmount('');
-    setIsMonthly(false);
-    setFormData({ name: '', email: '', message: '' });
-    setClientSecret(null);
-  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -798,36 +792,7 @@ export default function PLDonationPage() {
                 border: '1px solid var(--color-gray-light)',
               }}
             >
-              {paymentStep === 'success' ? (
-                <div className="text-center py-12">
-                  <div
-                    className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
-                    style={{ background: 'var(--gradient-orange-red)' }}
-                  >
-                    <Check className="w-10 h-10 text-white" />
-                  </div>
-
-                  <h2
-                    className="text-3xl font-bold mb-3"
-                    style={{ color: 'var(--foreground)' }}
-                  >
-                    Thank You!
-                  </h2>
-
-                  <p className="text-lg mb-6" style={{ color: 'var(--color-gray)' }}>
-                    Your {paidIsMonthly ? 'monthly' : 'one-time'} donation of{' '}
-                    <strong>${paidAmount}</strong> is being processed.
-                  </p>
-
-                  <button
-                    onClick={() => setPaymentStep('form')}
-                    className="px-6 py-3 rounded-xl font-semibold"
-                    style={{ background: 'var(--gradient-cyan-yellow)', color: '#000' }}
-                  >
-                    Make Another Donation
-                  </button>
-                </div>
-              ) : paymentStep === 'payment' && clientSecret ? (
+              {paymentStep === 'payment' && clientSecret ? (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
                     <button
@@ -862,12 +827,13 @@ export default function PLDonationPage() {
                       },
                     }}
                   >
+                    {/* edited by Christella - 04/01/2026: Pass clientSecret instead of old onSuccess prop. */}
                     <StripePaymentForm
                       amount={donationAmount}
                       isMonthly={isMonthly}
                       formData={formData}
                       isDark={isDark}
-                      onSuccess={handlePaymentSuccess}
+                      clientSecret={clientSecret}
                     />
                   </Elements>
                 </div>
