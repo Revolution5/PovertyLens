@@ -7,14 +7,17 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
 type Contrast = 'normal' | 'high'; //Modified for High contrast mode added by Damon 3/4/2026
+const TEXT_SCALE_OPTIONS = [1, 1.15, 1.3, 1.4] as const;
 
 interface ThemeContextType {
   theme: Theme;
   contrast: Contrast; //Modified for High contrast mode added by Damon 3/4/2026
   simpleUI: boolean; // Added by Reymes 3/24/2026 - Simple UI mode for reduced overstimulation
+  textScale: number; // Added by Damon 4/1/2026 - global text scaling preference
   toggleTheme: () => void;
   toggleContrast: () => void; //Modified for High contrast mode added by Damon 3/4/2026
   toggleSimpleUI: () => void; // Added by Reymes 3/24/2026 - Simple UI mode for reduced overstimulation
+  setTextScale: (scale: number) => void; // Added by Damon 4/1/2026 - set exact text scale
 
 }
 
@@ -24,11 +27,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [contrast, setContrast] = useState<Contrast>('normal'); //Modified for High contrast mode added by Damon 3/4/2026
   const [simpleUI, setSimpleUI] = useState<boolean>(false); // Added by Reymes 3/24/2026 - Simple UI mode
+  const [textScale, setTextScaleState] = useState<number>(1); // Added by Damon 4/1/2026 - default 100%
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
     const savedContrast = localStorage.getItem('contrast') as Contrast; //Modified for High contrast mode added by Damon 3/4/2026
     const savedSimpleUI = localStorage.getItem('simpleUI'); // Added by Reymes 3/24/2026
+    const savedTextScaleRaw = localStorage.getItem('textScale'); // Added by Damon 4/1/2026
+    const savedTextScale = savedTextScaleRaw ? Number(savedTextScaleRaw) : null;
     
     if (savedTheme) {
       setTheme(savedTheme);
@@ -46,6 +52,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Added by Reymes 3/24/2026 - restore simple UI setting
     if (savedSimpleUI === 'true') {
       setSimpleUI(true);
+    }
+
+    // Added by Damon 4/1/2026 - restore text scale setting if valid
+    if (savedTextScale && TEXT_SCALE_OPTIONS.includes(savedTextScale as (typeof TEXT_SCALE_OPTIONS)[number])) {
+      setTextScaleState(savedTextScale);
     }
   }, []);
 
@@ -77,6 +88,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('simpleUI', String(simpleUI));
   }, [simpleUI]);
 
+  // Added by Damon 4/1/2026 - apply and persist text scaling globally via root font-size
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.fontSize = `${textScale * 100}%`;
+    localStorage.setItem('textScale', String(textScale));
+  }, [textScale]);
+
   const toggleTheme = () => {
     setTheme(prev => {
       const newTheme = prev === 'light' ? 'dark' : 'light';
@@ -100,8 +118,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setSimpleUI(prev => !prev);
   };
 
+  const setTextScale = (scale: number) => {
+    if (TEXT_SCALE_OPTIONS.includes(scale as (typeof TEXT_SCALE_OPTIONS)[number])) {
+      setTextScaleState(scale);
+    }
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, contrast, simpleUI, toggleTheme, toggleContrast, toggleSimpleUI }}> {/* Modified for High contrast mode added by Damon 3/4/2026 */}
+    <ThemeContext.Provider value={{ theme, contrast, simpleUI, textScale, toggleTheme, toggleContrast, toggleSimpleUI, setTextScale }}> {/* Modified for High contrast mode added by Damon 3/4/2026 */}
       {children}
     </ThemeContext.Provider>
   );

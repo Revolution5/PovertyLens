@@ -139,9 +139,9 @@ export default function Navbar() {
         >
         {/* ============== End dark mode nav styles ============== */}
             <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
-                <div className="flex items-center h-16 relative">
+                <div className="flex items-center min-h-[4rem] py-2">
                     {/* Logo & Theme Toggle - Left */}
-                    <div className="flex items-center gap-3 flex-shrink-0 z-10">
+                    <div className="flex-1 flex items-center gap-3">
                         <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
                             <Image
                                 src="/logov3.png" 
@@ -155,9 +155,9 @@ export default function Navbar() {
                         {/* End addition */}
                     </div>
 
-                    {/* Desktop Navigation Links - Absolutely Centered */}
-                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <div className="flex items-center space-x-12">
+                    {/* Desktop Navigation Links - Flex Centered */}
+                    <div className="hidden lg:flex">
+                        <div className="flex items-center gap-x-6 xl:gap-x-10">
                             <Link 
                                 href="/" 
                                 className={`font-medium text-sm transition-colors pb-1 border-b-2 whitespace-nowrap ${
@@ -330,7 +330,7 @@ export default function Navbar() {
                     </div>
 
                     {/* Right Side Icons - Desktop */}
-                    <div className="hidden lg:flex items-center ml-auto space-x-3">
+                    <div className="flex-1 hidden lg:flex items-center justify-end space-x-3">
                         {/* Search Bar */}
                         <form onSubmit={handleSearch} className="relative">
                             <input suppressHydrationWarning
