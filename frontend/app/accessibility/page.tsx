@@ -7,14 +7,23 @@ import { useColorblind } from '@/components/ColorblindProvider'; // Added by Rey
 import { COLORBLIND_MODES, type ColorblindMode } from '@/components/colorblindPalette'; // Added by Reymes 3/24/2026
 import SimpleUIToggle from '@/components/SimpleUIToggle'; // Added by Reymes 3/24/2026 - Simple UI mode
 import Link from 'next/link';
-import { ArrowLeft, Moon, Sun, Contrast, Sparkles, Eye } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Contrast, Sparkles, Eye, Type } from 'lucide-react';
+
+const TEXT_SCALE_OPTIONS = [
+  { value: 1, label: '100% (Default)' },
+  { value: 1.15, label: '115% (Comfort)' },
+  { value: 1.3, label: '130% (Large)' },
+  { value: 1.4, label: '140% (Extra Large)' },
+];
 
 export default function AccessibilityPage() {
   const { 
     theme, 
     contrast, 
+    textScale,
     toggleTheme, 
-    toggleContrast
+    toggleContrast,
+    setTextScale,
   } = useTheme();
   // Added by Reymes 3/24/2026
   const { colorblindMode, setColorblindMode } = useColorblind();
@@ -303,6 +312,74 @@ export default function AccessibilityPage() {
           {/* Simple UI - Added by Reymes 3/24/2026 */}
           <SimpleUIToggle />
 
+          {/* Text Scaling - Added by Damon 4/1/2026 */}
+          <div
+            className="card"
+            style={{
+              padding: '1.5rem',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--background)',
+              boxShadow: 'var(--shadow-md)',
+              border: '2px solid var(--color-cyan)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+              <div
+                style={{
+                  width: '3rem',
+                  height: '3rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--gradient-cyan-yellow)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <Type className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontWeight: '600', marginBottom: '0.25rem', color: 'var(--foreground)' }}>
+                  Text Size
+                </h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', marginBottom: '1rem' }}>
+                  Increase text size across the site for easier reading. This works alongside browser zoom.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {TEXT_SCALE_OPTIONS.map((option) => (
+                    <label
+                      key={option.value}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        padding: '0.625rem 0.75rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: textScale === option.value
+                          ? '2px solid var(--color-cyan)'
+                          : '2px solid var(--color-gray-light)',
+                        cursor: 'pointer',
+                        transition: 'var(--transition-base)',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="textScale"
+                        value={option.value}
+                        checked={textScale === option.value}
+                        onChange={() => setTextScale(option.value)}
+                        style={{ accentColor: 'var(--color-cyan)', flexShrink: 0 }}
+                      />
+                      <span style={{ fontWeight: '500', color: 'var(--foreground)', fontSize: '0.9rem' }}>
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Coming Soon Section */}
           <div 
             style={{
@@ -332,8 +409,8 @@ export default function AccessibilityPage() {
               More Features Coming Soon
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', maxWidth: '32rem', margin: '0 auto' }}>
-              We're working on adding more accessibility features including font size adjustment, 
-              reduced motion options, and keyboard navigation enhancements. Stay tuned!
+              We're working on adding more accessibility features including 
+              reduced motion options and keyboard navigation enhancements. Stay tuned!
             </p>
           </div>
         </div>

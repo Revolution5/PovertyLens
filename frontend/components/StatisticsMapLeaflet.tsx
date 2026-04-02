@@ -82,7 +82,7 @@ type Props = {
   rateType?: "national" | "international"; // Added by Reymes 3/2/26
   showSchools?: boolean; // Added by Damon 3/19/26 - show school pins
   showHospitals?: boolean; // Added by Damon 3/19/26 - show hospital pins
-  onSelectedFacilityDistanceChange?: (distanceKm: number | null) => void // Added by Copilot 3/24/26 - sync right panel metric with map overlay
+  onSelectedFacilityDistanceChange?: (distanceKm: number | null) => void // Added by Damon 3/24/26 - sync right panel metric with map overlay
 }
 
 // National rates now imported from data/nationalRates.ts - Reymes 3/2/26
