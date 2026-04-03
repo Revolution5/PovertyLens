@@ -451,4 +451,62 @@ router.get('/user-images', async (req, res) => {
 });
 // End of Marisol Morales Code 1/28/26 =====================
 
+// PATCH /api/profile/digest-optin - opt in or out of the weekly email digest
+// Added by Damon
+router.patch('/digest-optin', async (req, res) => {
+  try {
+    const { email, optIn } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    if (typeof optIn !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'optIn must be a boolean' });
+    }
+
+    const db = getDb();
+    const result = await db
+      .collection('users')
+      .updateOne({ email }, { $set: { weeklyDigestOptIn: optIn } });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, weeklyDigestOptIn: optIn });
+  } catch (error) {
+    console.error('Digest opt-in error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// GET /api/profile/settings?email=... - return user preference settings
+// Added by Damon
+router.get('/settings', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const db = getDb();
+    const user = await db
+      .collection('users')
+      .findOne({ email }, { projection: { weeklyDigestOptIn: 1 } });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      weeklyDigestOptIn: user.weeklyDigestOptIn === true,
+    });
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;
