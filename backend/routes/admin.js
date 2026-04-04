@@ -292,4 +292,71 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
+// GET /api/admin/users - returns all users (no passwords)
+router.get('/users', async (req, res) => {
+  try {
+    const db = getDb();
+    if (!db) return res.status(500).json({ success: false, message: 'Database not initialized' });
+ 
+    const users = await db.collection('users').find(
+      {},
+      { projection: { password: 0, passwordHistory: 0 } }
+    ).sort({ createdAt: -1 }).toArray();
+ 
+    res.json({ success: true, users });
+  } catch (err) {
+    console.error('Error in GET /api/admin/users:', err);
+    res.status(500).json({ success: false, message: 'Failed to load users' });
+  }
+});
+ 
+// PATCH /api/admin/users/suspend - suspend or unsuspend a user
+router.patch('/users/suspend', async (req, res) => {
+  try {
+    const { email, suspend } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+ 
+    const db = getDb();
+    const user = await db.collection('users').findOne({ email });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.admin) return res.status(403).json({ success: false, message: 'Cannot suspend admin accounts' });
+ 
+    await db.collection('users').updateOne(
+      { email },
+      { $set: { suspended: !!suspend } }
+    );
+ 
+    console.log(`User ${email} ${suspend ? 'suspended' : 'unsuspended'} by admin`);
+    res.json({ success: true, message: `User ${suspend ? 'suspended' : 'unsuspended'} successfully` });
+  } catch (err) {
+    console.error('Error in PATCH /api/admin/users/suspend:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+ 
+// PATCH /api/admin/users/ban - ban or unban a user
+router.patch('/users/ban', async (req, res) => {
+  try {
+    const { email, ban } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+ 
+    const db = getDb();
+    const user = await db.collection('users').findOne({ email });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.admin) return res.status(403).json({ success: false, message: 'Cannot ban admin accounts' });
+ 
+    // Banning also clears suspension since ban is more severe
+    await db.collection('users').updateOne(
+      { email },
+      { $set: { banned: !!ban, suspended: ban ? false : user.suspended } }
+    );
+ 
+    console.log(`User ${email} ${ban ? 'banned' : 'unbanned'} by admin`);
+    res.json({ success: true, message: `User ${ban ? 'banned' : 'unbanned'} successfully` });
+  } catch (err) {
+    console.error('Error in PATCH /api/admin/users/ban:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;
