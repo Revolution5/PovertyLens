@@ -120,7 +120,9 @@ router.post('/login', async (req, res) => {
       user: { 
         email: user.email, 
         username: user.username,
-        id: user._id 
+        id: user._id,
+        admin: user.admin ?? false // Added by Marisol for Work Review 3 
+
       }
     });
     
@@ -166,7 +168,7 @@ router.get('/user-by-email', async (req, res) => {
         username: user.username,
         profileImage: user.profileImage || null,
         bannerImage: user.bannerImage || null,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       }
     });
     

@@ -77,6 +77,12 @@ useEffect(() => {
           localStorage.setItem('username', data.user.username);
         }
 
+        // Start Added by Marisol for Work Review 3 Store admin status if available
+        if (data.user && data.user.admin === true) {
+          localStorage.setItem('isAdmin', 'true');
+        }
+        // END Added by Marisol for Work Review 3 Store admin status if available
+        
         // Redirect to home page after successful login/signup
         setTimeout(() => {
           window.location.href = '/';
