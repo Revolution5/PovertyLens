@@ -29,12 +29,22 @@ export default function Navbar() {
     // Add state to track if user is logged in
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+    // START Added by Damon - 04/03/2026 - admin perm state
+    const [isAdmin, setIsAdmin] = useState(false);
+    // END Added by Damon - 04/03/2026
+
     // Check if user is logged in on component mount
     useEffect(() => {
         const userEmail = localStorage.getItem('userEmail');
         if (userEmail) {
             setIsLoggedIn(true);
         }
+        // START Added by Damon - 04/03/2026 - read admin flag from localStorage
+        const adminFlag = localStorage.getItem('isAdmin');
+        if (adminFlag === 'true') {
+            setIsAdmin(true);
+        }
+        // END Added by Damon - 04/03/2026
     }, []);
 
     // Close dropdowns when clicking outside
@@ -77,8 +87,10 @@ export default function Navbar() {
 
         localStorage.removeItem('userEmail');
         localStorage.removeItem('username');
+        localStorage.removeItem('isAdmin'); // START/END Added by Damon - 04/03/2026 - clear admin flag on logout
         localStorage.setItem('contrast', 'normal');         // Reset high contrast mode to normal on logout - Added by Damon 3/7/2026
         setIsLoggedIn(false);
+        setIsAdmin(false); // START/END Added by Damon - 04/03/2026 - reset admin state on logout
         setUserMenuOpen(false);
         // Force a full page reload to reset all state
         window.location.href = '/'; 
@@ -278,7 +290,7 @@ export default function Navbar() {
                                                     >
                                                         Poverty Glossary
                                                         <span
-                                                            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium"                                                        >
+                                                            className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-medium">
                                                         </span>
                                                     </Link>
                                                 </div>
@@ -407,6 +419,25 @@ export default function Navbar() {
                                             >
                                                 Account Activity 
                                             </Link>
+                                            {/* START Modified by Damon 4/3/2026 - only show for admins */}
+                                            {isAdmin && (
+                                                <Link
+                                                    href="/admin-dashboard"
+                                                    className="block px-4 py-2.5 text-sm transition-all duration-200"
+                                                    style={{ color: 'var(--foreground)' }}
+                                                    onMouseEnter={(e) => {
+                                                        const isDark = document.documentElement.classList.contains('dark');
+                                                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                                    }}
+                                                    onClick={() => setUserMenuOpen(false)}
+                                                >
+                                                    Admin Dashboard
+                                                </Link>
+                                            )}
+                                            {/* END Modified by Damon 4/3/2026 */}
                                             {/*Added by Marisol to keep track of user activity - End */}
                                             <hr style={{ borderColor: 'var(--color-gray-light)' }} className="my-2" />
                                             <button suppressHydrationWarning

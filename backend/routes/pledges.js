@@ -67,6 +67,16 @@ router.post('/', async (req, res) => {
 
     const db = getDb();
 
+    if (userEmail) {
+      const user = await db.collection('users').findOne({ email: userEmail });
+      if (user?.suspended) {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account is suspended. You cannot create pledges right now.',
+        });
+      }
+    }
+
     const newPledge = {
       pledgeText: pledgeText.trim(),
       category,
