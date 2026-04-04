@@ -333,6 +333,12 @@ router.patch('/users/suspend', async (req, res) => {
       } catch (msgErr) {
         console.error('Failed to send suspension inbox message:', msgErr);
       }
+    } else if (user.suspended) {
+      try {
+        await createMessage(email, 'unsuspension_issued');
+      } catch (msgErr) {
+        console.error('Failed to send unsuspension inbox message:', msgErr);
+      }
     }
  
     console.log(`User ${email} ${suspend ? 'suspended' : 'unsuspended'} by admin`);

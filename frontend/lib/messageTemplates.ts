@@ -6,6 +6,7 @@ export type MessageType =
   | 'story_removed'
   | 'warning_issued'
   | 'suspension_issued'
+  | 'unsuspension_issued'
   | 'ban_issued'
   | 'story_report_cleared';
 
@@ -70,6 +71,14 @@ export function generateMessage(
         from,
         subject: 'Your account has been temporarily suspended',
         body: `Your PovertyLens account has been temporarily suspended for ${context.suspensionDays ?? 7} days due to repeated violations of our community guidelines. You will not be able to post or interact with the platform during this period. If you believe this was a mistake, please contact our support team.`,
+      };
+
+    case 'unsuspension_issued':
+      return {
+        type,
+        from,
+        subject: 'Your account suspension has been lifted',
+        body: 'Your PovertyLens account suspension has been lifted. You can now post stories and create pledges again. Please continue following our community guidelines.',
       };
 
     case 'ban_issued':

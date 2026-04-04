@@ -40,6 +40,13 @@ function buildMessage(type, context = {}) {
         subject: 'Your account has been temporarily suspended',
         body: `Your PovertyLens account has been temporarily suspended for ${context.suspensionDays || 7} days due to repeated violations of our community guidelines.`,
       };
+    case 'unsuspension_issued':
+      return {
+        type,
+        from,
+        subject: 'Your account suspension has been lifted',
+        body: 'Your PovertyLens account suspension has been lifted. You can now post stories and create pledges again. Please continue following our community guidelines.',
+      };
     case 'ban_issued':
       return {
         type,

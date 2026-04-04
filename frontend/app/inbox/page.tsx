@@ -22,6 +22,8 @@ function getTypeBadge(type: MessageType): { label: string; color: string; bg: st
       return { label: 'Warning', color: '#F5D547', bg: 'rgba(245,213,71,0.15)', icon: Clock };
     case 'suspension_issued':
       return { label: 'Suspended', color: '#FF5656', bg: 'rgba(255,86,86,0.15)', icon: Archive };
+    case 'unsuspension_issued':
+      return { label: 'Reinstated', color: '#22c55e', bg: 'rgba(34,197,94,0.15)', icon: CheckCircle2 };
     case 'ban_issued':
       return { label: 'Banned', color: '#FF5656', bg: 'rgba(255,86,86,0.15)', icon: Archive };
   }
