@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-// Modified by Marisol for Work Review 3 - added Sparkles for header
-import { MessageCircle, X, Send, Bot, User, Loader2, ChevronDown, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Loader2, ChevronDown, Sparkles } from "lucide-react"; // Modified by Marisol for Work Review 3 - added Sparkles for header
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
@@ -22,11 +21,9 @@ const WELCOME_MESSAGE: Message = {
 
 // Added by Marisol for Work Review 3 - quick questions aligned with PovertyLens platform features
 const QUICK_QUESTIONS = [
-  "What is PovertyLens?",
   "How do I share a story?",
   "How does FreeRice work?",
-  "Where can I donate?",
-  "Show me poverty statistics",
+  "Where can I donate?"
 ];
 // End added by Marisol for Work Review 3
 
@@ -71,8 +68,7 @@ export default function AIChatBot() {
     }
   }, [isOpen]);
 
-  // Modified by Marisol for Work Review 3 - added optional overrideText param for quick question buttons
-  const sendMessage = useCallback(async (overrideText?: string) => {
+  const sendMessage = useCallback(async (overrideText?: string) => { // Modified by Marisol for Work Review 3 - added optional overrideText param for quick question buttons
     const trimmed = (overrideText ?? input).trim();
     if (!trimmed || isLoading) return;
 
@@ -111,8 +107,7 @@ export default function AIChatBot() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Added by Marisol for Work Review 3 - bump unread badge when chat is minimised
-      if (!isOpen) setUnreadCount((prev) => prev + 1);
+      if (!isOpen) setUnreadCount((prev) => prev + 1); // Added by Marisol for Work Review 3 - bump unread badge when chat is minimised
 
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
@@ -145,6 +140,7 @@ export default function AIChatBot() {
             height: "520px",
             animation: "chatSlideUp 0.3s ease-out",
           }}
+          // End of Modified by Marisol for Work Review 3 - CSS variables so all themes (light/dark/high-contrast) are respected
         >
           {/* ── Header ── */}
           {/* Modified by Marisol for Work Review 3 - site brand gradient + Sparkles + "Typing..." status */}
@@ -177,7 +173,7 @@ export default function AIChatBot() {
           {/* End header modification by Marisol for Work Review 3 */}
 
           {/* ── Messages ── */}
-          {/* Modified by Marisol for Work Review 3 - CSS variable background tint, works in all themes */}
+          {/* Start of Modified by Marisol for Work Review 3 - CSS variable background tint, works in all themes */}
           <div
             className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
             style={{
@@ -186,6 +182,7 @@ export default function AIChatBot() {
                 : "rgba(140,228,255,0.04)",
             }}
           >
+          {/* End of Modified by Marisol for Work Review 3 - CSS variable background tint, works in all themes */}
             {messages.map((msg) => (
               <div
                 key={msg.id}
@@ -201,6 +198,7 @@ export default function AIChatBot() {
                         : "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)",
                   }}
                 >
+                {/* End of Modified by Marisol for Work Review 3 - site gradient / orange for user */}
                   {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
 
@@ -221,6 +219,7 @@ export default function AIChatBot() {
                       boxShadow: "var(--shadow-sm)",
                     }}
                   >
+                  {/* End of Bubble - Modified by Marisol for Work Review 3 - CSS variables for all themes */}
                     <p
                       className="text-sm leading-relaxed whitespace-pre-wrap"
                       style={{ color: "var(--foreground)" }}
@@ -252,6 +251,7 @@ export default function AIChatBot() {
                     boxShadow: "var(--shadow-sm)",
                   }}
                 >
+                {/* End of Modified by Marisol for Work Review 3 - CSS variable colours */}
                   <Loader2
                     className="w-4 h-4 animate-spin"
                     style={{ color: "var(--color-cyan)" }}
@@ -306,7 +306,7 @@ export default function AIChatBot() {
           </div>
 
           {/* ── Input ── */}
-          {/* Modified by Marisol for Work Review 3 - CSS variables throughout */}
+          {/* Start of Modified by Marisol for Work Review 3 - CSS variables throughout */}
           <div
             className="flex-shrink-0 px-3 py-3 border-t"
             style={{
@@ -357,7 +357,7 @@ export default function AIChatBot() {
               Press Enter to send · Shift+Enter for new line
             </p>
           </div>
-          {/* End input modification by Marisol for Work Review 3 */}
+          {/* End of Modified by Marisol for Work Review 3 - CSS variables throughout */}
         </div>
       )}
 
