@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2, ChevronDown } from "lucide-react";
+// Modified by Marisol for Work Review 3 - added Sparkles for header
+import { MessageCircle, X, Send, Bot, User, Loader2, ChevronDown, Sparkles } from "lucide-react";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
@@ -19,6 +20,16 @@ const WELCOME_MESSAGE: Message = {
     "Hi! I'm the PovertyLens AI assistant. I can help you understand poverty statistics, navigate the platform, or find ways to take action. How can I help you today?",
 };
 
+// Added by Marisol for Work Review 3 - quick questions aligned with PovertyLens platform features
+const QUICK_QUESTIONS = [
+  "What is PovertyLens?",
+  "How do I share a story?",
+  "How does FreeRice work?",
+  "Where can I donate?",
+  "Show me poverty statistics",
+];
+// End added by Marisol for Work Review 3
+
 export default function AIChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
@@ -27,6 +38,24 @@ export default function AIChatBot() {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Added by Marisol for Work Review 3 - unread badge counter + quick questions visibility + dark mode detection
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showQuickQuestions, setShowQuickQuestions] = useState(true);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains("dark"));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) setUnreadCount(0);
+  }, [isOpen]);
+  // End added by Marisol for Work Review 3
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -42,8 +71,9 @@ export default function AIChatBot() {
     }
   }, [isOpen]);
 
-  const sendMessage = useCallback(async () => {
-    const trimmed = input.trim();
+  // Modified by Marisol for Work Review 3 - added optional overrideText param for quick question buttons
+  const sendMessage = useCallback(async (overrideText?: string) => {
+    const trimmed = (overrideText ?? input).trim();
     if (!trimmed || isLoading) return;
 
     const userMessage: Message = {
@@ -56,6 +86,7 @@ export default function AIChatBot() {
     setInput("");
     setIsLoading(true);
     setError(null);
+    setShowQuickQuestions(false); // Added by Marisol for Work Review 3 - hide quick questions after first message
 
     try {
       const history = [...messages, userMessage].filter((m) => m.id !== "welcome");
@@ -79,13 +110,17 @@ export default function AIChatBot() {
         content: data.reply,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Added by Marisol for Work Review 3 - bump unread badge when chat is minimised
+      if (!isOpen) setUnreadCount((prev) => prev + 1);
+
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       setError(msg);
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages]);
+  }, [input, isLoading, messages, isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -96,87 +131,196 @@ export default function AIChatBot() {
 
   return (
     <>
-      {/* Chat window */}
+      {/* ── Chat window ── */}
       {isOpen && (
         <div
-          className="fixed bottom-24 right-4 z-50 flex flex-col w-80 sm:w-96 h-[520px] rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+          className="fixed bottom-24 right-4 z-50 flex flex-col w-80 sm:w-96 rounded-2xl shadow-2xl overflow-hidden"
           role="dialog"
           aria-label="PovertyLens AI Chat"
+          // Modified by Marisol for Work Review 3 - CSS variables so all themes (light/dark/high-contrast) are respected
+          style={{
+            backgroundColor: "var(--background)",
+            border: "1.5px solid var(--color-gray-light)",
+            boxShadow: "var(--shadow-xl)",
+            height: "520px",
+            animation: "chatSlideUp 0.3s ease-out",
+          }}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-cyan-400 to-sky-500 dark:from-cyan-600 dark:to-sky-700">
-            <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-white" />
-              <span className="font-semibold text-white text-sm">PovertyLens AI</span>
-              <span className="w-2 h-2 rounded-full bg-green-300 animate-pulse" title="Online" />
+          {/* ── Header ── */}
+          {/* Modified by Marisol for Work Review 3 - site brand gradient + Sparkles + "Typing..." status */}
+          <div
+            className="flex-shrink-0 flex items-center justify-between px-5 py-4"
+            style={{ background: "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)" }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Bot className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
+                  PovertyLens AI
+                  <Sparkles className="w-3.5 h-3.5 text-white/80" />
+                </h3>
+                <p className="text-xs text-white/80">
+                  {isLoading ? "Typing..." : "Always here to help"}
+                </p>
+              </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
               aria-label="Close chat"
-              className="text-white hover:text-gray-200 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
             >
-              <ChevronDown className="w-5 h-5" />
+              <ChevronDown className="w-5 h-5 text-white" />
             </button>
           </div>
+          {/* End header modification by Marisol for Work Review 3 */}
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50 dark:bg-gray-900">
+          {/* ── Messages ── */}
+          {/* Modified by Marisol for Work Review 3 - CSS variable background tint, works in all themes */}
+          <div
+            className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(0,0,0,0.2)"
+                : "rgba(140,228,255,0.04)",
+            }}
+          >
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
               >
-                {/* Avatar */}
+                {/* Avatar - Modified by Marisol for Work Review 3 - site gradient / orange for user */}
                 <div
-                  className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-xs ${
-                    msg.role === "user"
-                      ? "bg-orange-400"
-                      : "bg-gradient-to-br from-cyan-400 to-sky-500"
-                  }`}
+                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs shadow-sm"
+                  style={{
+                    background:
+                      msg.role === "user"
+                        ? "var(--color-orange)"
+                        : "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)",
+                  }}
                 >
-                  {msg.role === "user" ? (
-                    <User className="w-4 h-4" />
-                  ) : (
-                    <Bot className="w-4 h-4" />
-                  )}
+                  {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
 
-                {/* Bubble */}
-                <div
-                  className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
-                    msg.role === "user"
-                      ? "bg-cyan-500 dark:bg-cyan-600 text-white rounded-tr-sm"
-                      : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-tl-sm shadow-sm border border-gray-100 dark:border-gray-700"
-                  }`}
-                >
-                  {msg.content}
+                {/* Bubble - Modified by Marisol for Work Review 3 - CSS variables for all themes */}
+                <div className={`max-w-[75%] ${msg.role === "user" ? "text-right" : ""}`}>
+                  <div
+                    className="rounded-xl px-4 py-2.5"
+                    style={{
+                      backgroundColor:
+                        msg.role === "assistant"
+                          ? isDark ? "rgba(140,228,255,0.1)" : "rgba(140,228,255,0.18)"
+                          : isDark ? "rgba(255,162,57,0.15)" : "rgba(255,162,57,0.2)",
+                      border: `1px solid ${
+                        msg.role === "assistant"
+                          ? "rgba(140,228,255,0.25)"
+                          : "rgba(255,162,57,0.25)"
+                      }`,
+                      boxShadow: "var(--shadow-sm)",
+                    }}
+                  >
+                    <p
+                      className="text-sm leading-relaxed whitespace-pre-wrap"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {msg.content}
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
 
             {/* Loading indicator */}
             {isLoading && (
-              <div className="flex gap-2 flex-row">
-                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 flex items-center justify-center">
+              <div className="flex gap-2">
+                <div
+                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                  style={{
+                    background: "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)",
+                  }}
+                >
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
-                  <Loader2 className="w-4 h-4 animate-spin text-cyan-500" />
+                {/* Modified by Marisol for Work Review 3 - CSS variable colours */}
+                <div
+                  className="rounded-xl px-4 py-2.5 flex items-center gap-2"
+                  style={{
+                    backgroundColor: isDark ? "rgba(140,228,255,0.1)" : "rgba(140,228,255,0.18)",
+                    border: "1px solid rgba(140,228,255,0.25)",
+                    boxShadow: "var(--shadow-sm)",
+                  }}
+                >
+                  <Loader2
+                    className="w-4 h-4 animate-spin"
+                    style={{ color: "var(--color-cyan)" }}
+                  />
+                  <span className="text-sm" style={{ color: "var(--color-gray)" }}>
+                    Thinking...
+                  </span>
                 </div>
               </div>
             )}
 
+            {/* Added by Marisol for Work Review 3 - quick questions, hidden after first user message */}
+            {showQuickQuestions && messages.length === 1 && !isLoading && (
+              <div className="pt-1">
+                <p
+                  className="text-xs font-semibold mb-2 px-1 tracking-wide"
+                  style={{ color: "var(--color-gray)" }}
+                >
+                  QUICK QUESTIONS
+                </p>
+                <div className="space-y-2">
+                  {QUICK_QUESTIONS.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => sendMessage(q)}
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm hover:scale-[1.02] active:scale-[0.98]"
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(140,228,255,0.08)"
+                          : "rgba(140,228,255,0.13)",
+                        border: "1px solid rgba(140,228,255,0.3)",
+                        color: "var(--color-cyan)",
+                        transition: "transform var(--transition-fast), background-color var(--transition-fast)",
+                      }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* End added by Marisol for Work Review 3 */}
+
             {/* Error message */}
             {error && (
-              <p className="text-xs text-red-500 dark:text-red-400 text-center px-2">{error}</p>
+              <p className="text-xs text-center px-2" style={{ color: "var(--color-red)" }}>
+                {error}
+              </p>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="px-3 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="flex items-end gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl px-3 py-2">
+          {/* ── Input ── */}
+          {/* Modified by Marisol for Work Review 3 - CSS variables throughout */}
+          <div
+            className="flex-shrink-0 px-3 py-3 border-t"
+            style={{
+              borderColor: "var(--color-gray-light)",
+              backgroundColor: "var(--background)",
+            }}
+          >
+            <div
+              className="flex items-end gap-2 rounded-xl px-3 py-2"
+              style={{
+                backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+                border: "1px solid var(--color-gray-light)",
+              }}
+            >
               <textarea
                 ref={inputRef}
                 value={input}
@@ -184,35 +328,71 @@ export default function AIChatBot() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything about poverty..."
                 rows={1}
-                className="flex-1 resize-none bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none max-h-28 leading-relaxed"
+                className="flex-1 resize-none bg-transparent text-sm outline-none max-h-28 leading-relaxed"
+                style={{ color: "var(--foreground)" }}
                 aria-label="Chat input"
               />
               <button
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 disabled={!input.trim() || isLoading}
                 aria-label="Send message"
                 suppressHydrationWarning
-                className="flex-shrink-0 p-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white"
+                // Modified by Marisol for Work Review 3 - site gradient when active, gray when disabled
+                className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  background:
+                    input.trim() && !isLoading
+                      ? "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)"
+                      : "var(--color-gray-light)",
+                  color: "white",
+                }}
               >
                 <Send className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] text-gray-400 dark:text-gray-600 text-center mt-1.5">
+            <p
+              className="text-xs text-center mt-1.5"
+              style={{ color: "var(--color-gray)" }}
+            >
               Press Enter to send · Shift+Enter for new line
             </p>
           </div>
+          {/* End input modification by Marisol for Work Review 3 */}
         </div>
       )}
 
-      {/* FAB toggle button */}
-      <button
-        onClick={() => setIsOpen((o) => !o)}
-        aria-label={isOpen ? "Close AI chat" : "Open AI chat"}
-        suppressHydrationWarning
-        className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white"
-      >
-        {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-      </button>
+      {/* ── FAB toggle button ── */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <button
+          onClick={() => setIsOpen((o) => !o)}
+          aria-label={isOpen ? "Close AI chat" : "Open AI chat"}
+          suppressHydrationWarning
+          className="relative w-14 h-14 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white"
+        >
+          {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+        </button>
+
+
+        {/* Added by Marisol for Work Review 3 - unread message badge */}
+            {!isOpen && unreadCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center animate-pulse pointer-events-none"
+                  style={{ backgroundColor: "var(--color-red)", color: "#fff" }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+          {/* End added by Marisol for Work Review 3 */}
+
+      {/* Added by Marisol for Work Review 3 - slide-up animation for chat window */}
+      <style jsx>{`
+        @keyframes chatSlideUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      {/* End added by Marisol for Work Review 3 */}
     </>
   );
 }
