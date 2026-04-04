@@ -279,6 +279,18 @@ export default function Navbar() {
                                                         Poverty Timeline
                                                     </Link>
 
+                                                    {/* Poverty Rates Map Timeline Reymes */}
+                                                    <Link
+                                                        href="/map-timeline"
+                                                        className="flex items-center gap-2 px-4 py-2.5 text-sm transition-all duration-200"
+                                                        style={{ color: 'var(--foreground)' }}
+                                                        onMouseEnter={e => hoverStyle(e, true)}
+                                                        onMouseLeave={e => hoverStyle(e, false)}
+                                                        onClick={() => { setResourcesOpen(false); setEduOpen(false); }}
+                                                    >
+                                                        Poverty Rates Map Timeline
+                                                    </Link>
+
                                                     {/* Poverty Glossary */}
                                                     <Link
                                                         href="glossary"
@@ -548,6 +560,13 @@ export default function Navbar() {
                                                     onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
                                                 >
                                                     Poverty Timeline
+                                                </Link>
+                                                <Link
+                                                    href="map-timeline"
+                                                    className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-[#FFA239]"
+                                                    onClick={() => { setResourcesOpen(false); setMobileMenuOpen(false); setMobileEduOpen(false); }}
+                                                >
+                                                    Poverty Rates Map Timeline
                                                 </Link>
                                                 <Link
                                                     href="glossary"
