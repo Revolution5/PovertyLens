@@ -23,6 +23,7 @@ const currencyRouter = require('./routes/currency'); // added by daniel q. - 3/1
 const { router: activityLogRouter } = require('./routes/activitylog'); // Added by Marisol - 03/05/2026
 const glossaryRoutes = require('./routes/glossaryRoutes'); // Added by Christella - 03/17/2026
 const chatRouter = require('./routes/chat'); // Added by Reymes - 03/24/2026
+const adminRoutes = require('./routes/admin'); // Added by Marisol for WORK REVIEW 3
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
@@ -35,6 +36,8 @@ app.use(express.urlencoded({ extended: true }))
 // Serve uploaded files as static files so they can be accessed via URL 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // End of Marisol Morales Code 1/28/26 ===============
+
+app.use('/api/admin', adminRoutes); // added by Marisol for WORK REVIEW 3
 
 // Mount routes
 app.use('/api/notifications', notificationsRouter);

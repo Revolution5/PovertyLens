@@ -2,9 +2,9 @@
 // Created by Marisol Morales for Work Review 3
 
 "use client"
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '@/components/ThemeProvider'; // Marisol's ThemeProvider - provides isDark via theme === 'dark'
-import { Users, Heart, FileText, Gamepad2, ArrowUpRight, ArrowDownRight, Globe } from 'lucide-react';
+import { Users, Heart, FileText, Gamepad2, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -40,39 +40,41 @@ interface ReportedStory {
 }
 //END Added by Damon - 04/03/2026
 
-// ============== Mock data for PovertyLens metrics ==============
-const userGrowthData = [
-  { month: 'Jan', users: 450, stories: 120 },
-  { month: 'Feb', users: 680, stories: 185 },
-  { month: 'Mar', users: 920, stories: 250 },
-  { month: 'Apr', users: 1240, stories: 340 },
-  { month: 'May', users: 1680, stories: 480 },
-  { month: 'Jun', users: 2341, stories: 650 },
-];
+// Analytics types
+interface DashboardStats {
+  totalUsers: number;
+  storiesShared: number;
+  riceDonated: number;
+  donationsMade: number;
+  usersChange: string;
+  storiesChange: string;
+  riceChange: string;
+  donationsChange: string;
+}
 
-const donationData = [
-  { organization: 'UNICEF', amount: 12500 },
-  { organization: 'Red Cross', amount: 9800 },
-  { organization: 'World Food', amount: 8200 },
-  { organization: 'Save Children', amount: 6500 },
-  { organization: 'Oxfam', amount: 5100 },
-];
+interface UserGrowthPoint {
+  month: string;
+  users: number;
+  stories: number;
+}
 
-const riceData = [
-  { week: 'Week 1', grains: 12500, players: 145 },
-  { week: 'Week 2', grains: 18200, players: 198 },
-  { week: 'Week 3', grains: 24100, players: 256 },
-  { week: 'Week 4', grains: 31500, players: 312 },
-];
+interface DonationPoint {
+  month: string;
+  amount: number;
+}
 
-// ============== End mock data ==============
+interface RicePoint {
+  period: string;
+  grains: number;
+  players: number;
+}
 
 // ============== Stat Card ==============
 interface StatCardProps {
   title: string;
   value: string;
   change: string;
-  trend: 'up' | 'down';
+  trend: 'up' | 'down' | 'neutral';
   icon: any;
   color: string;
 }
@@ -102,11 +104,22 @@ function StatCard({ title, value, change, trend, icon: Icon, color }: StatCardPr
         <div
           className="flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full"
           style={{
-            backgroundColor: trend === 'up' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-            color: trend === 'up' ? '#22c55e' : '#ef4444',
+            backgroundColor:
+              trend === 'up'
+                ? 'rgba(34,197,94,0.1)'
+                : trend === 'down'
+                ? 'rgba(239,68,68,0.1)'
+                : 'rgba(156,163,175,0.15)', // gray
+            color:
+              trend === 'up'
+                ? '#22c55e'
+                : trend === 'down'
+                ? '#ef4444'
+                : '#9ca3af', // gray text
           }}
         >
-          {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+          {trend === 'up' && <ArrowUpRight className="w-3 h-3" />}
+          {trend === 'down' && <ArrowDownRight className="w-3 h-3" />}
           {change}
         </div>
       </div>
@@ -147,6 +160,33 @@ export default function AdminDashboardPage() {
   const [actionLoadingKey, setActionLoadingKey] = useState<string | null>(null);
 //END Added by Damon - 04/03/2026
 
+  // Analytics state
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState('');
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    storiesShared: 0,
+    riceDonated: 0,
+    donationsMade: 0,
+    usersChange: '+0%',
+    storiesChange: '+0%',
+    riceChange: '+0%',
+    donationsChange: '+0%',
+  });
+  const [userGrowthData, setUserGrowthData] = useState<UserGrowthPoint[]>([]);
+  const [donationData, setDonationData] = useState<DonationPoint[]>([]);
+  const [riceData, setRiceData] = useState<RicePoint[]>([]);
+  const [riceRange, setRiceRange] = useState<'7d' | '4w' | '4m'>('4w');
+
+  const getTrendFromChange = (change: string): 'up' | 'down' | 'neutral' => {
+    const value = parseFloat(change.replace('%', ''));
+
+    if (isNaN(value)) return 'neutral';
+    if (value > 0) return 'up';
+    if (value < 0) return 'down';
+    return 'neutral';
+  };
+
   // Recharts styles that adapt to dark/light mode
   const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
   const axisColor = isDark ? 'var(--color-gray)' : '#888';
@@ -156,6 +196,48 @@ export default function AdminDashboardPage() {
     borderRadius: '8px',
     color: 'var(--foreground)',
   };
+
+  // Analytics loading
+  const fetchAnalytics = useCallback(async (selectedRange?: '7d' | '4w' | '4m') => {
+    setAnalyticsLoading(true);
+    setAnalyticsError('');
+
+    try {
+      const rangeToUse = selectedRange || riceRange;
+      const res = await fetch(`${BACKEND_URL}/api/admin/analytics?range=${rangeToUse}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to load analytics');
+      }
+
+      setStats(data.stats || {
+        totalUsers: 0,
+        storiesShared: 0,
+        riceDonated: 0,
+        donationsMade: 0,
+        usersChange: '+0%',
+        storiesChange: '+0%',
+        riceChange: '+0%',
+        donationsChange: '+0%',
+      });
+
+      setUserGrowthData(Array.isArray(data.userGrowthData) ? data.userGrowthData : []);
+      setDonationData(Array.isArray(data.donationData) ? data.donationData : []);
+      setRiceData(Array.isArray(data.riceData) ? data.riceData : []);
+    } catch (err: any) {
+      setAnalyticsError(err?.message || 'Failed to load analytics');
+      setUserGrowthData([]);
+      setDonationData([]);
+      setRiceData([]);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [riceRange]);
+
+  useEffect(() => {
+    fetchAnalytics(riceRange);
+  }, [fetchAnalytics, riceRange]);
 
   //START Added by Damon - 04/03/2026
   const fetchReportedStories = useCallback(async () => {
@@ -402,12 +484,48 @@ export default function AdminDashboardPage() {
 {/* //END Added by Damon - 04/03/2026 */}
         {adminTab === 'analytics' && (
           <>
+            {analyticsLoading && (
+              <p style={{ color: 'var(--color-gray)' }}>Loading analytics...</p>
+            )}
+
+            {analyticsError && (
+              <p className="text-sm text-red-600">{analyticsError}</p>
+            )}
+
             {/* ── Stat Cards ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <StatCard title="Total Users"    value="2,341"   change="+38%" trend="up" icon={Users}    color="#8CE4FF" />
-              <StatCard title="Stories Shared" value="650"     change="+35%" trend="up" icon={FileText} color="#FEEE91" />
-              <StatCard title="Rice Donated"   value="86.3K"   change="+42%" trend="up" icon={Gamepad2} color="#FFA239" />
-              <StatCard title="Donations Made" value="$42,100" change="+28%" trend="up" icon={Heart}    color="#FF5656" />
+              <StatCard
+                title="Total Users"
+                value={stats.totalUsers.toLocaleString()}
+                change={stats.usersChange}
+                trend={getTrendFromChange(stats.usersChange)}
+                icon={Users}
+                color="#8CE4FF"
+              />
+              <StatCard
+                title="Stories Shared"
+                value={stats.storiesShared.toLocaleString()}
+                change={stats.storiesChange}
+                trend={getTrendFromChange(stats.storiesChange)}
+                icon={FileText}
+                color="#FEEE91"
+              />
+              <StatCard
+                title="Rice Donated"
+                value={`${(stats.riceDonated / 1000).toFixed(1)}K`}
+                change={stats.riceChange}
+                trend={getTrendFromChange(stats.riceChange)}
+                icon={Gamepad2}
+                color="#FFA239"
+              />
+              <StatCard
+                title="Donations Made"
+                value={`$${stats.donationsMade.toLocaleString()}`}
+                change={stats.donationsChange}
+                trend={getTrendFromChange(stats.donationsChange)}
+                icon={Heart}
+                color="#FF5656"
+              />
             </div>
 
             {/* ── Two column charts ── */}
@@ -428,11 +546,11 @@ export default function AdminDashboardPage() {
                 </ResponsiveContainer>
               </ChartCard>
 
-              <ChartCard title="Donations by Organization">
+              <ChartCard title="Donations by Month">
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={donationData}>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                    <XAxis dataKey="organization" stroke={axisColor} tick={{ fontSize: 11 }} angle={-12} textAnchor="end" height={60} />
+                    <XAxis dataKey="month" stroke={axisColor} tick={{ fontSize: 11 }} />
                     <YAxis stroke={axisColor} tick={{ fontSize: 12 }} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, 'Donations']} />
                     <Bar dataKey="amount" fill="#FF5656" name="Donations ($)" radius={[6, 6, 0, 0]} />
@@ -442,11 +560,60 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* ── FreeRice Activity ── */}
-            <ChartCard title="FreeRice Activity">
+            <ChartCard
+              title={
+                riceRange === '7d'
+                  ? 'FreeRice Activity (Past 7 Days)'
+                  : riceRange === '4w'
+                  ? 'FreeRice Activity (Past 4 Weeks)'
+                  : 'FreeRice Activity (Past 4 Months)'
+              }
+            >
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setRiceRange('7d')}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    backgroundColor: riceRange === '7d' ? '#8CE4FF' : 'transparent',
+                    border: riceRange === '7d' ? '1px solid #8CE4FF' : '1px solid var(--color-gray-light)',
+                    color: riceRange === '7d' ? '#111' : 'var(--foreground)',
+                  }}
+                >
+                  Past 7 Days
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRiceRange('4w')}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    backgroundColor: riceRange === '4w' ? '#8CE4FF' : 'transparent',
+                    border: riceRange === '4w' ? '1px solid #8CE4FF' : '1px solid var(--color-gray-light)',
+                    color: riceRange === '4w' ? '#111' : 'var(--foreground)',
+                  }}
+                >
+                  Past 4 Weeks
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRiceRange('4m')}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+                  style={{
+                    backgroundColor: riceRange === '4m' ? '#8CE4FF' : 'transparent',
+                    border: riceRange === '4m' ? '1px solid #8CE4FF' : '1px solid var(--color-gray-light)',
+                    color: riceRange === '4m' ? '#111' : 'var(--foreground)',
+                  }}
+                >
+                  Past 4 Months
+                </button>
+              </div>
+
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={riceData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                  <XAxis dataKey="week" stroke={axisColor} tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="period" stroke={axisColor} tick={{ fontSize: 12 }} />
                   <YAxis yAxisId="left"  stroke={axisColor} tick={{ fontSize: 12 }} />
                   <YAxis yAxisId="right" orientation="right" stroke={axisColor} tick={{ fontSize: 12 }} />
                   <Tooltip contentStyle={tooltipStyle} />
