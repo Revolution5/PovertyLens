@@ -344,7 +344,7 @@ export default function AIChatBot() {
                     input.trim() && !isLoading
                       ? "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)"
                       : "var(--color-gray-light)",
-                  color: "white",
+                  color: "var(--color-orange) 100%)",
                 }}
               >
                 <Send className="w-4 h-4" />
@@ -367,7 +367,12 @@ export default function AIChatBot() {
           onClick={() => setIsOpen((o) => !o)}
           aria-label={isOpen ? "Close AI chat" : "Open AI chat"}
           suppressHydrationWarning
-          className="relative w-14 h-14 rounded-full bg-gradient-to-br from-cyan-400 to-sky-500 hover:from-cyan-500 hover:to-sky-600 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white"
+          className="relative w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white"
+          style={{
+            background: isDark
+              ? "linear-gradient(135deg, #22d3ee 0%, #38bdf8 100%)"  // original light cyan
+              : "linear-gradient(135deg, #0e7490 0%, #1d4ed8 100%)", // darker teal→blue in light mode
+          }}
         >
           {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
         </button>
