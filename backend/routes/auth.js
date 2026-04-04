@@ -168,7 +168,7 @@ router.get('/user-by-email', async (req, res) => {
         username: user.username,
         profileImage: user.profileImage || null,
         bannerImage: user.bannerImage || null,
-        createdAt: user.createdAt,
+        createdAt: user.createdAt
       }
     });
     
