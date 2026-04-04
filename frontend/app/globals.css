@@ -819,3 +819,10 @@ svg {
   color: #ffffff !important;
 }
 /* ============== END HIGH CONTRAST SVG/ICON STYLES ============== */
+
+/* Added by Marisol Morales 3/24/2026 - Navigation Support (Focus Highlight Mode) */
+:root[data-focus-mode="true"] *:focus-visible {
+  outline: 3px solid var(--color-cyan) !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(140, 228, 255, 0.25);
+}
