@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../database');
+const { createMessage } = require('../helpers/messagesHelper');
 
 function monthLabel(date) {
   return date.toLocaleString('en-US', { month: 'short' });
@@ -325,6 +326,14 @@ router.patch('/users/suspend', async (req, res) => {
       { email },
       { $set: { suspended: !!suspend } }
     );
+
+    if (suspend) {
+      try {
+        await createMessage(email, 'suspension_issued', { suspensionDays: 7 });
+      } catch (msgErr) {
+        console.error('Failed to send suspension inbox message:', msgErr);
+      }
+    }
  
     console.log(`User ${email} ${suspend ? 'suspended' : 'unsuspended'} by admin`);
     res.json({ success: true, message: `User ${suspend ? 'suspended' : 'unsuspended'} successfully` });

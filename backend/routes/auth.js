@@ -87,13 +87,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    if (user.suspended) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account has been temporarily suspended. Please contact support for more information.'
-      });
-    }
-    // END Added by Marisol for work review 3 - Block banned and suspended users from logging in
+    // END Added by Marisol for work review 3 - Block banned users from logging in
     
     //Password hashing/encryption added by Damon
     const isPasswordValid = await bcrypt.compare(password, user.password);

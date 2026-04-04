@@ -94,7 +94,7 @@ export default function PledgeWallPage() {
   }, []);
 
   useEffect(() => {
-    if (message) {
+    if (message?.type === 'success') {
       const t = setTimeout(() => setMessage(null), 3000);
       return () => clearTimeout(t);
     }
