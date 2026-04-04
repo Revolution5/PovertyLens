@@ -1,10 +1,12 @@
 // Created by Marisol Morales for work review 3
 'use client';
 
-import React, { useState } from 'react'; // Removed useEffect - no longer needed for dark mode
+import React, { useEffect, useState } from 'react';
 import { Mail, MailOpen, Search, Archive, Trash2, Clock, CheckCircle2 } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider'; 
-import { mockMessages, Message, MessageType } from '@/lib/messageTemplates'; 
+import { Message, MessageType } from '@/lib/messageTemplates'; 
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 function getTypeBadge(type: MessageType): { label: string; color: string; bg: string; icon: any } {
   switch (type) {
@@ -29,19 +31,68 @@ export default function EnhancedInbox() {
   const { theme } = useTheme(); 
   const isDark = theme === 'dark';
   const [selected, setSelected] = useState<Message | null>(null);
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
+  useEffect(() => {
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) {
+      setMessages([]);
+      return;
+    }
+
+    const loadMessages = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/messages?email=${encodeURIComponent(userEmail)}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load messages');
+        }
+        setMessages(Array.isArray(data.messages) ? data.messages : []);
+      } catch (err) {
+        console.error('Error loading inbox messages:', err);
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+  }, []);
+
   const unread = messages.filter(m => !m.read).length;
 
-  const handleSelect = (msg: Message) => {
+  const handleSelect = async (msg: Message) => {
     setSelected(msg);
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, read: true } : m));
+
+    if (!msg.read) {
+      try {
+        await fetch(`${BACKEND_URL}/api/messages/${msg.id}/read`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        window.dispatchEvent(new Event('inboxUpdated'));
+      } catch (err) {
+        console.error('Error marking message as read:', err);
+      }
+    }
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setMessages(prev => prev.map(m => ({ ...m, read: true })));
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) return;
+
+    try {
+      await fetch(`${BACKEND_URL}/api/messages/read-all`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      window.dispatchEvent(new Event('inboxUpdated'));
+    } catch (err) {
+      console.error('Error marking all messages as read:', err);
+    }
   };
 
   const filteredMessages = messages.filter(msg => {

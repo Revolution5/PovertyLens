@@ -90,31 +90,4 @@ export function generateMessage(
   }
 }
 
-// Mock messages for development - replace with API call when backend is ready
-// TO DO
-export const mockMessages: Message[] = [
-  {
-    id: '1',
-    ...generateMessage('story_under_review', { storyTitle: 'Community Garden Initiative in Detroit' }),
-    date: '2026-04-03',
-    read: false,
-  },
-  {
-    id: '2',
-    ...generateMessage('warning_issued', { warningCount: 1 }),
-    date: '2026-04-02',
-    read: false,
-  },
-  {
-    id: '3',
-    ...generateMessage('story_approved', { storyTitle: 'My Experience with the Food Bank' }),
-    date: '2026-04-01',
-    read: true,
-  },
-  {
-    id: '4',
-    ...generateMessage('story_report_cleared', { storyTitle: 'Poverty in Rural Communities' }),
-    date: '2026-03-28',
-    read: true,
-  },
-];
+export const mockMessages: Message[] = [];

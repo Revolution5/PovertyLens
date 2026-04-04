@@ -5,6 +5,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb, ObjectId } = require('../database');
 const { createNotification } = require('../helpers/notificationshelper');
+const { createMessage } = require('../helpers/messagesHelper');
 const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 
 // Added by Christella - 12/10/2025
@@ -123,6 +124,14 @@ router.post('/:id/report', async (req, res) => {
 
     const db = getDb();
     const storiesCollection = db.collection('stories');
+    const story = await storiesCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
 
     const reportId = new ObjectId();
     const report = {
@@ -134,7 +143,7 @@ router.post('/:id/report', async (req, res) => {
     };
 
     const result = await storiesCollection.updateOne(
-      { _id: new ObjectId(id) },
+      { _id: story._id },
       {
         $push: { reports: report },
         $set: { updatedAt: new Date() },
@@ -153,6 +162,17 @@ router.post('/:id/report', async (req, res) => {
       message: 'Story report submitted',
       reportId,
     });
+
+    if (story.userEmail) {
+      try {
+        await createMessage(story.userEmail, 'story_under_review', {
+          storyTitle: story.title || 'Untitled Story',
+          reportedBy: reportedBy || null,
+        });
+      } catch (messageErr) {
+        console.error('Error creating inbox message for reported story:', messageErr);
+      }
+    }
   } catch (err) {
     console.error('Error reporting story:', err);
     res.status(500).json({
@@ -221,6 +241,14 @@ router.patch('/:id/report/:reportId/ignore', async (req, res) => {
     const db = getDb();
     const storiesCollection = db.collection('stories');
 
+    const story = await storiesCollection.findOne({ _id: new ObjectId(id) });
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
     const result = await storiesCollection.updateOne(
       { _id: new ObjectId(id) },
       {
@@ -236,18 +264,17 @@ router.patch('/:id/report/:reportId/ignore', async (req, res) => {
       }
     );
 
-    if (!result.matchedCount) {
-      return res.status(404).json({
-        success: false,
-        message: 'Story not found',
-      });
-    }
-
     if (!result.modifiedCount) {
       return res.status(404).json({
         success: false,
         message: 'Open report not found',
       });
+    }
+
+    try {
+      await createMessage(story.userEmail, 'story_report_cleared', { storyTitle: story.title });
+    } catch (msgErr) {
+      console.error('Failed to send report-cleared inbox message:', msgErr);
     }
 
     res.json({
@@ -378,9 +405,15 @@ router.delete('/:id', async (req, res) => {
     const db = getDb();
     const storiesCollection = db.collection('stories');
 
-    const result = await storiesCollection.deleteOne({
-      _id: new ObjectId(id),
-    });
+    const story = await storiesCollection.findOne({ _id: new ObjectId(id) });
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const result = await storiesCollection.deleteOne({ _id: new ObjectId(id) });
 
     if (!result.deletedCount) {
       return res.status(404).json({
@@ -392,6 +425,12 @@ router.delete('/:id', async (req, res) => {
     // Added by Marisol - 03/05/2026
     if (deleteEmail) await logActivity(deleteEmail, 'Deleted story', '', req);
     // End of addition by Marisol - 03/05/2026
+
+    try {
+      await createMessage(story.userEmail, 'story_removed', { storyTitle: story.title });
+    } catch (msgErr) {
+      console.error('Failed to send story-removed inbox message:', msgErr);
+    }
 
     res.json({
       success: true,

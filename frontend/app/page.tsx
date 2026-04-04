@@ -22,7 +22,6 @@ import { UserAppTour } from '@/components/UserAppTour'; // Separate tour specifi
 
 // Start of added by Marisol Morales for work review 3 - Inbox drawer component for user messages
 import { InboxDrawer } from '@/components/InboxDrawer';
-import { mockMessages } from '@/lib/messageTemplates';
 
 // End of addition by Marisol Morales for work review 3 - Inbox drawer
 
@@ -155,7 +154,7 @@ export default function Home() {
 
     // Start of Marisol Morales Work Review 3 - Inbox drawer state
     const [isInboxOpen, setIsInboxOpen] = useState(false);
-    const unreadCount = mockMessages.filter(m => !m.read).length; // unread badge count
+    const [unreadCount, setUnreadCount] = useState(0);
     // End of Marisol Morales Work Review 3 - Inbox drawer state
 
     // Check if user is logged in when page loads
@@ -207,6 +206,7 @@ export default function Home() {
             // ============== Fetch FreeRice Total Grains - Added by Marisol 2/3/2026 ==============
             fetchUserTotalGrains(userEmail);
             // ============== End Fetch FreeRice Total Grains ==============
+            fetchInboxUnreadCount(userEmail);
         } else {
             //Daily Facts added by Damon
             //if not logged in, fetch daily fact
@@ -225,6 +225,33 @@ export default function Home() {
             })();
         }
     }, []);
+
+    useEffect(() => {
+        const refreshInbox = () => {
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                fetchInboxUnreadCount(userEmail);
+            }
+        };
+
+        window.addEventListener('inboxUpdated', refreshInbox);
+        return () => window.removeEventListener('inboxUpdated', refreshInbox);
+    }, []);
+
+    async function fetchInboxUnreadCount(email: string) {
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/messages?email=${encodeURIComponent(email)}`);
+            const data = await res.json();
+            if (data?.success && Array.isArray(data.messages)) {
+                setUnreadCount(data.messages.filter((message: { read: boolean }) => !message.read).length);
+            } else {
+                setUnreadCount(0);
+            }
+        } catch (err) {
+            console.error('Error fetching inbox count:', err);
+            setUnreadCount(0);
+        }
+    }
 
     // ============== Fetch User's Total FreeRice Grains - Added by Marisol 2/3/2026 ==============
     async function fetchUserTotalGrains(email: string) {

@@ -8,7 +8,9 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, MailOpen, ChevronRight } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
-import { mockMessages, MessageType } from '@/lib/messageTemplates';
+import { Message, MessageType } from '@/lib/messageTemplates';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 interface InboxDrawerProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ function getTypeBadge(type: MessageType): { label: string; color: string; bg: st
 export function InboxDrawer({ isOpen, onClose }: InboxDrawerProps) {
   const { theme, contrast } = useTheme();
   const isDark = theme === 'dark';
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Track whether we're mounted on the client so createPortal is safe to call
   const [mounted, setMounted] = useState(false);
@@ -57,7 +60,33 @@ export function InboxDrawer({ isOpen, onClose }: InboxDrawerProps) {
     cursor: 'pointer',
   };
 
-  const unread = mockMessages.filter(m => !m.read).length;
+  const unread = messages.filter(m => !m.read).length;
+
+  useEffect(() => {
+    const loadMessages = async () => {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        setMessages([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/messages?email=${encodeURIComponent(userEmail)}`);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to load messages');
+        }
+        setMessages(Array.isArray(data.messages) ? data.messages.slice(0, 5) : []);
+      } catch (err) {
+        console.error('Error loading inbox drawer messages:', err);
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+    window.addEventListener('inboxUpdated', loadMessages);
+    return () => window.removeEventListener('inboxUpdated', loadMessages);
+  }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
@@ -129,20 +158,20 @@ export function InboxDrawer({ isOpen, onClose }: InboxDrawerProps) {
         {/* Message list — minHeight: 0 is critical so this flex child scrolls
             instead of growing past the container and pushing the footer off-screen */}
         <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
-          {mockMessages.length === 0 ? (
+          {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
               <MailOpen className="w-12 h-12" style={{ color: 'var(--color-gray-light)' }} />
               <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No messages yet</p>
             </div>
           ) : (
-            mockMessages.map((msg, i) => {
+            messages.map((msg, i) => {
               const badge = getTypeBadge(msg.type);
               return (
                 <div
                   key={msg.id}
                   className="px-6 py-4 cursor-pointer transition-colors"
                   style={{
-                    borderBottom: i < mockMessages.length - 1 ? '1px solid var(--color-gray-light)' : 'none',
+                    borderBottom: i < messages.length - 1 ? '1px solid var(--color-gray-light)' : 'none',
                     backgroundColor: msg.read ? 'transparent' : (isDark ? 'rgba(140,228,255,0.04)' : 'rgba(140,228,255,0.06)'),
                   }}
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)'}
