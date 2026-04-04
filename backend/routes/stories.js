@@ -100,6 +100,169 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Added by Damon - 04/03/2026
+// Report a story with a required reason
+router.post('/:id/report', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason, reportedBy } = req.body || {};
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid story id',
+      });
+    }
+
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Report reason is required',
+      });
+    }
+
+    const db = getDb();
+    const storiesCollection = db.collection('stories');
+
+    const reportId = new ObjectId();
+    const report = {
+      _id: reportId,
+      reason: String(reason).trim(),
+      reportedBy: reportedBy ? String(reportedBy) : null,
+      status: 'open',
+      createdAt: new Date(),
+    };
+
+    const result = await storiesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $push: { reports: report },
+        $set: { updatedAt: new Date() },
+      }
+    );
+
+    if (!result.matchedCount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Story report submitted',
+      reportId,
+    });
+  } catch (err) {
+    console.error('Error reporting story:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while reporting story',
+    });
+  }
+});
+
+// Added by Copilot - 04/03/2026
+// List stories that have reports for admin review
+router.get('/reported', async (req, res) => {
+  try {
+    const status = (req.query.status || 'open').toString().toLowerCase();
+    const db = getDb();
+
+    const filter =
+      status === 'all'
+        ? { reports: { $exists: true, $ne: [] } }
+        : { reports: { $elemMatch: { status } } };
+
+    const stories = await db
+      .collection('stories')
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const normalizedStories = stories.map((story) => {
+      const reports = Array.isArray(story.reports) ? story.reports : [];
+      const filteredReports =
+        status === 'all' ? reports : reports.filter((r) => r?.status === status);
+
+      return {
+        ...story,
+        reports: filteredReports,
+      };
+    });
+
+    res.json({
+      success: true,
+      stories: normalizedStories,
+    });
+  } catch (err) {
+    console.error('Error fetching reported stories:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching reported stories.',
+    });
+  }
+});
+
+// Added by Copilot - 04/03/2026
+// Ignore a specific report while keeping the story
+router.patch('/:id/report/:reportId/ignore', async (req, res) => {
+  try {
+    const { id, reportId } = req.params;
+    const { reviewedBy } = req.body || {};
+
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(reportId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid id',
+      });
+    }
+
+    const db = getDb();
+    const storiesCollection = db.collection('stories');
+
+    const result = await storiesCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          'reports.$[target].status': 'ignored',
+          'reports.$[target].ignoredAt': new Date(),
+          'reports.$[target].reviewedBy': reviewedBy ? String(reviewedBy) : null,
+          updatedAt: new Date(),
+        },
+      },
+      {
+        arrayFilters: [{ 'target._id': new ObjectId(reportId), 'target.status': 'open' }],
+      }
+    );
+
+    if (!result.matchedCount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    if (!result.modifiedCount) {
+      return res.status(404).json({
+        success: false,
+        message: 'Open report not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Report ignored',
+    });
+  } catch (err) {
+    console.error('Error ignoring report:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while ignoring report',
+    });
+  }
+});
+
 // Edit route for the stories
 router.put('/:id', async (req, res) => {
   try {
