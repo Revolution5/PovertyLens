@@ -6,7 +6,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart, Globe } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart
+import { FileText, BookOpen, Gamepad2, Heart, Compass, HandHeart, Globe, Inbox } from 'lucide-react'; // Modified by Christella - 03/06/2026 - to include handheart; Added inbox by Marisol for work review 3
 
 // ============== Marisol Modified code for Fav Resources 2/5/2026 Begin ==============
 import { Star } from 'lucide-react';
@@ -19,6 +19,12 @@ import { AppTour } from '@/components/AppTour'; // Tour for non-logged-in users 
 // ============== User App Tour Component - Added by Marisol 2/25/2026 ==============
 import { UserAppTour } from '@/components/UserAppTour'; // Separate tour specifically for logged-in users on the dashboard - kept separate from AppTour intentionally
 // ============== End User App Tour Import ==============
+
+// Start of added by Marisol Morales for work review 3 - Inbox drawer component for user messages
+import { InboxDrawer } from '@/components/InboxDrawer';
+import { mockMessages } from '@/lib/messageTemplates';
+
+// End of addition by Marisol Morales for work review 3 - Inbox drawer
 
 // Added by Christella - 03/17/2026 - public bento pledge wall for the landing page
 import PledgeWallPublic from '@/components/PledgeWallPublic';
@@ -146,6 +152,11 @@ export default function Home() {
     // ============== User App Tour State - Added by Marisol 2/25/2026 ==============
     const [isUserTourOpen, setIsUserTourOpen] = useState(false); // controls the logged-in UserAppTour - kept separate from isTourOpen intentionally
     // ============== End User App Tour State ==============
+
+    // Start of Marisol Morales Work Review 3 - Inbox drawer state
+    const [isInboxOpen, setIsInboxOpen] = useState(false);
+    const unreadCount = mockMessages.filter(m => !m.read).length; // unread badge count
+    // End of Marisol Morales Work Review 3 - Inbox drawer state
 
     // Check if user is logged in when page loads
     useEffect(() => {
@@ -367,17 +378,41 @@ export default function Home() {
                             </div>
                             {/* ============== User App Tour Button - Added by Marisol 2/25/2026 ============== */}
                             {/* Separate from the public AppTour button - this one only appears for logged-in users */}
-                            <button
-                                onClick={() => setIsUserTourOpen(true)} // opens UserAppTour, not AppTour
-                                className="group px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-3"
-                                style={{
-                                    background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
-                                    color: 'white'
-                                }}
-                            >
-                                <Compass className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
-                                <span>Take the Tour</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {/* Added by Marisol for Work Review 3 - Inbox button with unread badge */}
+                                <button
+                                    onClick={() => setIsInboxOpen(true)}
+                                    className="relative p-3 rounded-xl transition-all hover:scale-105"
+                                    style={{
+                                        backgroundColor: 'var(--color-gray-light)',
+                                        color: 'var(--foreground)',
+                                    }}
+                                    aria-label="Open inbox"
+                                >
+                                    <Inbox className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span
+                                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center"
+                                            style={{ backgroundColor: '#FF5656' }}
+                                        >
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+                                {/* End inbox button  */}
+
+                                <button
+                                    onClick={() => setIsUserTourOpen(true)} // opens UserAppTour, not AppTour
+                                    className="group px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-3"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #FFA239 0%, #FF5656 100%)',
+                                        color: 'white'
+                                    }}
+                                >
+                                    <Compass className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" />
+                                    <span>Take the Tour</span>
+                                </button>
+                            </div>
                             {/* ============== End User App Tour Button ============== */}
                         </div>
                     </div>
@@ -528,6 +563,10 @@ export default function Home() {
                 {/* Kept completely separate from <AppTour> which is only rendered in the non-logged-in return below */}
                 <UserAppTour isOpen={isUserTourOpen} onClose={() => setIsUserTourOpen(false)} />
                 {/* ============== End User App Tour Component ============== */}
+
+                {/* Start of Marisol Morales Work Review 3 - Inbox slide-in drawer */}
+                <InboxDrawer isOpen={isInboxOpen} onClose={() => setIsInboxOpen(false)} />
+                {/* End inbox drawer */}
             </div>
         )
     }
