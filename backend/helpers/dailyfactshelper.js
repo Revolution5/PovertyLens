@@ -43,7 +43,10 @@ async function sendDailyFactReminder() {
       return;
     }
     
-    const users = await db.collection('users').find({}, { projection: { email: 1 } }).toArray();
+    const users = await db.collection('users').find(
+      { $or: [ { dailyFactsOptIn: { $exists: false } }, { dailyFactsOptIn: true } ] }, // modified by Marisol for work review 3
+      { projection: { email: 1 } }
+    ).toArray();
     const notificationsCollection = db.collection('notifications');
     
     const today = new Date();
