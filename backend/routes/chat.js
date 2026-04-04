@@ -1,10 +1,258 @@
 // Added by Reymes - 03/24/2026 - AI Chat route — calls Google Gemini (free tier) on behalf of the frontend
 // Two specialised bots route under the hood; the user sees one seamless assistant.
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env'), override: true });
 const express = require('express');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const fetch = require('node-fetch');
+// Added by Reymes 4/4/2026 - database context helpers for RAG (retrieval-augmented generation)
+const { getDb } = require('../database');
+const { getTodaysFact } = require('../helpers/dailyfactshelper');
 
 const router = express.Router();
+
+// Added by Reymes 4/4/2026 - single Gemini primary model; OpenRouter is the provider-level fallback.
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+
+// Added by Reymes 4/4/2026 - optional second provider fallback (GroqCloud free tier).
+const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+
+function isQuotaError(err) {
+  if (err?.status === 429) return true;
+  return Array.isArray(err?.errorDetails)
+    ? err.errorDetails.some((d) => d?.['@type']?.includes('QuotaFailure'))
+    : false;
+}
+
+async function sendWithGroq({ systemPrompt, safeMessages, botType }) {
+  if (!GROQ_API_KEY) {
+    const err = new Error('Groq API key is not configured.');
+    err.status = 503;
+    throw err;
+  }
+
+  const groqMessages = [
+    { role: 'system', content: systemPrompt },
+    ...safeMessages.map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content,
+    })),
+  ];
+
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: groqMessages,
+      max_tokens: botType === 'moderation' ? 200 : botType === 'research' ? 1400 : 800,
+    }),
+  });
+
+  const data = await resp.json().catch(() => ({}));
+
+  if (!resp.ok) {
+    const err = new Error(data?.error?.message || 'Groq request failed');
+    err.status = resp.status;
+    err.statusText = resp.statusText;
+    err.errorDetails = data?.error ? [data.error] : undefined;
+    throw err;
+  }
+
+  const reply = data?.choices?.[0]?.message?.content?.trim();
+  return {
+    reply: reply || "Sorry, I couldn't generate a response.",
+    modelUsed: `groq:${GROQ_MODEL}`,
+  };
+}
+
+// Added by Reymes 4/4/2026 - deterministic DB-first response path for common stats queries.
+async function getDirectDatabaseReply(question, botType) {
+  if (botType !== 'research') return null;
+
+  const asksForStats = /stats?|statistics|poverty rate|poverty gap|headcount|numbers?|data/i.test(question);
+  if (!asksForStats) return null;
+
+  const db = getDb();
+  if (!db) return null;
+
+  const detectedCodes = new Set();
+  for (const [name, code] of Object.entries(COUNTRY_NAME_TO_ISO3)) {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`\\b${escaped}\\b`, 'i').test(question)) {
+      detectedCodes.add(code);
+    }
+  }
+  if (detectedCodes.size === 0) return null;
+
+  const codes = [...detectedCodes].slice(0, 3);
+  const docs = await db.collection('povertyLiveStats')
+    .find({ country: { $in: codes } }, { projection: { country: 1, year: 1, povline: 1, metric: 1, meta: 1 } })
+    .sort({ year: -1 })
+    .toArray();
+
+  if (!docs.length) {
+    return 'I could not find cached PovertyLens statistics for that country yet. Please try again later or open the Statistics page to refresh live data.';
+  }
+
+  const byCountry = new Map();
+  for (const d of docs) {
+    if (!byCountry.has(d.country)) byCountry.set(d.country, d);
+  }
+
+  const lines = ['Here are the latest poverty statistics available on PovertyLens (World Bank PIP source):'];
+  for (const c of codes) {
+    const d = byCountry.get(c);
+    if (!d) continue;
+    const countryName = d.meta?.country_name || d.country;
+    const headcount = d.metric?.headcount != null ? `${(d.metric.headcount * 100).toFixed(1)}%` : 'N/A';
+    const gap = d.metric?.poverty_gap != null ? `${(d.metric.poverty_gap * 100).toFixed(1)}%` : 'N/A';
+    lines.push(`${countryName} (${d.year}, $${d.povline}/day): headcount poverty rate ${headcount}, poverty gap ${gap}.`);
+  }
+
+  return lines.join(' ');
+}
+
+// Added by Reymes 4/4/2026 - country name → ISO3 map used to detect country mentions and pull live stats
+const COUNTRY_NAME_TO_ISO3 = {
+  'afghanistan':'AFG','albania':'ALB','algeria':'DZA','angola':'AGO','argentina':'ARG',
+  'australia':'AUS','austria':'AUT','azerbaijan':'AZE','bangladesh':'BGD','belgium':'BEL',
+  'benin':'BEN','bolivia':'BOL','brazil':'BRA','bulgaria':'BGR','burkina faso':'BFA',
+  'burundi':'BDI','cambodia':'KHM','cameroon':'CMR','canada':'CAN',
+  'central african republic':'CAF','chad':'TCD','chile':'CHL','china':'CHN',
+  'colombia':'COL','congo':'COG','democratic republic of congo':'COD','drc':'COD',
+  'costa rica':'CRI','croatia':'HRV','czech republic':'CZE','denmark':'DNK',
+  'ecuador':'ECU','egypt':'EGY','el salvador':'SLV','ethiopia':'ETH','finland':'FIN',
+  'france':'FRA','germany':'DEU','ghana':'GHA','greece':'GRC','guatemala':'GTM',
+  'guinea':'GIN','haiti':'HTI','honduras':'HND','hungary':'HUN','india':'IND',
+  'indonesia':'IDN','iran':'IRN','iraq':'IRQ','ireland':'IRL','israel':'ISR',
+  'italy':'ITA','jamaica':'JAM','japan':'JPN','jordan':'JOR','kazakhstan':'KAZ',
+  'kenya':'KEN','laos':'LAO','lebanon':'LBN','liberia':'LBR','madagascar':'MDG',
+  'malawi':'MWI','malaysia':'MYS','mali':'MLI','mauritania':'MRT','mexico':'MEX',
+  'moldova':'MDA','mongolia':'MNG','morocco':'MAR','mozambique':'MOZ','myanmar':'MMR',
+  'namibia':'NAM','nepal':'NPL','netherlands':'NLD','new zealand':'NZL',
+  'nicaragua':'NIC','niger':'NER','nigeria':'NGA','north korea':'PRK','norway':'NOR',
+  'pakistan':'PAK','panama':'PAN','paraguay':'PRY','peru':'PER','philippines':'PHL',
+  'poland':'POL','portugal':'PRT','romania':'ROU','russia':'RUS','rwanda':'RWA',
+  'saudi arabia':'SAU','senegal':'SEN','sierra leone':'SLE','somalia':'SOM',
+  'south africa':'ZAF','south korea':'KOR','south sudan':'SSD','spain':'ESP',
+  'sri lanka':'LKA','sudan':'SDN','sweden':'SWE','switzerland':'CHE','syria':'SYR',
+  'taiwan':'TWN','tajikistan':'TJK','tanzania':'TZA','thailand':'THA',
+  'timor-leste':'TLS','togo':'TGO','trinidad':'TTO','tunisia':'TUN','turkey':'TUR',
+  'turkmenistan':'TKM','uganda':'UGA','ukraine':'UKR','united kingdom':'GBR',
+  'uk':'GBR','united states':'USA','usa':'USA','us':'USA','america':'USA',
+  'uruguay':'URY','uzbekistan':'UZB','venezuela':'VEN','vietnam':'VNM',
+  'yemen':'YEM','zambia':'ZMB','zimbabwe':'ZWE',
+};
+
+// Added by Reymes 4/4/2026 - fetch live data from PovertyLens DB to inject as context into Gemini prompts
+async function fetchDatabaseContext(question) {
+  const parts = [];
+  try {
+    const db = getDb();
+    if (!db) return '';
+
+    // 1. Glossary: find any glossary terms mentioned in the question
+    const words = question.split(/\s+/).filter(w => w.length >= 4);
+    if (words.length > 0) {
+      const pattern = words
+        .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|');
+      const glossaryMatches = await db.collection('glossary')
+        .find({ term: { $regex: pattern, $options: 'i' } }, { projection: { term: 1, definition: 1 } })
+        .limit(3)
+        .toArray();
+      if (glossaryMatches.length > 0) {
+        parts.push('=== PovertyLens Glossary Definitions ===');
+        for (const t of glossaryMatches) {
+          parts.push(`"${t.term}": ${t.definition}`);
+        }
+      }
+    }
+
+    // 2. Poverty statistics: detect country names and pull cached World Bank data
+    const detectedCodes = new Set();
+    for (const [name, code] of Object.entries(COUNTRY_NAME_TO_ISO3)) {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp(`\\b${escaped}\\b`, 'i').test(question)) {
+        detectedCodes.add(code);
+      }
+    }
+    if (detectedCodes.size > 0) {
+      const codes = [...detectedCodes].slice(0, 3);
+      const stats = await db.collection('povertyLiveStats')
+        .find({ country: { $in: codes } }, { projection: { country: 1, year: 1, povline: 1, metric: 1, meta: 1 } })
+        .sort({ year: -1 })
+        .limit(6)
+        .toArray();
+      if (stats.length > 0) {
+        parts.push('=== Live Poverty Statistics (World Bank PIP, cached in PovertyLens) ===');
+        for (const s of stats) {
+          const countryName = s.meta?.country_name || s.country;
+          const headcount = s.metric?.headcount != null
+            ? `${(s.metric.headcount * 100).toFixed(1)}%` : 'N/A';
+          const gap = s.metric?.poverty_gap != null
+            ? `${(s.metric.poverty_gap * 100).toFixed(1)}%` : 'N/A';
+          parts.push(
+            `${countryName} (${s.year}, $${s.povline}/day poverty line): ` +
+            `headcount poverty rate = ${headcount}, poverty gap = ${gap}`
+          );
+        }
+      }
+    }
+
+    // 3. FreeRice community totals
+    if (/freerice|rice|grain/i.test(question)) {
+      const agg = await db.collection('freericeDonations').aggregate([
+        { $group: { _id: null, totalGrains: { $sum: '$grains' }, totalDonations: { $sum: 1 } } },
+      ]).toArray();
+      if (agg[0]) {
+        parts.push('=== PovertyLens FreeRice Community Stats ===');
+        parts.push(
+          `Total grains donated by the PovertyLens community: ` +
+          `${agg[0].totalGrains.toLocaleString()} grains across ` +
+          `${agg[0].totalDonations.toLocaleString()} logged donations.`
+        );
+      }
+    }
+
+    // 4. Community story count
+    if (/stor(y|ies)|people shared|community/i.test(question)) {
+      const count = await db.collection('stories').countDocuments({});
+      parts.push('=== PovertyLens Community Stories ===');
+      parts.push(`The platform currently has ${count} community stories submitted by real people sharing their experiences with poverty.`);
+    }
+
+    // 5. Donations and pledges
+    if (/donat(e|ion|ions)|pledge/i.test(question)) {
+      const [donCount, pledgeCount] = await Promise.all([
+        db.collection('donations').countDocuments(),
+        db.collection('pledges').countDocuments(),
+      ]);
+      parts.push('=== PovertyLens Donation & Pledge Activity ===');
+      parts.push(`Total donations logged on the platform: ${donCount}. Total pledges made: ${pledgeCount}.`);
+    }
+
+    // 6. Daily fact
+    if (/daily fact|fact of the day|today.{0,3}fact|interesting fact/i.test(question)) {
+      const fact = await getTodaysFact();
+      if (fact) {
+        parts.push("=== Today's Daily Poverty Fact ===");
+        parts.push(`${fact.title ? fact.title + ': ' : ''}${fact.text}`);
+      }
+    }
+
+  } catch (err) {
+    console.error('[Chat] Error fetching database context:', err);
+  }
+
+  if (parts.length === 0) return '';
+  return `\n\n--- Live PovertyLens Data (use this to answer the user accurately) ---\n${parts.join('\n')}\n---`;
+}
+// End Added by Reymes 4/4/2026 - database context helpers for RAG
 
 // ── Bot 1: Research Analyst ───────────────────────────────────────────────────
 // Handles questions about poverty data, statistics, definitions, history, causes.
@@ -18,9 +266,11 @@ You specialise in:
 
 Guidelines:
 - Be analytical, precise, and compassionate.
-- Never invent statistics — always direct users to the Statistics or Timeline pages on PovertyLens for verified data.
-- If a term is in the PovertyLens Glossary, mention they can look it up there.
+- When live PovertyLens data is provided below your instructions, use it to give accurate, specific answers. Always cite it as coming from the PovertyLens platform (sourced from the World Bank PIP).
+- If a term is in the PovertyLens Glossary and its definition is provided below, quote it directly.
+- If no live data is provided for a specific country or term, say so honestly and direct the user to the Statistics or Glossary pages.
 - Keep answers concise and factual.
+- Use plain text only. Do not use Markdown formatting (no asterisks, no bold markers, no bullet points).
 - If the question is really about how to use the platform, gently answer it but note you are primarily a research assistant.`;
 
 // ── Bot 2: Platform Guide - Work done by Marisol for Work Review 3 ─────────────────────────────────────────────────────
@@ -42,9 +292,10 @@ Tone guidelines:
 - Be warm, encouraging, and concise — never cold or robotic.
 - Use simple, accessible language; avoid jargon.
 - Keep answers short and actionable — the user should always know what to do next.
-- If a question is data or statistics heavy, redirect the user to the Statistics page for verified figures.
+- If live PovertyLens data is provided below your instructions, use it to answer the question directly and accurately.
+- Only redirect to the Statistics page if no live data was provided for the specific question.
 - Never make up platform features — if you are unsure, direct the user to explore the site or contact support.
-- Always respond in 2-3 sentences maximum. Never leave a sentence unfinished.
+- Keep responses concise (usually 2-5 sentences), but fully complete the answer.
 - Do not use emojis under any circumstances.`;
 
 // ── Bot 3: Moderation Bot - Work done by Marisol for Work Review 3 ─────────────────────────────────────────────────────
@@ -83,14 +334,22 @@ Tone guidelines:
 
 // Start of Added by Marisol for Work Review 3
 const MODERATION_PATTERN =
-  /\b(hate|kill|abuse|stupid|idiot|dumb|shut up|scam|fake|racist|sex|porn|nude|violent|threat|harm|suicide|self.harm|die|kys|write me|solve|summarise|summarize|essay|homework|assignment|calculate|equation)\b|(.)\1{4,}|[^\w\s,.!?]{4,}/i;
+  // Use non-capturing group for keywords so (.)\1{4,} correctly checks repeated characters.
+  /\b(?:hate|kill|abuse|stupid|idiot|dumb|shut up|scam|fake|racist|sex|porn|nude|violent|threat|harm|suicide|self.harm|die|kys|write me|solve|summarise|summarize|essay|homework|assignment|calculate|equation)\b|(.)\1{4,}|[^\w\s,.!?]{4,}/i;
 // End of Added by Marisol for Work Review 3
+// Modified by Reymes 4/4/2026 - added \bstats\b, rate, number, and tell me about so short queries like
 const RESEARCH_PATTERN =
-  /statistic|data|percent|%|poverty rate|poverty line|gini|coefficient|index|gdp|define|definition|what is|explain|how many|how much|cause[sd]?|effect[sd]?|impact[sd]?|histor|measur|income|wage|hunger|malnutrition|literacy|country|nation|region|global|world|report|study|research|fact|figure|\bnumber\b|billion|million|threshold|multidimensional|inequality|disparity|demographic/i;
+  /\bstats\b|statistic|\bdata\b|percent|%|poverty rate|poverty line|gini|coefficient|index|gdp|define|definition|what is|\btell me about\b|explain|how many|how much|cause[sd]?|effect[sd]?|impact[sd]?|histor|measur|income|wage|hunger|malnutrition|literacy|country|nation|region|global|world|report|study|research|\bfact[s]?\b|figure|\bnumber[s]?\b|billion|million|threshold|multidimensional|inequality|disparity|demographic|\brate[s]?\b/i;
 
 function classifyMessage(lastUserMessage) {
   if (MODERATION_PATTERN.test(lastUserMessage)) return 'moderation';
   if (RESEARCH_PATTERN.test(lastUserMessage)) return 'research';
+  // Modified by Reymes 4/4/2026 - treat any message that names a known country as a research query
+  const lower = lastUserMessage.toLowerCase();
+  for (const name of Object.keys(COUNTRY_NAME_TO_ISO3)) {
+    const escaped = name.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+    if (new RegExp(`\\b${escaped}\\b`, 'i').test(lower)) return 'research';
+  }
   return 'guide';
 }
 
@@ -125,12 +384,26 @@ router.post('/', async (req, res) => {
   // Classify based on the latest user message
   const lastUser = [...safeMessages].reverse().find((m) => m.role === 'user');
   const botType = lastUser ? classifyMessage(lastUser.content) : 'guide';
-  // start of modified by Marisol for Work Review 3 
-  const systemPrompt =
-  botType === 'research' ? RESEARCH_PROMPT :
-  botType === 'moderation' ? MODERATION_PROMPT :
-  GUIDE_PROMPT;
+  // start of modified by Marisol for Work Review 3
+  const basePrompt =
+    botType === 'research' ? RESEARCH_PROMPT :
+    botType === 'moderation' ? MODERATION_PROMPT :
+    GUIDE_PROMPT;
   // end of modified by Marisol for Work Review 3
+
+  // Added by Reymes 4/4/2026 - inject live DB data as context (RAG) for non-moderation messages
+  const dbContext = botType !== 'moderation' && lastUser
+    ? await fetchDatabaseContext(lastUser.content)
+    : '';
+  const systemPrompt = basePrompt + dbContext;
+
+  // Added by Reymes 4/4/2026 - DB-first answer path to reduce external AI usage and quota dependence.
+  const directReply = lastUser
+    ? await getDirectDatabaseReply(lastUser.content, botType)
+    : null;
+  if (directReply) {
+    return res.json({ reply: directReply, modelUsed: 'database-direct' });
+  }
 
   // Gemini expects 'model' instead of 'assistant' for role names
   const geminiHistory = safeMessages.slice(0, -1).map((m) => ({
@@ -141,26 +414,105 @@ router.post('/', async (req, res) => {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction: systemPrompt,
-    });
+    try {
+      const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        systemInstruction: systemPrompt,
+      });
 
-    const chat = model.startChat({
-      history: geminiHistory,
-      generationConfig: { 
-        maxOutputTokens: botType === 'moderation' ? 150 : 500 // modified by Marisol for Work Review 3 - shorter responses for moderation bot
-      },
-    });
+      const chat = model.startChat({
+        history: geminiHistory,
+        generationConfig: {
+          // modified by Marisol for Work Review 3 - shorter responses for moderation bot
+          // Modified by Reymes 4/4/2026 - increase non-moderation token budget to reduce truncation.
+          maxOutputTokens: botType === 'moderation' ? 200 : botType === 'research' ? 1600 : 900
+        },
+      });
 
-    const result = await chat.sendMessage(latestMessage);
-    const reply = result.response.text() ?? "Sorry, I couldn't generate a response.";
-    return res.json({ reply });
+      const result = await chat.sendMessage(latestMessage);
+      let reply = result.response.text() ?? "Sorry, I couldn't generate a response.";
+
+      // Auto-continue when output is cut by token limits so users get complete responses.
+      const finishReason = result.response?.candidates?.[0]?.finishReason;
+      if (finishReason === 'MAX_TOKENS') {
+        const continuation = await chat.sendMessage(
+          'Continue exactly where you left off and finish the response in complete sentences only.'
+        );
+        const extra = continuation.response.text() ?? '';
+        if (extra) {
+          reply = `${reply}\n${extra}`.trim();
+        }
+      }
+
+      return res.json({ reply, modelUsed: GEMINI_MODEL });
+    } catch (geminiErr) {
+      // Added by Reymes 4/4/2026 - second provider fallback when Gemini is unavailable or limited.
+      try {
+        const fallback = await sendWithGroq({
+          systemPrompt,
+          safeMessages,
+          botType,
+        });
+        return res.json({
+          reply: fallback.reply,
+          modelUsed: fallback.modelUsed,
+          fallbackFrom: GEMINI_MODEL,
+        });
+      } catch (groqErr) {
+        console.error('Groq fallback error:', groqErr);
+        const combinedErr = new Error('Both Gemini and Groq providers failed.');
+        combinedErr.status = groqErr?.status || geminiErr?.status || 502;
+        combinedErr.providerErrors = {
+          gemini: {
+            status: geminiErr?.status,
+            message: geminiErr?.message,
+          },
+          groq: {
+            status: groqErr?.status,
+            message: groqErr?.message,
+          },
+        };
+        combinedErr.errorDetails = groqErr?.errorDetails || geminiErr?.errorDetails;
+        throw combinedErr;
+      }
+    }
   } catch (err) {
     console.error('Chat route error:', err);
+
+    if (err?.providerErrors) {
+      return res.status(err.status || 502).json({
+        error: 'Both AI providers failed for this request. Check providerErrors for details.',
+        providerErrors: err.providerErrors,
+      });
+    }
+
+    const invalidKey =
+      err?.status === 400 &&
+      Array.isArray(err?.errorDetails) &&
+      err.errorDetails.some((d) => d?.reason === 'API_KEY_INVALID');
+
+    if (invalidKey) {
+      return res.status(503).json({
+        error: 'The AI service API key is invalid or expired. Please update GEMINI_API_KEY in backend/.env and restart the backend server.',
+      });
+    }
+
     if (err.status === 429) {
+      const quotaFailure = Array.isArray(err?.errorDetails)
+        ? err.errorDetails.find((d) => d?.['@type']?.includes('QuotaFailure'))
+        : null;
+      const retryInfo = Array.isArray(err?.errorDetails)
+        ? err.errorDetails.find((d) => d?.['@type']?.includes('RetryInfo'))
+        : null;
+      const retryDelay = retryInfo?.retryDelay || null;
+      const quotaMetric = quotaFailure?.violations?.[0]?.quotaMetric || null;
+
       return res.status(429).json({
-        error: 'The AI assistant is busy right now. Please wait a moment and try again.',
+        error: quotaMetric
+          ? 'Gemini API quota exceeded for the current model/key. Please wait and retry, switch models, or increase quota/billing in Google AI Studio.'
+          : 'Gemini API rate limit reached. Please wait and try again shortly. If this persists, check quota/billing in Google AI Studio.',
+        retryDelay,
+        quotaMetric,
       });
     }
     return res.status(502).json({
