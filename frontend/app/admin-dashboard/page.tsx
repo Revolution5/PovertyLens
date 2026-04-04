@@ -27,6 +27,22 @@ interface StoryReport {
   status: 'open' | 'ignored';
   createdAt?: string;
 }
+
+// START Added by Marisol for Work Review 3 - Contact form submission type
+interface ContactSubmission {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'pending' | 'replied';
+  reply?: string | null;
+  repliedAt?: string | null;
+  repliedBy?: string | null;
+  createdAt?: string;
+}
+// END Added by Marisol for Work Review 3
+
 // START Added by Damon - 04/03/2026 - Type for reported stories
 interface ReportedStory {
   _id: string;
@@ -121,7 +137,9 @@ export default function AdminDashboardPage() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
-  const [adminTab, setAdminTab] = useState<'analytics' | 'reports' | 'users'>('analytics');
+  // START Added by Marisol for Work Review 3 - added 'contacts' to tab union
+  const [adminTab, setAdminTab] = useState<'analytics' | 'reports' | 'users' | 'contacts'>('analytics');
+  // END Added by Marisol for Work Review 3
 
   // Reports state
   const [reportedStoriesLoading, setReportedStoriesLoading] = useState(false);
@@ -146,6 +164,14 @@ export default function AdminDashboardPage() {
   const [usersList, setUsersList] = useState<ManagedUser[]>([]);
   const [usersSearch, setUsersSearch] = useState('');
   const currentAdminEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : '';
+
+  // START Added by Marisol for Work Review 3 - Contact forms state (moved inside component)
+  const [contacts, setContacts] = useState<ContactSubmission[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactsError, setContactsError] = useState('');
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [replyLoading, setReplyLoading] = useState<string | null>(null);
+  // END Added by Marisol for Work Review 3
 
   const getTrendFromChange = (change: string): 'up' | 'down' | 'neutral' => {
     const value = parseFloat(change.replace('%', ''));
@@ -301,6 +327,46 @@ export default function AdminDashboardPage() {
     return u.email.toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q);
   });
 
+  // START Added by Marisol for Work Review 3 - fetch contact form submissions
+  const fetchContacts = useCallback(async () => {
+    setContactsLoading(true);
+    setContactsError('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/contact`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load');
+      setContacts(Array.isArray(data.contacts) ? data.contacts : []);
+    } catch (err: any) {
+      setContactsError(err?.message || 'Failed to load contact forms');
+    } finally {
+      setContactsLoading(false);
+    }
+  }, []);
+
+  // START Added by Marisol for Work Review 3 - send reply to contact form submission
+  const handleReply = useCallback(async (contactId: string) => {
+    const reply = replyText[contactId]?.trim();
+    if (!reply) return;
+    setReplyLoading(contactId);
+    try {
+      const adminEmail = localStorage.getItem('userEmail');
+      const res = await fetch(`${BACKEND_URL}/api/contact/${contactId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply, adminEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to send reply');
+      setReplyText((prev) => ({ ...prev, [contactId]: '' }));
+      await fetchContacts();
+    } catch (err: any) {
+      setContactsError(err?.message || 'Failed to send reply');
+    } finally {
+      setReplyLoading(null);
+    }
+  }, [replyText, fetchContacts]);
+  // END Added by Marisol for Work Review 3
+
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6" style={{ background: 'var(--background)' }}>
       <div className="max-w-7xl mx-auto space-y-8">
@@ -329,6 +395,7 @@ export default function AdminDashboardPage() {
             >
               Analytics
             </button>
+
             {/* START Added by Damon - 04/03/2026 - Reported Stories button */}
             <button
               type="button"
@@ -343,6 +410,7 @@ export default function AdminDashboardPage() {
               Reported Stories
             </button>
             {/* END Added by Damon - 04/03/2026 */}
+
             <button
               type="button"
               onClick={async () => { setAdminTab('users'); await fetchUsers(); }}
@@ -355,6 +423,21 @@ export default function AdminDashboardPage() {
             >
               User Management
             </button>
+
+            {/* START Added by Marisol for Work Review 3 - Contact Forms tab button */}
+            <button
+              type="button"
+              onClick={async () => { setAdminTab('contacts'); await fetchContacts(); }}
+              className="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: adminTab === 'contacts' ? '#22c55e' : 'rgba(34,197,94,0.1)',
+                border: '1px solid rgba(34,197,94,0.3)',
+                color: adminTab === 'contacts' ? '#fff' : '#22c55e',
+              }}
+            >
+              Contact Forms
+            </button>
+            {/* END Added by Marisol for Work Review 3 */}
           </div>
         </div>
 
@@ -417,7 +500,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* START Added by marisol for work review 3 - User Management Tab */}
+        {/* START Added by Marisol for work review 3 - User Management Tab */}
         {adminTab === 'users' && (
           <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--background)', border: '1px solid var(--color-gray-light)', boxShadow: 'var(--shadow-sm)' }}>
             <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
@@ -506,6 +589,76 @@ export default function AdminDashboardPage() {
           </div>
         )}
         {/* END Added by Marisol for work review 3 */}
+
+        {/* START Added by Marisol for Work Review 3 - Contact Forms Tab */}
+        {adminTab === 'contacts' && (
+          <div className="rounded-xl p-6" style={{ backgroundColor: 'var(--background)', border: '1px solid var(--color-gray-light)', boxShadow: 'var(--shadow-sm)' }}>
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Contact Form Submissions</h2>
+            {contactsLoading && <p style={{ color: 'var(--color-gray)' }}>Loading...</p>}
+            {contactsError && <p className="text-sm text-red-500 mb-3">{contactsError}</p>}
+            {!contactsLoading && contacts.length === 0 && (
+              <p style={{ color: 'var(--color-gray)' }}>No submissions yet.</p>
+            )}
+            <div className="space-y-4">
+              {contacts.map((c) => (
+                <div key={c.id} className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)', backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#fbfbfb' }}>
+                  {/* Submission header - name, email, status badge */}
+                  <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                    <div>
+                      <span className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>{c.name}</span>
+                      <span className="text-xs ml-2" style={{ color: 'var(--color-gray)' }}>{c.email}</span>
+                    </div>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                      style={{
+                        backgroundColor: c.status === 'replied' ? 'rgba(34,197,94,0.1)' : 'rgba(255,162,57,0.1)',
+                        color: c.status === 'replied' ? '#22c55e' : '#FFA239',
+                      }}
+                    >
+                      {c.status === 'replied' ? 'Replied' : 'Pending'}
+                    </span>
+                  </div>
+
+                  {/* Subject and message body */}
+                  <p className="text-xs font-semibold mb-1" style={{ color: 'var(--color-gray)' }}>Subject: {c.subject}</p>
+                  <p className="text-sm mb-3 whitespace-pre-wrap" style={{ color: 'var(--foreground)' }}>{c.message}</p>
+
+                  {/* Show existing reply if already replied */}
+                  {c.status === 'replied' && c.reply && (
+                    <div className="rounded-lg p-3 mb-3" style={{ backgroundColor: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)' }}>
+                      <p className="text-xs font-semibold mb-1" style={{ color: '#22c55e' }}>Your reply:</p>
+                      <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--foreground)' }}>{c.reply}</p>
+                    </div>
+                  )}
+
+                  {/* Reply textarea + send button — only shown for pending submissions */}
+                  {c.status === 'pending' && (
+                    <div className="space-y-2">
+                      <textarea
+                        rows={3}
+                        placeholder="Type your reply..."
+                        value={replyText[c.id] || ''}
+                        onChange={(e) => setReplyText((prev) => ({ ...prev, [c.id]: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg text-sm resize-none outline-none"
+                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', border: '1px solid var(--color-gray-light)', color: 'var(--foreground)' }}
+                      />
+                      <button
+                        type="button"
+                        disabled={!replyText[c.id]?.trim() || replyLoading === c.id}
+                        onClick={() => handleReply(c.id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: '#22c55e', color: '#fff' }}
+                      >
+                        {replyLoading === c.id ? 'Sending...' : 'Send Reply'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* END Added by Marisol for Work Review 3 */}
 
         {/* ── Analytics Tab ── */}
         {adminTab === 'analytics' && (

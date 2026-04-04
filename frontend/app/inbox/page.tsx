@@ -26,6 +26,10 @@ function getTypeBadge(type: MessageType): { label: string; color: string; bg: st
       return { label: 'Reinstated', color: '#22c55e', bg: 'rgba(34,197,94,0.15)', icon: CheckCircle2 };
     case 'ban_issued':
       return { label: 'Banned', color: '#FF5656', bg: 'rgba(255,86,86,0.15)', icon: Archive };
+    case 'contact_received':
+    return { label: 'Received', color: '#8CE4FF', bg: 'rgba(140,228,255,0.15)', icon: Mail };
+  case 'contact_reply':
+    return { label: 'Reply', color: '#22c55e', bg: 'rgba(34,197,94,0.15)', icon: CheckCircle2 };
   }
 }
 
