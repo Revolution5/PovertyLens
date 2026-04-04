@@ -62,6 +62,21 @@ export function InboxDrawer({ isOpen, onClose }: InboxDrawerProps) {
 
   const unread = messages.filter(m => !m.read).length;
 
+  const handleMessageClick = async (msg: Message) => {
+    if (!msg.read) {
+      setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, read: true } : m));
+      try {
+        await fetch(`${BACKEND_URL}/api/messages/${msg.id}/read`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        window.dispatchEvent(new Event('inboxUpdated'));
+      } catch (err) {
+        console.error('Error marking message as read:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     const loadMessages = async () => {
       const userEmail = localStorage.getItem('userEmail');
@@ -170,6 +185,7 @@ export function InboxDrawer({ isOpen, onClose }: InboxDrawerProps) {
                 <div
                   key={msg.id}
                   className="px-6 py-4 cursor-pointer transition-colors"
+                  onClick={() => handleMessageClick(msg)}
                   style={{
                     borderBottom: i < messages.length - 1 ? '1px solid var(--color-gray-light)' : 'none',
                     backgroundColor: msg.read ? 'transparent' : (isDark ? 'rgba(140,228,255,0.04)' : 'rgba(140,228,255,0.06)'),
