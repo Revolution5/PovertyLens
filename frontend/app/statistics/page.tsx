@@ -273,14 +273,21 @@ const CONTINENT_ISO3: Record<string, string[]> = {
 function StoryCard({ 
   // Added by Daniel
   story, 
-  userProfile 
+  userProfile,
+  onStoryReported
 }: { 
   story: Story; 
   userProfile?: UserProfile | null;
+  onStoryReported?: () => void;
 }) // End of addition by Daniel
   {
   const [expanded, setExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [reportSuccess, setReportSuccess] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const maxChars = 220;
   // Start of Marisol Code for dark mode support - 2/8/2026
   // Track if dark mode is active
@@ -345,6 +352,52 @@ function StoryCard({
   const preview = !needsTruncate ? text : text.slice(0, maxChars) + "...";
   const showName = story.displayName && userProfile?.username; // Added by Daniel
   const showPhoto = story.displayPhoto && userProfile?.profileImage; // Added by Daniel
+
+  const handleSubmitReport = async () => {
+    const trimmedReason = reportReason.trim();
+    if (!trimmedReason) {
+      setReportError("Please enter a reason before submitting your report.");
+      return;
+    }
+
+    setReportSubmitting(true);
+    setReportError("");
+    setReportSuccess("");
+
+    try {
+      const reportedBy = localStorage.getItem('userEmail');
+      const res = await fetch(`${BACKEND_URL}/api/stories/${story._id}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: trimmedReason,
+          reportedBy: reportedBy || null,
+        }),
+      });
+
+      const raw = await res.text();
+      let data: any = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok || !data?.success) {
+        const fallbackMessage = raw && raw.trim() ? raw.trim() : 'Failed to submit report';
+        throw new Error(data?.message || fallbackMessage);
+      }
+
+      setReportSuccess('Report submitted. Admins will review it.');
+      setReportReason('');
+      setReportOpen(false);
+      onStoryReported?.();
+    } catch (err: any) {
+      setReportError(err?.message || 'Unable to submit report right now.');
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
 
   return (
     <div 
@@ -479,8 +532,77 @@ function StoryCard({
             </svg>
             <span>{isSaved ? 'Saved' : 'Save'}</span>
           </button>
+          <button
+            onClick={() => {
+              setReportOpen((prev) => !prev);
+              setReportError("");
+              setReportSuccess("");
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: isDark ? 'rgba(255, 86, 86, 0.16)' : 'rgba(255, 86, 86, 0.1)',
+              color: '#ff5656',
+            }}
+            title="Report this story"
+          >
+            Report
+          </button>
           {/* save button - daniel q. 3/7/26 end */}
         </div>
+        {reportSuccess && (
+          <p className="mt-2 text-xs" style={{ color: '#22c55e' }}>
+            {reportSuccess}
+          </p>
+        )}
+        {reportOpen && (
+          <div
+            className="mt-3 p-3 rounded-lg border"
+            style={{ borderColor: 'var(--color-gray-light)', backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#fafafa' }}
+          >
+            <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+              Why are you reporting this story?
+            </label>
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              rows={3}
+              maxLength={500}
+              className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF5656]"
+              style={{ borderColor: 'var(--color-gray-light)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+              placeholder="Enter the reason for your report"
+            />
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                {reportReason.trim().length}/500
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReportOpen(false);
+                    setReportError("");
+                  }}
+                  className="px-3 py-1.5 text-xs rounded border"
+                  style={{ borderColor: 'var(--color-gray-light)', color: 'var(--foreground)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={reportSubmitting}
+                  onClick={handleSubmitReport}
+                  className="px-3 py-1.5 text-xs rounded font-semibold disabled:opacity-60"
+                  style={{ backgroundColor: '#FF5656', color: 'white' }}
+                >
+                  {reportSubmitting ? 'Submitting...' : 'Submit Report'}
+                </button>
+              </div>
+            </div>
+            {reportError && (
+              <p className="mt-2 text-xs text-red-600">{reportError}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
