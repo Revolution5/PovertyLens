@@ -106,7 +106,7 @@ router.post('/login', async (req, res) => {
         email: user.email, 
         username: user.username,
         id: user._id,
-        admin: user.admin ?? false  // Added by Damon - 04/03/2026
+        admin: user.admin ?? false  // Added by Marisol for work review 3 - Include admin status in login response
       }
     });
     
