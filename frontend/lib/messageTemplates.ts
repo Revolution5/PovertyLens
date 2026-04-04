@@ -8,8 +8,10 @@ export type MessageType =
   | 'suspension_issued'
   | 'unsuspension_issued'
   | 'ban_issued'
-  | 'story_report_cleared';
-
+  | 'story_report_cleared'
+  | 'contact_received'
+  | 'contact_reply';
+  
 export interface Message {
   id: string;
   type: MessageType;
@@ -96,7 +98,22 @@ export function generateMessage(
         subject: 'Report on your story has been cleared',
         body: `We have completed our review of the report made against your story "${context.storyTitle ?? 'your story'}". We found no violations of our community guidelines and your story remains published. Thank you for your patience during this process.`,
       };
+  case 'contact_received':
+  return {
+    type,
+    from,
+    subject: 'We received your message',
+    body: 'Thank you for reaching out to PovertyLens. We have received your message and will get back to you as soon as possible.',
+  };
+
+  case 'contact_reply':
+    return {
+      type,
+      from,
+      subject: 'A reply to your message',
+      body: 'The PovertyLens team has replied to your contact form submission. Please see the message above.',
+    };
+    }
   }
-}
 
 export const mockMessages: Message[] = [];

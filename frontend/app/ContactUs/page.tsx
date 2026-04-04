@@ -57,20 +57,25 @@ export default function Contact() {
   };
 
   // Handler function for form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent default form submission (page reload)
-    // Here you would typically send the form data to your backend
-    console.log('Form submitted:', formData); // Log form data to console
-    setIsSubmitted(true); // Show success message
-    
-    // Reset form after 3 seconds
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Failed to send.');
+    setIsSubmitted(true);
     setTimeout(() => {
-      // Clear all form fields
       setFormData({ name: '', email: '', subject: '', message: '' });
-      // Hide success message
       setIsSubmitted(false);
-    }, 3000); // 3000 milliseconds = 3 seconds
-  };
+    }, 3000);
+  } catch (err) {
+    console.error('Contact form error:', err);
+  }
+};
 
   return (
     // ============== Marisol Dark Mode: Updated background 2/10/2026 ============== //
