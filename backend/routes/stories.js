@@ -162,7 +162,7 @@ router.post('/:id/report', async (req, res) => {
   }
 });
 
-// Added by Copilot - 04/03/2026
+// Added by Damon - 04/03/2026
 // List stories that have reports for admin review
 router.get('/reported', async (req, res) => {
   try {
@@ -204,7 +204,7 @@ router.get('/reported', async (req, res) => {
   }
 });
 
-// Added by Copilot - 04/03/2026
+// Added by Damon - 04/03/2026
 // Ignore a specific report while keeping the story
 router.patch('/:id/report/:reportId/ignore', async (req, res) => {
   try {
