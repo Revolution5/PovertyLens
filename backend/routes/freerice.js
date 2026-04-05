@@ -10,6 +10,23 @@ const router = express.Router();
 const { getDb } = require('../database');
 const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 
+async function createNotification(userId, message) { // added daniel q. 4/4/26 start
+  try {
+    const db = getDb();
+    if (!db) return;
+    
+    const notification = {
+      userId: userId,
+      message: message,
+      read: false,
+      createdAt: new Date()
+    };
+    await db.collection('notifications').insertOne(notification);
+  } catch (err) {
+    console.error('Error creating notification:', err);
+  }
+}
+
 // Log manual donation
 router.post('/donate', async (req, res) => {
   try {
@@ -49,6 +66,12 @@ router.post('/donate', async (req, res) => {
 
     await db.collection('freericeDonations').insertOne(donation);
     await logActivity(email, 'Logged rice donation', `${grains} grains donated`, req); // Added by Marisol - 03/05/2026
+
+    await createNotification(
+      email,
+      `Thank you for donating ${grains.toLocaleString()} grains of rice through FreeRice!`
+    ); // added daniel q. 4/4/26 
+
 
     res.status(201).json({ success: true, message: 'Donation logged', donation });
   } catch (err) {

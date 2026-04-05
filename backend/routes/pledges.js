@@ -5,6 +5,21 @@ const express = require('express');
 const router = express.Router();
 const { getDb, ObjectId } = require('../database');
 
+async function createNotification(userId, message) { // added daniel q. 4/4/26 
+  try {
+    const db = getDb();
+    const notification = {
+      userId: userId,
+      message: message,
+      read: false,
+      createdAt: new Date()
+    };
+    await db.collection('notifications').insertOne(notification);
+  } catch (err) {
+    console.error('Error creating notification:', err);
+  }
+}
+
 // Preset pledges users can pick from
 const PRESET_PLEDGES = [
   { text: 'I will donate $5 this month to a poverty-relief organization.', category: 'donate' },
@@ -88,7 +103,14 @@ router.post('/', async (req, res) => {
     };
 
     const result = await db.collection('pledges').insertOne(newPledge);
-
+    // added daniel q. 4/4/26 start
+    if (userEmail) {
+      await createNotification(
+        userEmail,
+        `You created a new pledge: "${pledgeText.trim().substring(0, 50)}${pledgeText.trim().length > 50 ? '...' : ''}"`
+      );
+    }
+    // added daniel q. 4/4/26 start
     res.status(201).json({
       success: true,
       message: 'Pledge created successfully.',
@@ -127,6 +149,14 @@ router.patch('/:id/complete', async (req, res) => {
     if (!result.matchedCount) {
       return res.status(404).json({ success: false, message: 'Pledge not found.' });
     }
+    // added daniel q. 4/4/26 start
+    if (pledge.userEmail) {
+      await createNotification(
+        pledge.userEmail,
+        `Congratulations! You completed your pledge: "${pledge.pledgeText.substring(0, 50)}${pledge.pledgeText.length > 50 ? '...' : ''}"`
+      );
+    }
+    // added daniel q. 4/4/26 end
 
     res.json({ success: true, message: 'Pledge marked as completed!' });
   } catch (err) {
