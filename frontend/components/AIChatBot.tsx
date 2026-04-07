@@ -33,6 +33,7 @@ export default function AIChatBot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userProfileImage, setUserProfileImage] = useState<string | null>(null); // Added by Reymes 4/4/2026 - store user's profile image URL for chat avatars
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,6 +54,47 @@ export default function AIChatBot() {
     if (isOpen) setUnreadCount(0);
   }, [isOpen]);
   // End added by Marisol for Work Review 3
+
+  // Added by Reymes 4/4/2026 - load signed-in user's profile image for chat avatars
+  useEffect(() => {
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
+
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const loadProfileImage = async () => {
+      try {
+        const res = await fetch(
+          `${BACKEND_URL}/api/profile/user-images?email=${encodeURIComponent(email)}`,
+          { signal: controller.signal }
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (!data?.success || !data.profileImage || isCancelled) return;
+
+        const rawImageUrl = String(data.profileImage);
+        const fullImageUrl =
+          rawImageUrl.startsWith("http://") || rawImageUrl.startsWith("https://")
+            ? rawImageUrl
+            : `${BACKEND_URL}${rawImageUrl}`;
+
+        setUserProfileImage(fullImageUrl);
+      } catch (err) {
+        if (!(err instanceof Error && err.name === "AbortError")) {
+          console.error("Unable to load chat profile image", err);
+        }
+      }
+    };
+
+    loadProfileImage();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, []); //end of Added by Reymes 4/4/2026 - load signed-in user's profile image for chat avatars
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -146,7 +188,10 @@ export default function AIChatBot() {
           {/* Modified by Marisol for Work Review 3 - site brand gradient + Sparkles + "Typing..." status */}
           <div
             className="flex-shrink-0 flex items-center justify-between px-5 py-4"
-            style={{ background: "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)" }}
+            style={{
+              // Modified by Reymes 4/4/2026 - solid color header for clean, readable appearance.
+              background: isDark ? "#0f3c4a" : "#0b5a6e",
+            }}
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -190,7 +235,7 @@ export default function AIChatBot() {
               >
                 {/* Avatar - Modified by Marisol for Work Review 3 - site gradient / orange for user */}
                 <div
-                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs shadow-sm"
+                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs shadow-sm overflow-hidden" // Added overflow-hidden to ensure profile images are contained within avatar circle
                   style={{
                     background:
                       msg.role === "user"
@@ -199,8 +244,20 @@ export default function AIChatBot() {
                   }}
                 >
                 {/* End of Modified by Marisol for Work Review 3 - site gradient / orange for user */}
-                  {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  {msg.role === "user" && userProfileImage ? ( // Added by Reymes 4/4/2026 - show user's profile image in avatar if available, fallback to default icons
+                    <img
+                      src={userProfileImage}
+                      alt="Your profile picture"
+                      className="w-full h-full object-cover"
+                      onError={() => setUserProfileImage(null)}
+                    />
+                  ) : msg.role === "user" ? (
+                    <User className="w-4 h-4" />
+                  ) : (
+                    <Bot className="w-4 h-4" />
+                  )}
                 </div>
+                {/* End of Added by Reymes 4/4/2026 - show user's profile image in avatar if available, fallback to default icons */}
 
                 {/* Bubble - Modified by Marisol for Work Review 3 - CSS variables for all themes */}
                 <div className={`max-w-[75%] ${msg.role === "user" ? "text-right" : ""}`}>
@@ -283,7 +340,7 @@ export default function AIChatBot() {
                           ? "rgba(140,228,255,0.08)"
                           : "rgba(140,228,255,0.13)",
                         border: "1px solid rgba(140,228,255,0.3)",
-                        color: "var(--color-cyan)",
+                        color: "var(--foreground)", // Modified by Reymes 4/4/2026 - use foreground token so quick questions are readable.
                         transition: "transform var(--transition-fast), background-color var(--transition-fast)",
                       }}
                     >
@@ -308,14 +365,14 @@ export default function AIChatBot() {
           {/* ── Input ── */}
           {/* Start of Modified by Marisol for Work Review 3 - CSS variables throughout */}
           <div
-            className="flex-shrink-0 px-3 py-3 border-t"
+            className="flex-shrink-0 px-3 py-2 border-t" // adjusted padding for better spacing Reymes
             style={{
               borderColor: "var(--color-gray-light)",
               backgroundColor: "var(--background)",
             }}
           >
             <div
-              className="flex items-end gap-2 rounded-xl px-3 py-2"
+              className="flex items-center gap-2 rounded-xl px-3 py-0.5" //adjusted for better spacing Reymes
               style={{
                 backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
                 border: "1px solid var(--color-gray-light)",
@@ -328,7 +385,7 @@ export default function AIChatBot() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything about poverty..."
                 rows={1}
-                className="flex-1 resize-none bg-transparent text-sm outline-none max-h-28 leading-relaxed"
+                className="flex-1 resize-none bg-transparent text-sm outline-none h-8 max-h-8 leading-8 py-0"
                 style={{ color: "var(--foreground)" }}
                 aria-label="Chat input"
               />
@@ -338,13 +395,13 @@ export default function AIChatBot() {
                 aria-label="Send message"
                 suppressHydrationWarning
                 // Modified by Marisol for Work Review 3 - site gradient when active, gray when disabled
-                className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed" // adjusted for better spacing and added disabled styles Reymes
                 style={{
                   background:
                     input.trim() && !isLoading
                       ? "linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)"
                       : "var(--color-gray-light)",
-                  color: "var(--color-orange) 100%)",
+                  color: input.trim() && !isLoading ? "#ffffff" : "var(--color-gray)",// Modified by Reymes 4/4/2026 - fixed invalid color value and set high-contrast icon colors.
                 }}
               >
                 <Send className="w-4 h-4" />
@@ -369,9 +426,10 @@ export default function AIChatBot() {
           suppressHydrationWarning
           className="relative w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center text-white"
           style={{
+            // Modified by Reymes 4/4/2026 - deepened FAB gradient to improve icon contrast in light and dark modes.
             background: isDark
-              ? "linear-gradient(135deg, #22d3ee 0%, #38bdf8 100%)"  // original light cyan
-              : "linear-gradient(135deg, #0e7490 0%, #1d4ed8 100%)", // darker teal→blue in light mode
+              ? "linear-gradient(135deg, #0f4c5c 0%, #1e3a8a 100%)"
+              : "linear-gradient(135deg, #0b5a6e 0%, #1e40af 100%)",
           }}
         >
           {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}

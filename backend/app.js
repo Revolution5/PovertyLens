@@ -1,5 +1,5 @@
 //===== Created by Christella - 11/22/2025 =====//
-require('dotenv').config()
+require('dotenv').config({ override: true })
 const cors = require('cors')
 const express = require('express')
 const path = require('path')

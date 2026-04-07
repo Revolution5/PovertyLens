@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useEffect, useRef, useState } from "react"
 import { MapContainer, TileLayer, useMap } from "react-leaflet"
@@ -83,6 +83,9 @@ type Props = {
   showSchools?: boolean; // Added by Damon 3/19/26 - show school pins
   showHospitals?: boolean; // Added by Damon 3/19/26 - show hospital pins
   onSelectedFacilityDistanceChange?: (distanceKm: number | null) => void // Added by Damon 3/24/26 - sync right panel metric with map overlay
+  containerClassName?: string // Added 04/04/2026 - allows callers to override the default h-[360px] height
+  restrictBounds?: boolean   // Added 04/04/2026 - when true, prevents world-copy wrapping on edges
+  showLegend?: boolean // Added 04/04/2026 - allows pages like timeline to hide the in-map legend
 }
 
 // National rates now imported from data/nationalRates.ts - Reymes 3/2/26
@@ -106,7 +109,7 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "178": { lat: -0.2280, lng: 15.8277, name: "Congo" },
   "180": { lat: -4.0383, lng: 21.7587, name: "Democratic Republic of the Congo" },
   "262": { lat: 11.8251, lng: 42.5903, name: "Djibouti" }, // Added by Marisol Morales - 3/2/2026
-  "384": { lat: 7.5400, lng: -5.5471, name: "Côte d'Ivoire" },
+  "384": { lat: 7.5400, lng: -5.5471, name: "CÃ´te d'Ivoire" },
   "818": { lat: 26.8206, lng: 30.8025, name: "Egypt" },
   "226": { lat: 1.6508, lng: 10.2679, name: "Equatorial Guinea" }, // Added by Marisol Morales - 3/2/2026
   "232": { lat: 15.1794, lng: 39.7823, name: "Eritrea" }, // Added by Marisol Morales - 3/2/2026
@@ -132,7 +135,7 @@ const COORDS: Record<string, { lat: number; lng: number; name: string }> = {
   "562": { lat: 17.6078, lng: 8.0817, name: "Niger" },
   "566": { lat: 9.082, lng: 8.6753, name: "Nigeria" },
   "646": { lat: -1.9403, lng: 29.8739, name: "Rwanda" },
-  "678": { lat: 0.1864, lng: 6.6131, name: "São Tomé and Príncipe" }, // Added by Marisol Morales - 3/2/2026
+  "678": { lat: 0.1864, lng: 6.6131, name: "SÃ£o TomÃ© and PrÃ­ncipe" }, // Added by Marisol Morales - 3/2/2026
   "686": { lat: 14.4974, lng: -14.4524, name: "Senegal" },
   "694": { lat: 8.4606, lng: -11.7799, name: "Sierra Leone" },
   "706": { lat: 5.1521, lng: 46.1996, name: "Somalia" }, // Added by Marisol Morales - 3/2/2026
@@ -326,7 +329,7 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "178": { iso3: "COG", name: "Congo", geojsonName: "Republic of the Congo" },
   "180": { iso3: "COD", name: "Democratic Republic of the Congo", geojsonName: "Democratic Republic of the Congo" },
   "262": { iso3: "DJI", name: "Djibouti", geojsonName: "Djibouti" }, // Added by Marisol Morales - 3/2/2026
-  "384": { iso3: "CIV", name: "Côte d'Ivoire", geojsonName: "Ivory Coast" },
+  "384": { iso3: "CIV", name: "CÃ´te d'Ivoire", geojsonName: "Ivory Coast" },
   "818": { iso3: "EGY", name: "Egypt", geojsonName: "Egypt" },
   "226": { iso3: "GNQ", name: "Equatorial Guinea", geojsonName: "Equatorial Guinea" }, // Added by Marisol Morales - 3/2/2026
   "232": { iso3: "ERI", name: "Eritrea", geojsonName: "Eritrea" }, // Added by Marisol Morales - 3/2/2026
@@ -352,7 +355,7 @@ const COUNTRY_CODE_MAP: Record<string, { iso3: string; name: string; geojsonName
   "562": { iso3: "NER", name: "Niger", geojsonName: "Niger" },
   "566": { iso3: "NGA", name: "Nigeria", geojsonName: "Nigeria" },
   "646": { iso3: "RWA", name: "Rwanda", geojsonName: "Rwanda" },
-  "678": { iso3: "STP", name: "São Tomé and Príncipe", geojsonName: "São Tomé and Principe" }, // Added by Marisol Morales - 3/2/2026
+  "678": { iso3: "STP", name: "SÃ£o TomÃ© and PrÃ­ncipe", geojsonName: "SÃ£o TomÃ© and Principe" }, // Added by Marisol Morales - 3/2/2026
   "686": { iso3: "SEN", name: "Senegal", geojsonName: "Senegal" },
   "694": { iso3: "SLE", name: "Sierra Leone", geojsonName: "Sierra Leone" },
   "706": { iso3: "SOM", name: "Somalia", geojsonName: "Somalia" }, // Added by Marisol Morales - 3/2/2026
@@ -563,7 +566,19 @@ export default function StatisticsMapLeaflet({
   showSchools = false,
   showHospitals = false,
   onSelectedFacilityDistanceChange,
+  containerClassName,
+  restrictBounds = false,
+  showLegend = true,
 }: Props) {
+  const [canRenderMap, setCanRenderMap] = useState(false)
+  const [leafletReady, setLeafletReady] = useState(false)
+
+  // Delay Leaflet initialization by one animation frame so the container is attached to DOM.
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => setCanRenderMap(true))
+    return () => window.cancelAnimationFrame(rafId)
+  }, [])
+
   //START added by Damon 3/24/26
   const [geojsonData, setGeojsonData] = useState<{ features: Record<string, unknown>[] } | null>(null)
   const [map, setMap] = useState<L.Map | null>(null)
@@ -829,7 +844,7 @@ export default function StatisticsMapLeaflet({
     // Helper function to create custom icon
     const createFacilityIcon = (type: "school" | "hospital") => {
       const iconColor = type === "school" ? "#3B82F6" : "#EF4444" // Blue for schools, red for hospitals
-      const emoji = type === "school" ? "🏫" : "🏥"
+      const emoji = type === "school" ? "ðŸ«" : "ðŸ¥"
       return L.divIcon({
         className: "facility-icon",
         html: `<div style="
@@ -857,7 +872,7 @@ export default function StatisticsMapLeaflet({
       schools.forEach((school) => {
         const marker = L.marker([school.lat, school.lng], {
           icon: createFacilityIcon("school"),
-        }).bindTooltip(`<div style="font-weight: bold; font-size: 0.85rem;">${school.name}</div><div style="font-size: 0.75rem; color: #3B82F6;">📚 School</div>`)
+        }).bindTooltip(`<div style="font-weight: bold; font-size: 0.85rem;">${school.name}</div><div style="font-size: 0.75rem; color: #3B82F6;">ðŸ“š School</div>`)
         clusterGroup.addLayer(marker)
       })
     }
@@ -870,7 +885,7 @@ export default function StatisticsMapLeaflet({
       hospitals.forEach((hospital) => {
         const marker = L.marker([hospital.lat, hospital.lng], {
           icon: createFacilityIcon("hospital"),
-        }).bindTooltip(`<div style="font-weight: bold; font-size: 0.85rem;">${hospital.name}</div><div style="font-size: 0.75rem; color: #EF4444;">🏥 Hospital</div>`)
+        }).bindTooltip(`<div style="font-weight: bold; font-size: 0.85rem;">${hospital.name}</div><div style="font-size: 0.75rem; color: #EF4444;">ðŸ¥ Hospital</div>`)
         clusterGroup.addLayer(marker)
       })
     }
@@ -884,8 +899,12 @@ export default function StatisticsMapLeaflet({
     }
   }, [map, selectedGeoId, showSchools, showHospitals])
 
+  if (!canRenderMap) {
+    return <div className={containerClassName ?? "relative w-full h-[360px] rounded-lg overflow-hidden"} />
+  }
+
   return (
-    <div className="relative w-full h-[360px] rounded-lg overflow-hidden">
+    <div className={containerClassName ?? "relative w-full h-[360px] rounded-lg overflow-hidden"}>
       <MapContainer
         center={[20, 0]}
         zoom={2}
@@ -894,45 +913,52 @@ export default function StatisticsMapLeaflet({
         maxZoom={6}
         maxBounds={[[-85, -180], [85, 180]]}
         // Added by Reymes 3/2/26 - soften bounds lock to reduce stuck-on-USA feel
-        maxBoundsViscosity={0.5}
+        maxBoundsViscosity={restrictBounds ? 1 : 0.5}
+        worldCopyJump={!restrictBounds}
+        whenReady={() => setLeafletReady(true)}
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {leafletReady && (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            noWrap={restrictBounds}
+          />
+        )}
 
         <MapFlyTo selectedGeoId={selectedGeoId} onMapReady={setMap} />
       </MapContainer>
 
       {/* Added by Reymes 3/2/26 - bottom-left map legend */}
-      <div
-        className="absolute bottom-3 left-3 z-[1000] rounded-md px-3 py-2 text-xs shadow-md map-legend" //Modified for High contrast mode added by Damon 3/4/2026
-        style={{ backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#222" }}
-      >
-        <div className="font-semibold mb-1">{showFacilityDistanceOverlay ? `${facilityDistanceLabel} key` : "Poverty rate key"}</div>
-        {showFacilityDistanceOverlay ? (
-          <>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[0].color }} />&gt; 1200 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[1].color }} />900 - 1200 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[2].color }} />600 - 900 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[3].color }} />300 - 600 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[4].color }} />150 - 300 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[5].color }} />0 - 150 km</div>
-            <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[6].color }} />Missing facility data</div>
-          </>
-        ) : (
-          <>
-            {/* Added by Reymes 3/24/2026 - dynamic colorblind-safe legend */}
-            {getLegendEntriesForMode(colorblindMode).map((entry) => (
-              <div key={entry.label} className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
-                {entry.label}
-              </div>
-            ))}
-          </>
-        )}
-      </div>
+      {showLegend && (
+        <div
+          className="absolute bottom-3 left-3 z-[1000] rounded-md px-3 py-2 text-xs shadow-md map-legend" //Modified for High contrast mode added by Damon 3/4/2026
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.92)", color: "#222" }}
+        >
+          <div className="font-semibold mb-1">{showFacilityDistanceOverlay ? `${facilityDistanceLabel} key` : "Poverty rate key"}</div>
+          {showFacilityDistanceOverlay ? (
+            <>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[0].color }} />&gt; 1200 km</div>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[1].color }} />900 - 1200 km</div>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[2].color }} />600 - 900 km</div>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[3].color }} />300 - 600 km</div>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[4].color }} />150 - 300 km</div>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[5].color }} />0 - 150 km</div>
+              <div className="flex items-center gap-2"><span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: getLegendEntriesForMode(colorblindMode)[6].color }} />Missing facility data</div>
+            </>
+          ) : (
+            <>
+              {/* Added by Reymes 3/24/2026 - dynamic colorblind-safe legend */}
+              {getLegendEntriesForMode(colorblindMode).map((entry) => (
+                <div key={entry.label} className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }} />
+                  {entry.label}
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
