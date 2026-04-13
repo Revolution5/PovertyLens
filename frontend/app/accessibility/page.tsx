@@ -8,6 +8,7 @@ import { COLORBLIND_MODES, type ColorblindMode } from '@/components/colorblindPa
 import SimpleUIToggle from '@/components/SimpleUIToggle'; // Added by Reymes 3/24/2026 - Simple UI mode
 import Link from 'next/link';
 import { ArrowLeft, Moon, Sun, Contrast, Sparkles, Eye, Type } from 'lucide-react';
+import NavigationSupport from '@/components/navigationSupport'; // Added by Marisol Morales for Work Review 3 - Keyboard navigation support component
 
 const TEXT_SCALE_OPTIONS = [
   { value: 1, label: '100% (Default)' },
@@ -312,6 +313,9 @@ export default function AccessibilityPage() {
           {/* Simple UI - Added by Reymes 3/24/2026 */}
           <SimpleUIToggle />
 
+          {/* Navigation Support - Added by Marisol Morales 3/24/2026 */}
+          <NavigationSupport/> 
+          
           {/* Text Scaling - Added by Damon 4/1/2026 */}
           <div
             className="card"
@@ -378,42 +382,9 @@ export default function AccessibilityPage() {
                 </div>
               </div>
             </div>
+          </div>            
           </div>
 
-          {/* Coming Soon Section */}
-          <div 
-            style={{
-              marginTop: '2rem',
-              padding: '2rem',
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--gradient-light)',
-              border: '2px dashed var(--color-yellow)',
-              textAlign: 'center'
-            }}
-          >
-            <div 
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '4rem',
-                height: '4rem',
-                borderRadius: 'var(--radius-full)',
-                background: 'var(--gradient-cyan-yellow)',
-                marginBottom: '1rem'
-              }}
-            >
-              <Sparkles className="w-6 h-6" style={{ color: 'var(--foreground)' }} />
-            </div>
-            <h3 style={{ fontWeight: '700', fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--foreground)' }}>
-              More Features Coming Soon
-            </h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-gray)', maxWidth: '32rem', margin: '0 auto' }}>
-              We're working on adding more accessibility features including 
-              reduced motion options and keyboard navigation enhancements. Stay tuned!
-            </p>
-          </div>
-        </div>
 
         {/* Info Section */}
         <div 

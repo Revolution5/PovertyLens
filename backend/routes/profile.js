@@ -195,6 +195,50 @@ router.put('/update', async (req, res) => {
   }
 });
 
+// Added by Marisol for WORK REVIEW 3
+// Update user preferences such as daily facts opt-in without changing password
+router.put('/preferences', async (req, res) => {
+  try {
+    const { email, dailyFactsOptIn } = req.body;
+
+    if (!email || typeof dailyFactsOptIn !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and dailyFactsOptIn boolean are required'
+      });
+    }
+
+    const db = getDb();
+    const usersCollection = db.collection('users');
+
+    const user = await usersCollection.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await usersCollection.updateOne(
+      { email },
+      { $set: { dailyFactsOptIn } }
+    );
+
+    await logActivity(email, 'Updated daily facts preference', `dailyFactsOptIn=${dailyFactsOptIn}`, req); // Added by Marisol for WORK REVIEW 3
+
+    res.json({
+      success: true,
+      message: 'Daily facts preference saved'
+    });
+  } catch (error) {
+    console.error('Preference update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while saving preferences'
+    });
+  }
+});
+
 // Delete Account Route
 router.delete('/delete', async (req, res) => {
   try {
@@ -424,7 +468,7 @@ router.get('/user-images', async (req, res) => {
     // Find user and only return the image fields (projection)
     const user = await usersCollection.findOne(
       { email },
-      { projection: { profileImage: 1, bannerImage: 1 } }
+      { projection: { profileImage: 1, bannerImage: 1, dailyFactsOptIn: 1 } } // modified by Marisol for work review 3 to also get daily facts preference
     );
 
     if (!user) {
@@ -434,11 +478,12 @@ router.get('/user-images', async (req, res) => {
       });
     }
 
-    // Return the image URLs (or null if they don't exist)
+    // Return the image URLs and daily facts opt-in preference (default true)
     res.json({
       success: true,
       profileImage: user.profileImage || null,
-      bannerImage: user.bannerImage || null
+      bannerImage: user.bannerImage || null,
+      dailyFactsOptIn: user.dailyFactsOptIn !== false // modified by Marisol for work review 3 - if field is missing, default to true
     });
 
   } catch (error) {

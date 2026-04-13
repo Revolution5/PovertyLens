@@ -17,7 +17,8 @@ export default function ProfilePage() {
     confirmPassword: '',
     // Marisol code for adding new fields 1/28/26 =====================
     profileImage: null as string | null,
-    bannerImage: null as string | null
+    bannerImage: null as string | null,
+    dailyFactsOptIn: true, // added by marisol for work review 3 
     // End of Marisol Morales Code 1/28/26 =====================
   });
   const [message, setMessage] = useState('');
@@ -88,7 +89,8 @@ export default function ProfilePage() {
           ...prev,
           // Only set if image exists, otherwise keep as null for default gradient
           profileImage: data.profileImage ? `http://localhost:4000${data.profileImage}` : null,
-          bannerImage: data.bannerImage ? `http://localhost:4000${data.bannerImage}` : null
+          bannerImage: data.bannerImage ? `http://localhost:4000${data.bannerImage}` : null,
+          dailyFactsOptIn: data.dailyFactsOptIn !== false
         }));
       }
     } catch (error) {
@@ -161,6 +163,38 @@ export default function ProfilePage() {
   };
   // End of Marisol Morales Code 1/28/26 =====================
 
+ // Added by Marisol for Daily Facts Preference work review 3
+  const handleDailyFactsToggle = async (enabled: boolean) => {
+    setUser(prev => ({ ...prev, dailyFactsOptIn: enabled }));
+    try {
+      const response = await fetch('http://localhost:4000/api/profile/preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          dailyFactsOptIn: enabled,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setMessage(data.message || 'Could not save daily facts preference');
+        setUser(prev => ({ ...prev, dailyFactsOptIn: !enabled }));
+        return;
+      }
+
+      setMessage('Daily facts preference saved');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Error saving daily facts preference:', error);
+      setMessage('Could not save daily facts preference');
+      setUser(prev => ({ ...prev, dailyFactsOptIn: !enabled }));
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+// end of Marisol code for Daily Facts Preference
   const handleUpdateUsername = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -542,6 +576,30 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
+
+                <div className="h-px" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+
+                {/*  added by marisol for work report 3 - Daily Facts Preference */}
+                <div className="flex items-center justify-between p-4 rounded-lg">
+                  <div className="flex-1">
+                    <label className="text-sm" style={{ color: 'var(--color-gray)' }}>Daily “Did you know?” facts</label>
+                    <p className="text-base mt-1" style={{ color: 'var(--foreground)' }}>
+                      Receive daily facts as notifications in your account.
+                    </p>
+                  </div>
+                  <label className="inline-flex relative items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      value=""
+                      checked={user.dailyFactsOptIn}
+                      onChange={(e) => handleDailyFactsToggle(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#8CE4FF] rounded-full peer peer-checked:bg-[#8CE4FF] transition-colors"></div>
+                    <div className="absolute left-1 top-1 bg-white border border-gray-300 peer-checked:translate-x-5 rounded-full w-4 h-4 transition-transform"></div>
+                  </label>
+                </div>
+                {/* end of added by marisol for work report 3 - Daily Facts Preference */}
 
                 <div className="h-px" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
 

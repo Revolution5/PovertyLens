@@ -1,5 +1,5 @@
 //===== Created by Christella - 11/22/2025 =====//
-require('dotenv').config()
+require('dotenv').config({ override: true })
 const cors = require('cors')
 const express = require('express')
 const path = require('path')
@@ -24,6 +24,9 @@ const { router: activityLogRouter } = require('./routes/activitylog'); // Added 
 const glossaryRoutes = require('./routes/glossaryRoutes'); // Added by Christella - 03/17/2026
 const chatRouter = require('./routes/chat'); // Added by Reymes - 03/24/2026
 const digestRouter = require('./routes/digest'); // Added by Damon
+const adminRoutes = require('./routes/admin'); // Added by Marisol for WORK REVIEW 3
+const contactRouter = require('./routes/contact'); // Added by Marisol for WORK REVIEW 3
+const messagesRouter = require('./routes/messages');
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
@@ -36,6 +39,10 @@ app.use(express.urlencoded({ extended: true }))
 // Serve uploaded files as static files so they can be accessed via URL 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // End of Marisol Morales Code 1/28/26 ===============
+
+app.use('/api/admin', adminRoutes); // added by Marisol for WORK REVIEW 3
+app.use('/api/contact', contactRouter); // added by Marisol for WORK REVIEW 3
+app.use('/api/messages', messagesRouter);
 
 // Mount routes
 app.use('/api/notifications', notificationsRouter);

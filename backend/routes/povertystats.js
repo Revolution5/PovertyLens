@@ -382,3 +382,68 @@ router.get('/countries', async (req, res) => {
 });
 
 module.exports = router;
+
+// Added 04/04/2026 - Fast bulk map route using PIP country=all (one request instead of 200+)
+// Returns all countries for a given year in a single World Bank PIP API call
+router.get('/pip-map-bulk', async (req, res) => {
+  try {
+    const povline = Number(req.query.povline ?? DEFAULT_POVLINE);
+    const year    = Number(req.query.year    ?? DEFAULT_YEAR);
+    const maxAgeDays = Number(req.query.maxAgeDays ?? DEFAULT_MAX_AGE_DAYS);
+
+    if (!Number.isFinite(povline) || povline <= 0 || povline > 100)
+      return res.status(400).json({ success: false, message: 'Invalid povline' });
+    if (!Number.isFinite(year) || year < 1960 || year > 2100)
+      return res.status(400).json({ success: false, message: 'Invalid year' });
+
+    const db  = getDb();
+    const col = db.collection('pipMapBulkCache');
+    const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000);
+
+    // Return cached result if fresh enough
+    const cached = await col.findOne({ year, povline, fetchedAt: { $gte: cutoff } });
+    if (cached) {
+      return res.json({ success: true, source: 'MongoDB cache', year, povline, rows: cached.rows });
+    }
+
+    // Call PIP once with country=all
+    const pipUrl = `https://api.worldbank.org/pip/v1/pip?country=all&year=${year}&povline=${povline}&fill_gaps=true&welfare_type=all&format=json`;
+    const pipRes = await fetch(pipUrl);
+    if (!pipRes.ok) throw new Error(`PIP returned ${pipRes.status}`);
+    const pipData = await pipRes.json();
+
+    if (!Array.isArray(pipData)) throw new Error('Unexpected PIP response format');
+
+    // Deduplicate: keep the national-level estimate for each country, fall back to any
+    const byCountry = new Map();
+    for (const row of pipData) {
+      const iso3 = row.country_code;
+      if (!iso3) continue;
+      const existing = byCountry.get(iso3);
+      if (!existing || row.reporting_level === 'national') {
+        byCountry.set(iso3, row);
+      }
+    }
+
+    const rows = Array.from(byCountry.values()).map((row) => ({
+      country:          row.country_code,
+      year:             row.reporting_year ?? year,
+      povline,
+      headcount:        typeof row.headcount      === 'number' ? row.headcount      : null,
+      poverty_gap:      typeof row.poverty_gap    === 'number' ? row.poverty_gap    : null,
+      poverty_severity: typeof row.poverty_severity === 'number' ? row.poverty_severity : null,
+    }));
+
+    // Cache result
+    await col.updateOne(
+      { year, povline },
+      { $set: { year, povline, fetchedAt: new Date(), rows } },
+      { upsert: true }
+    );
+
+    res.json({ success: true, source: 'World Bank PIP (bulk, fresh)', year, povline, rows });
+  } catch (err) {
+    console.error('Error in /api/poverty/pip-map-bulk:', err);
+    res.status(500).json({ success: false, message: String(err?.message || err) });
+  }
+});
