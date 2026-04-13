@@ -1,31 +1,31 @@
 // ===== ROUTE =====
-// Weekly Email Digest - Created by Damon
+// Weekly Email Newsletter - Created by Damon
 
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { getDb } = require('../database');
-const { sendWeeklyDigest } = require('../helpers/weeklydigesthelper');
+const { sendWeeklyNewsletter } = require('../helpers/newsletterhelper');
 
-// POST /api/digest/send
-// Manually trigger the weekly digest. Protected by DIGEST_ADMIN_SECRET env var if set.
+// POST /api/newsletter/send
+// Manually trigger the weekly newsletter. Protected by NEWSLETTER_ADMIN_SECRET env var if set.
 router.post('/send', async (req, res) => {
-  const adminSecret = process.env.DIGEST_ADMIN_SECRET;
+  const adminSecret = process.env.NEWSLETTER_ADMIN_SECRET;
   if (adminSecret && req.headers['x-admin-secret'] !== adminSecret) {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
 
   try {
-    const result = await sendWeeklyDigest();
+    const result = await sendWeeklyNewsletter();
     res.json({ success: true, ...result });
   } catch (err) {
-    console.error('[Digest] Error triggering digest:', err);
+    console.error('[Newsletter] Error triggering newsletter:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// GET /api/digest/unsubscribe?token=...
-// One-click unsubscribe link included in every digest email.
+// GET /api/newsletter/unsubscribe?token=...
+// One-click unsubscribe link included in every newsletter email.
 // Returns an HTML confirmation page (no frontend needed).
 router.get('/unsubscribe', async (req, res) => {
   const { token } = req.query;
@@ -35,7 +35,7 @@ router.get('/unsubscribe', async (req, res) => {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'pl-digest-secret';
+    const secret = process.env.JWT_SECRET || 'pl-newsletter-secret';
     const payload = jwt.verify(token, secret);
 
     if (payload.purpose !== 'unsubscribe' || !payload.email) {
@@ -45,7 +45,7 @@ router.get('/unsubscribe', async (req, res) => {
     const db = getDb();
     await db
       .collection('users')
-      .updateOne({ email: payload.email }, { $set: { weeklyDigestOptIn: false } });
+      .updateOne({ email: payload.email }, { $set: { weeklyNewsletterOptIn: false } });
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
@@ -68,7 +68,7 @@ router.get('/unsubscribe', async (req, res) => {
 <body>
   <div class="box">
     <h1>Unsubscribed</h1>
-    <p>You've been successfully removed from the PovertyLens weekly digest.</p>
+    <p>You've been successfully removed from the PovertyLens weekly newsletter.</p>
     <p>
       Changed your mind?
       <a href="${frontendUrl}/profile">Re-enable in account settings</a>.

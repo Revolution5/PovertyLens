@@ -28,8 +28,8 @@ export default function ProfilePage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   // ============== Damon - Email Preferences state ==============
-  const [digestOptIn, setDigestOptIn] = useState(false);
-  const [digestLoading, setDigestLoading] = useState(false);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
   // ============== End Email Preferences state ==============
 
   // ============== marisol morales 3/1/26 - Add Payment Card state ==============
@@ -71,8 +71,8 @@ export default function ProfilePage() {
       fetchUserImages(storedEmail);
       // End of Marisol Morales Code 1/28/26 =====================
 
-      // Damon - fetch digest opt-in status
-      fetchDigestSettings(storedEmail);
+      // Damon - fetch newsletter opt-in status
+      fetchNewsletterSettings(storedEmail);
     } else {
       router.push('/');
     }
@@ -99,39 +99,39 @@ export default function ProfilePage() {
   };
   // End of Marisol Morales Code 1/28/26 =====================
 
-  // Damon - fetch and toggle weekly digest opt-in
-  const fetchDigestSettings = async (email: string) => {
+  // Damon - fetch and toggle weekly newsletter opt-in
+  const fetchNewsletterSettings = async (email: string) => {
     try {
       const res = await fetch(
         `http://localhost:4000/api/profile/settings?email=${encodeURIComponent(email)}`
       );
       const data = await res.json();
-      if (data.success) setDigestOptIn(data.weeklyDigestOptIn);
+      if (data.success) setNewsletterOptIn(data.weeklyNewsletterOptIn);
     } catch {
       // silently ignore — default remains false
     }
   };
 
-  const handleDigestToggle = async () => {
-    const newValue = !digestOptIn;
-    setDigestLoading(true);
+  const handleNewsletterToggle = async () => {
+    const newValue = !newsletterOptIn;
+    setNewsletterLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/profile/digest-optin', {
+      const res = await fetch('http://localhost:4000/api/profile/newsletter-optin', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email, optIn: newValue }),
       });
       const data = await res.json();
       if (data.success) {
-        setDigestOptIn(newValue);
-        setMessage(newValue ? 'Weekly digest enabled!' : 'Weekly digest disabled.');
+        setNewsletterOptIn(newValue);
+        setMessage(newValue ? 'Weekly newsletter enabled!' : 'Weekly newsletter disabled.');
         setTimeout(() => setMessage(''), 3000);
       }
     } catch {
       setMessage('Error updating email preference.');
       setTimeout(() => setMessage(''), 3000);
     } finally {
-      setDigestLoading(false);
+      setNewsletterLoading(false);
     }
   };
   // End Damon
@@ -735,7 +735,7 @@ export default function ProfilePage() {
                     <Mail className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
                   </div>
                   <div>
-                    <p className="font-medium" style={{ color: 'var(--foreground)' }}>Weekly Digest</p>
+                    <p className="font-medium" style={{ color: 'var(--foreground)' }}>Weekly Newsletter</p>
                     <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
                       A weekly summary of facts, stories, and pledge reminders — sent every Monday
                     </p>
@@ -743,17 +743,17 @@ export default function ProfilePage() {
                 </div>
                 {/* Toggle switch */}
                 <button
-                  onClick={handleDigestToggle}
-                  disabled={digestLoading}
-                  aria-label={digestOptIn ? 'Disable weekly digest' : 'Enable weekly digest'}
+                  onClick={handleNewsletterToggle}
+                  disabled={newsletterLoading}
+                  aria-label={newsletterOptIn ? 'Disable weekly newsletter' : 'Enable weekly newsletter'}
                   className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    backgroundColor: digestOptIn ? '#4ade80' : (isDark ? '#555' : '#d1d5db')
+                    backgroundColor: newsletterOptIn ? '#4ade80' : (isDark ? '#555' : '#d1d5db')
                   }}
                 >
                   <span
                     className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200"
-                    style={{ transform: digestOptIn ? 'translateX(20px)' : 'translateX(0px)' }}
+                    style={{ transform: newsletterOptIn ? 'translateX(20px)' : 'translateX(0px)' }}
                   />
                 </button>
               </div>

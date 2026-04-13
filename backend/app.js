@@ -23,7 +23,7 @@ const currencyRouter = require('./routes/currency'); // added by daniel q. - 3/1
 const { router: activityLogRouter } = require('./routes/activitylog'); // Added by Marisol - 03/05/2026
 const glossaryRoutes = require('./routes/glossaryRoutes'); // Added by Christella - 03/17/2026
 const chatRouter = require('./routes/chat'); // Added by Reymes - 03/24/2026
-const digestRouter = require('./routes/digest'); // Added by Damon
+const newsletterRouter = require('./routes/newsletter'); // Added by Damon
 const adminRoutes = require('./routes/admin'); // Added by Marisol for WORK REVIEW 3
 const contactRouter = require('./routes/contact'); // Added by Marisol for WORK REVIEW 3
 const messagesRouter = require('./routes/messages');
@@ -59,7 +59,7 @@ app.use('/api/timeline', timelineRouter); // Added by Christella - 03/13/2026
 app.use('/api/glossary', glossaryRoutes); // Added by Christella - 03/17/2026
 app.use('/api/currency', currencyRouter); // added by daniel q. - 3/17/36
 app.use('/api/chat', chatRouter); // Added by Reymes - 03/24/2026
-app.use('/api/digest', digestRouter); // Added by Damon
+app.use('/api/newsletter', newsletterRouter); // Added by Damon
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint
@@ -103,16 +103,16 @@ app.get('/', async (req, res) => {
     }
   }, 5000);
 
-  // Schedule weekly digest — every Monday at 9:00 AM UTC
+  // Schedule weekly newsletter — every Monday at 9:00 AM UTC
   // Added by Damon
   const cron = require('node-cron');
-  const { sendWeeklyDigest } = require('./helpers/weeklydigesthelper');
+  const { sendWeeklyNewsletter } = require('./helpers/newsletterhelper');
   cron.schedule('0 9 * * 1', async () => {
-    console.log('[WeeklyDigest] Running scheduled digest...');
+    console.log('[WeeklyNewsletter] Running scheduled newsletter...');
     try {
-      await sendWeeklyDigest();
+      await sendWeeklyNewsletter();
     } catch (err) {
-      console.error('[WeeklyDigest] Scheduled send failed:', err);
+      console.error('[WeeklyNewsletter] Scheduled send failed:', err);
     }
   }, { timezone: 'UTC' });
 })();

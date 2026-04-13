@@ -1,5 +1,5 @@
 // ===== HELPER =====
-// Weekly Email Digest - Created by Damon
+// Weekly Email Newsletter - Created by Damon
 
 const { getDb } = require('../database');
 const { Resend } = require('resend');
@@ -7,12 +7,12 @@ const jwt = require('jsonwebtoken');
 
 // Build a signed JWT used as a one-click unsubscribe token in emails
 function buildUnsubscribeToken(email) {
-  const secret = process.env.JWT_SECRET || 'pl-digest-secret';
+  const secret = process.env.JWT_SECRET || 'pl-newsletter-secret';
   return jwt.sign({ email, purpose: 'unsubscribe' }, secret, { expiresIn: '30d' });
 }
 
 // Pull this week's fact, a random story, and return them
-async function buildDigestContent() {
+async function buildNewsletterContent() {
   const db = getDb();
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -39,22 +39,22 @@ async function buildDigestContent() {
   return { fact, story };
 }
 
-// Main entry point — queries opted-in users and sends each a digest email
-async function sendWeeklyDigest() {
+// Main entry point — queries opted-in users and sends each a newsletter email
+async function sendWeeklyNewsletter() {
   const db = getDb();
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const users = await db
     .collection('users')
-    .find({ weeklyDigestOptIn: true }, { projection: { email: 1 } })
+    .find({ weeklyNewsletterOptIn: true }, { projection: { email: 1 } })
     .toArray();
 
   if (!users.length) {
-    console.log('[WeeklyDigest] No opted-in users found.');
+    console.log('[WeeklyNewsletter] No opted-in users found.');
     return { sent: 0, errors: 0 };
   }
 
-  const { fact, story } = await buildDigestContent();
+  const { fact, story } = await buildNewsletterContent();
 
   let sent = 0;
   let errors = 0;
@@ -71,25 +71,25 @@ async function sendWeeklyDigest() {
       const token = buildUnsubscribeToken(user.email);
       const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const unsubscribeUrl = `${backendUrl}/api/digest/unsubscribe?token=${token}`;
+      const unsubscribeUrl = `${backendUrl}/api/newsletter/unsubscribe?token=${token}`;
 
       const html = buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl });
 
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || 'PovertyLens <onboarding@resend.dev>',
         to: user.email,
-        subject: 'Your PovertyLens Weekly Digest',
+        subject: 'Your PovertyLens Weekly Newsletter',
         html,
       });
 
       sent++;
     } catch (err) {
-      console.error(`[WeeklyDigest] Error sending to ${user.email}:`, err.message);
+      console.error(`[WeeklyNewsletter] Error sending to ${user.email}:`, err.message);
       errors++;
     }
   }
 
-  console.log(`[WeeklyDigest] Complete — Sent: ${sent}, Errors: ${errors}`);
+  console.log(`[WeeklyNewsletter] Complete — Sent: ${sent}, Errors: ${errors}`);
   return { sent, errors };
 }
 
@@ -142,7 +142,7 @@ function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>PovertyLens Weekly Digest</title>
+  <title>PovertyLens Weekly Newsletter</title>
 </head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 16px;">
@@ -154,7 +154,7 @@ function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
           <tr>
             <td style="background:linear-gradient(135deg,#8CE4FF 0%,#FFA239 100%);padding:36px 40px;text-align:center;">
               <h1 style="margin:0;color:#1a1a1a;font-size:30px;font-weight:bold;letter-spacing:-0.5px;">PovertyLens</h1>
-              <p style="margin:8px 0 0;color:#1a1a1a;opacity:0.75;font-size:14px;">Your Weekly Digest</p>
+              <p style="margin:8px 0 0;color:#1a1a1a;opacity:0.75;font-size:14px;">Your Weekly Newsletter</p>
             </td>
           </tr>
           <!-- Body -->
@@ -174,7 +174,7 @@ function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
           <tr>
             <td style="padding:24px 40px;background:#f9f9f9;border-top:1px solid #eeeeee;text-align:center;">
               <p style="margin:0;color:#aaa;font-size:12px;">
-                You're receiving this because you opted in to the PovertyLens weekly digest.
+                You're receiving this because you opted in to the PovertyLens weekly newsletter.
               </p>
               <p style="margin:8px 0 0;">
                 <a href="${unsubscribeUrl}" style="color:#aaa;font-size:12px;text-decoration:underline;">Unsubscribe</a>
@@ -200,4 +200,64 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-module.exports = { sendWeeklyDigest, buildUnsubscribeToken };
+// Send a newsletter email to a single user (used on opt-in or manual triggers)
+async function sendNewsletterToUser(email) {
+  console.log(`[Newsletter] Starting sendNewsletterToUser for: ${email}`);
+  
+  try {
+    const db = getDb();
+    
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not set');
+    }
+    
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    console.log(`[Newsletter] Initialized Resend with API key`);
+
+    // Verify user exists and is opted in
+    const user = await db.collection('users').findOne({ email });
+    if (!user) {
+      console.log(`[Newsletter] User not found: ${email}`);
+      return { success: false, message: 'User not found' };
+    }
+
+    console.log(`[Newsletter] Found user, building content...`);
+
+    // Build newsletter content
+    const { fact, story } = await buildNewsletterContent();
+    console.log(`[Newsletter] Got fact and story`);
+
+    // Get user's pledges
+    const pledges = await db
+      .collection('pledges')
+      .find({ userEmail: email, completed: false })
+      .limit(3)
+      .toArray();
+    console.log(`[Newsletter] Got ${pledges.length} pledges`);
+
+    // Build email
+    const token = buildUnsubscribeToken(email);
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const unsubscribeUrl = `${backendUrl}/api/newsletter/unsubscribe?token=${token}`;
+
+    const html = buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl });
+    console.log(`[Newsletter] Built HTML email (${html.length} bytes)`);
+
+    // Send
+    const result = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'PovertyLens <onboarding@resend.dev>',
+      to: email,
+      subject: 'Your PovertyLens Weekly Newsletter',
+      html,
+    });
+
+    console.log(`[Newsletter] Sent to ${email}`, result);
+    return { success: true };
+  } catch (err) {
+    console.error(`[Newsletter] Error sending to ${email}:`, err);
+    return { success: false, message: err.message };
+  }
+}
+
+module.exports = { sendWeeklyNewsletter, buildUnsubscribeToken, sendNewsletterToUser };
