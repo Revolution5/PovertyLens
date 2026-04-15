@@ -30,7 +30,8 @@ router.post('/', async (req, res) => {
 
     // Send confirmation message to user's inbox
     await db.collection('messages').insertOne({
-      recipientEmail: String(email),
+      email: String(email).trim().toLowerCase(), // added by Christella - 04/14/2026
+      recipientEmail: String(email).trim().toLowerCase(), // edited by Christella - 04/14/2026
       type: 'contact_received',
       subject: 'We received your message',
       body: `Hi ${name}, thank you for reaching out! We received your message about "${subject}" and will get back to you as soon as possible.`,
@@ -113,7 +114,8 @@ router.post('/:id/reply', async (req, res) => {
 
     // Send reply to user's inbox
     await db.collection('messages').insertOne({
-      recipientEmail: contact.email,
+      email: String(contact.email).trim().toLowerCase(), // added by Christella - 04/14/2026
+      recipientEmail: String(contact.email).trim().toLowerCase(), // edited by Christella - 04/14/2026
       type: 'contact_reply',
       subject: `Re: ${contact.subject}`,
       body: reply,

@@ -3,8 +3,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Mail, MailOpen, Search, Archive, Trash2, Clock, CheckCircle2 } from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider'; 
-import { Message, MessageType } from '@/lib/messageTemplates'; 
+import { useTheme } from '@/components/ThemeProvider';
+import { Message, MessageType } from '@/lib/messageTemplates';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
@@ -27,14 +27,22 @@ function getTypeBadge(type: MessageType): { label: string; color: string; bg: st
     case 'ban_issued':
       return { label: 'Banned', color: '#FF5656', bg: 'rgba(255,86,86,0.15)', icon: Archive };
     case 'contact_received':
-    return { label: 'Received', color: '#8CE4FF', bg: 'rgba(140,228,255,0.15)', icon: Mail };
-  case 'contact_reply':
-    return { label: 'Reply', color: '#22c55e', bg: 'rgba(34,197,94,0.15)', icon: CheckCircle2 };
+      return { label: 'Received', color: '#8CE4FF', bg: 'rgba(140,228,255,0.15)', icon: Mail };
+    case 'contact_reply':
+      return { label: 'Reply', color: '#22c55e', bg: 'rgba(34,197,94,0.15)', icon: CheckCircle2 };
+
+    // Added by Christella - 04/14/2026 - for Awareness Calendar messages
+    case 'event_under_review':
+      return { label: 'Under Review', color: '#FFA239', bg: 'rgba(255,162,57,0.15)', icon: Clock };
+    case 'event_approved':
+      return { label: 'Approved', color: '#8CE4FF', bg: 'rgba(140,228,255,0.15)', icon: CheckCircle2 };
+    case 'event_denied':
+      return { label: 'Denied', color: '#FF5656', bg: 'rgba(255,86,86,0.15)', icon: Trash2 };
   }
 }
 
 export default function EnhancedInbox() {
-  const { theme } = useTheme(); 
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [selected, setSelected] = useState<Message | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,7 +63,17 @@ export default function EnhancedInbox() {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to load messages');
         }
-        setMessages(Array.isArray(data.messages) ? data.messages : []);
+
+        // Modified by Christella - 04/14/2026 for message display in inbox
+        setMessages(
+          Array.isArray(data.messages)
+            ? data.messages.map((m: any) => ({
+                ...m,
+                id: m.id || m._id,
+              }))
+            : []
+        );
+        // End of Modification by Christella - 04/14/2026
       } catch (err) {
         console.error('Error loading inbox messages:', err);
         setMessages([]);
@@ -102,8 +120,9 @@ export default function EnhancedInbox() {
   };
 
   const filteredMessages = messages.filter(msg => {
-    const matchesSearch = msg.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         msg.body.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      msg.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      msg.body.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filter === 'all' || (filter === 'unread' && !msg.read);
     return matchesSearch && matchesFilter;
   });
@@ -113,7 +132,6 @@ export default function EnhancedInbox() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
@@ -123,14 +141,14 @@ export default function EnhancedInbox() {
                 {unread > 0 ? `${unread} unread message${unread !== 1 ? 's' : ''}` : 'All caught up!'}
               </p>
             </div>
-            
+
             {unread > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 className="px-4 py-2 rounded-lg font-medium transition-all hover:opacity-80"
                 style={{
                   background: '#FFA239 100%',
-                  color: 'white'
+                  color: 'white',
                 }}
               >
                 Mark all as read
@@ -143,8 +161,8 @@ export default function EnhancedInbox() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           {/* Search Bar */}
           <div className="flex-1 relative">
-            <Search 
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" 
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
               style={{ color: 'var(--color-gray)' }}
             />
             <input
@@ -156,25 +174,28 @@ export default function EnhancedInbox() {
               style={{
                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F9FAFB',
                 border: '1px solid var(--color-gray-light)',
-                color: 'var(--foreground)'
+                color: 'var(--foreground)',
               }}
             />
           </div>
 
           {/* Filter Tabs */}
-          <div 
+          <div
             className="flex rounded-xl p-1"
             style={{
               backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F9FAFB',
-              border: '1px solid var(--color-gray-light)'
+              border: '1px solid var(--color-gray-light)',
             }}
           >
             <button
               onClick={() => setFilter('all')}
               className="px-6 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
-                backgroundColor: filter === 'all' ? (isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.3)') : 'transparent',
-                color: filter === 'all' ? '#8CE4FF' : 'var(--color-gray)'
+                backgroundColor:
+                  filter === 'all'
+                    ? (isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.3)')
+                    : 'transparent',
+                color: filter === 'all' ? '#8CE4FF' : 'var(--color-gray)',
               }}
             >
               All
@@ -183,13 +204,16 @@ export default function EnhancedInbox() {
               onClick={() => setFilter('unread')}
               className="px-6 py-2 rounded-lg text-sm font-medium transition-all relative"
               style={{
-                backgroundColor: filter === 'unread' ? (isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.3)') : 'transparent',
-                color: filter === 'unread' ? '#8CE4FF' : 'var(--color-gray)'
+                backgroundColor:
+                  filter === 'unread'
+                    ? (isDark ? 'rgba(140, 228, 255, 0.2)' : 'rgba(140, 228, 255, 0.3)')
+                    : 'transparent',
+                color: filter === 'unread' ? '#8CE4FF' : 'var(--color-gray)',
               }}
             >
               Unread
               {unread > 0 && (
-                <span 
+                <span
                   className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold"
                   style={{ backgroundColor: '#FF5656', color: 'white' }}
                 >
@@ -220,7 +244,7 @@ export default function EnhancedInbox() {
           >
             {filteredMessages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-4 p-8">
-                <div 
+                <div
                   className="w-20 h-20 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: 'rgba(140, 228, 255, 0.1)' }}
                 >
@@ -240,7 +264,7 @@ export default function EnhancedInbox() {
                 const badge = getTypeBadge(msg.type);
                 const isActive = selected?.id === msg.id;
                 const BadgeIcon = badge.icon;
-                
+
                 return (
                   <div
                     key={msg.id}
@@ -255,7 +279,9 @@ export default function EnhancedInbox() {
                     }}
                     onMouseEnter={(e) => {
                       if (!isActive) {
-                        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+                        e.currentTarget.style.backgroundColor = isDark
+                          ? 'rgba(255,255,255,0.03)'
+                          : 'rgba(0,0,0,0.02)';
                       }
                     }}
                     onMouseLeave={(e) => {
@@ -266,7 +292,7 @@ export default function EnhancedInbox() {
                   >
                     {/* Unread indicator */}
                     {!msg.read && (
-                      <div 
+                      <div
                         className="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
                         style={{ backgroundColor: '#8CE4FF' }}
                       />
@@ -274,7 +300,7 @@ export default function EnhancedInbox() {
 
                     <div className="flex items-start gap-3">
                       {/* Icon */}
-                      <div 
+                      <div
                         className="mt-1 w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: badge.bg }}
                       >
@@ -296,7 +322,7 @@ export default function EnhancedInbox() {
                             {badge.label}
                           </span>
                         </div>
-                        <p 
+                        <p
                           className={`text-sm mb-1 line-clamp-2 ${!msg.read ? 'font-semibold' : 'font-medium'}`}
                           style={{ color: 'var(--foreground)' }}
                         >
@@ -340,13 +366,16 @@ export default function EnhancedInbox() {
                 </h2>
 
                 {/* Meta info */}
-                <div className="flex items-center gap-4 mb-6 pb-6" style={{ borderBottom: '2px solid var(--color-gray-light)' }}>
+                <div
+                  className="flex items-center gap-4 mb-6 pb-6"
+                  style={{ borderBottom: '2px solid var(--color-gray-light)' }}
+                >
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                      style={{ 
+                      style={{
                         background: 'linear-gradient(135deg, #8CE4FF 0%, #FFA239 100%)',
-                        color: 'white'
+                        color: 'white',
                       }}
                     >
                       PL
@@ -369,11 +398,10 @@ export default function EnhancedInbox() {
                 >
                   {selected.body}
                 </div>
-
-                </div>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-4">
-                <div 
+                <div
                   className="w-24 h-24 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: 'rgba(140, 228, 255, 0.1)' }}
                 >

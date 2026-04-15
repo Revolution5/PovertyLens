@@ -30,6 +30,11 @@ function getTypeBadge(type: MessageType): { label: string; color: string; bg: st
     case 'ban_issued':           return { label: 'Banned',       color: '#FF5656', bg: 'rgba(255,86,86,0.12)' };
     case 'contact_received': return { label: 'Received',  color: '#8CE4FF', bg: 'rgba(140,228,255,0.12)' };
     case 'contact_reply':    return { label: 'Reply',      color: '#22c55e', bg: 'rgba(34,197,94,0.12)' };
+    // Addition by Christella - 04/14/2026 for Awareness Calendar
+    case 'event_under_review': return { label: 'Under Review', color: '#FFA239', bg: 'rgba(255,162,57,0.15)'};
+    case 'event_approved': return { label: 'Approved', color: '#8CE4FF', bg: 'rgba(140,228,255,0.15)'};
+    case 'event_denied': return { label: 'Denied', color: '#FF5656', bg: 'rgba(255,86,86,0.15)'};
+    // End of Addition by Christella - 04/14/2026
   }
 }
 
