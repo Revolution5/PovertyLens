@@ -4,6 +4,7 @@
 const { getDb } = require('../database');
 const { Resend } = require('resend');
 const jwt = require('jsonwebtoken');
+const { createNotification } = require('./notificationshelper');
 
 // Build a signed JWT used as a one-click unsubscribe token in emails
 function buildUnsubscribeToken(email) {
@@ -82,6 +83,11 @@ async function sendWeeklyNewsletter() {
         html,
       });
 
+      await createNotification(
+        user.email,
+        'A new weekly newsletter has been sent to your email.'
+      );
+
       sent++;
     } catch (err) {
       console.error(`[WeeklyNewsletter] Error sending to ${user.email}:`, err.message);
@@ -94,6 +100,14 @@ async function sendWeeklyNewsletter() {
 }
 
 function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
+  const defaultHostedLogoUrl =
+    'https://raw.githubusercontent.com/Revolution5/PovertyLens/main/frontend/public/logov3.png';
+  const logoUrl =
+    process.env.NEWSLETTER_LOGO_URL ||
+    (frontendUrl && !/localhost|127\.0\.0\.1/i.test(frontendUrl)
+      ? `${frontendUrl}/logov3.png`
+      : defaultHostedLogoUrl);
+
   const factHtml = fact
     ? `<h2 style="color:#1a1a1a;font-size:18px;margin:0 0 10px;">Fact of the Week</h2>
        ${fact.title ? `<p style="font-weight:bold;color:#333;margin:0 0 6px;">${escapeHtml(fact.title)}</p>` : ''}
@@ -109,7 +123,7 @@ function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
     ? `<h2 style="color:#1a1a1a;font-size:18px;margin:0 0 10px;">Story Spotlight</h2>
        ${story.title ? `<p style="font-weight:bold;color:#333;margin:0 0 8px;">${escapeHtml(story.title)}</p>` : ''}
        <p style="color:#444;line-height:1.7;margin:0 0 12px;">${storyExcerpt}</p>
-       <a href="${frontendUrl}/viewstories" style="color:#1a73e8;text-decoration:none;font-weight:bold;">Read more stories →</a>`
+       <a href="${frontendUrl}/statistics" style="color:#1a73e8;text-decoration:none;font-weight:bold;">Read more stories →</a>`
     : '';
 
   const pledgesHtml =
@@ -152,10 +166,18 @@ function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
           style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
           <!-- Header -->
           <tr>
-            <td style="background:linear-gradient(135deg,#8CE4FF 0%,#FFA239 100%);padding:36px 40px;text-align:center;">
-              <h1 style="margin:0;color:#1a1a1a;font-size:30px;font-weight:bold;letter-spacing:-0.5px;">PovertyLens</h1>
+            <td style="background:#ffffff;padding:36px 40px;text-align:center;">
+              <img
+                src="${logoUrl}"
+                alt="PovertyLens logo"
+                width="180"
+                style="display:block;margin:0 auto 12px;height:auto;border:0;outline:none;text-decoration:none;"
+              />
               <p style="margin:8px 0 0;color:#1a1a1a;opacity:0.75;font-size:14px;">Your Weekly Newsletter</p>
             </td>
+          </tr>
+          <tr>
+            <td style="height:20px;background:#8CE4FF;line-height:3px;font-size:0;">&nbsp;</td>
           </tr>
           <!-- Body -->
           <tr>
@@ -164,7 +186,7 @@ function buildEmailHtml({ fact, story, pledges, unsubscribeUrl, frontendUrl }) {
               <!-- CTA -->
               <div style="text-align:center;margin-top:32px;">
                 <a href="${frontendUrl}"
-                  style="display:inline-block;background:linear-gradient(135deg,#8CE4FF,#FFA239);color:#1a1a1a;font-weight:bold;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:16px;">
+                  style="display:inline-block;background:#8CE4FF;color:#1a1a1a;font-weight:bold;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:16px;">
                   Visit PovertyLens
                 </a>
               </div>
@@ -251,6 +273,11 @@ async function sendNewsletterToUser(email) {
       subject: 'Your PovertyLens Weekly Newsletter',
       html,
     });
+
+    await createNotification(
+      email,
+      'A new weekly newsletter has been sent to your email.'
+    );
 
     console.log(`[Newsletter] Sent to ${email}`, result);
     return { success: true };

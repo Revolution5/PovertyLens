@@ -16,6 +16,7 @@ const fs = require('fs').promises // Import fs module for file system operations
 const { getDb } = require('../database');
 const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
 const { sendNewsletterToUser } = require('../helpers/newsletterhelper'); // Added by Damon
+const { createNotification } = require('../helpers/notificationshelper');
 
 // Added by Marisol Morales 1/28/26 
 // Configure multer storage to save uploaded files
@@ -521,6 +522,11 @@ router.patch('/newsletter-optin', async (req, res) => {
 
     // If opting in, send a welcome newsletter immediately
     if (optIn) {
+      await createNotification(
+        email,
+        'You are now opted in to the weekly newsletter.'
+      );
+
       const emailResult = await sendNewsletterToUser(email).catch(err => {
         console.error('Error sending welcome newsletter:', err);
         return { success: false, message: err.message };
