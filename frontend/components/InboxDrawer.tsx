@@ -18,7 +18,7 @@ interface InboxDrawerProps {
 }
 
 // Badge color per message type
-function getTypeBadge(type: MessageType): { label: string; color: string; bg: string } {
+function getTypeBadge(type: MessageType | string): { label: string; color: string; bg: string } {
   switch (type) {
     case 'story_under_review':   return { label: 'Under Review', color: '#FFA239', bg: 'rgba(255,162,57,0.12)' };
     case 'story_approved':       return { label: 'Approved',     color: '#8CE4FF', bg: 'rgba(140,228,255,0.12)' };
@@ -30,6 +30,8 @@ function getTypeBadge(type: MessageType): { label: string; color: string; bg: st
     case 'ban_issued':           return { label: 'Banned',       color: '#FF5656', bg: 'rgba(255,86,86,0.12)' };
     case 'contact_received': return { label: 'Received',  color: '#8CE4FF', bg: 'rgba(140,228,255,0.12)' };
     case 'contact_reply':    return { label: 'Reply',      color: '#22c55e', bg: 'rgba(34,197,94,0.12)' };
+    default:
+      return { label: 'Update', color: 'var(--color-gray)', bg: 'rgba(102,102,102,0.12)' };
   }
 }
 
