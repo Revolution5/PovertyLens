@@ -110,55 +110,280 @@ function CardBody({ event, cfg }: { event: TimelineEvent; cfg: Cfg }) {
 function TimelineCard({ event, index }: { event: TimelineEvent; index: number }) {
   const cfg: Cfg = CATEGORY_CONFIG[event.category as CfgKey] ?? CATEGORY_CONFIG['Policy & Law'];
   const isTop = index % 2 === 0;
+  // Added to flip timeline cards - by Christella - 04/15/2026
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  return (
-    <div style={{ width: CARD_W, height: CARD_H, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-      {/* Top content half */}
-      <div style={{ height: CONTENT_H, width: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        {isTop && <CardBody event={event} cfg={cfg} />}
+  // Addition by Christella - 04/15/2026
+  const CardFace = ({ back = false }: { back?: boolean }) => (
+    <div
+      onClick={() => {
+        if (isFlipped) setIsExpanded(false);
+        setIsFlipped(prev => !prev);
+      }}
+      style={{
+        height: '100%',
+        borderRadius: 'var(--radius-lg)',
+        padding: '0.9rem 1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--color-gray-light)',
+        border: `1.5px solid ${cfg.rawColor}40`,
+        overflow: 'hidden',
+        position: 'absolute',
+        inset: 0,
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+        transform: back ? 'rotateY(180deg)' : 'rotateY(0deg)',
+        cursor: 'pointer',
+      }}
+    >
+      {/* Top-left label */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 14,
+          left: 16,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          padding: '0.22rem 0.7rem',
+          borderRadius: 'var(--radius-full)',
+          fontSize: '0.74rem',
+          fontWeight: 600,
+          background: `${cfg.rawColor}18`,
+          color: cfg.color,
+          border: `1px solid ${cfg.rawColor}40`,
+        }}
+      >
+        {cfg.icon}
+        {cfg.label}
       </div>
 
-      {/* Spine — connector, dot, and year label all absolutely positioned */}
+      {/* Center content */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          paddingTop: '1.6rem',
+          paddingBottom: event.source ? '2.1rem' : '0.8rem',
+          paddingLeft: '0.8rem',
+          paddingRight: '0.8rem',
+        }}
+      >
+        {back ? (
+          <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            width: '100%',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '0.9rem',
+              lineHeight: 1.65,
+              color: 'var(--foreground)',
+              opacity: 0.9,
+              margin: 0,
+              overflow: 'hidden',
+              display: isExpanded ? 'block' : '-webkit-box',
+              WebkitLineClamp: isExpanded ? 'unset' : 4,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {event.description}
+          </p>
+
+  {event.description.length > 180 && (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsExpanded(prev => !prev);
+      }}
+      style={{
+        marginTop: 8,
+        fontSize: '0.8rem',
+        fontWeight: 600,
+        color: 'var(--foreground)',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: 0,
+      }}
+    >
+      {isExpanded ? 'See less' : 'See more'}
+    </button>
+  )}
+</div>
+        ) : (
+          <h3
+            style={{
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              lineHeight: 1.35,
+              color: 'var(--foreground)',
+              margin: 0,
+            }}
+          >
+            {event.title}
+          </h3>
+        )}
+      </div>
+
+      {/* Bottom-left link */}
+      {event.source && (
+        <a
+          href={event.source}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            left: 16,
+            bottom: 14,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            color: cfg.color,
+          }}
+        >
+          <ExternalLink style={{ width: 12, height: 12 }} />
+          {event.sourceLabel || 'Source'}
+        </a>
+      )}
+    </div>
+  );
+  // End of Addition by Christella - 04/15/2026
+
+  return (
+    <div
+      style={{
+        width: CARD_W,
+        height: CARD_H,
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      {/* Top content half */}
+      <div
+        style={{
+          height: CONTENT_H,
+          width: '100%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+        }}
+      >
+        {isTop && (
+          <div style={{ position: 'relative', width: '100%', height: '100%', perspective: 1200 }}>
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                transformStyle: 'preserve-3d',
+                transition: 'transform var(--transition-slow)',
+                transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              <CardFace />
+              <CardFace back />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Spine - adjusted by Christella to account for card size changing - 04/15/2026*/}
       <div style={{ height: SPINE_H, width: '100%', flexShrink: 0, position: 'relative' }}>
+        <div
+          style={{
+            position: 'absolute',
+            ...(isTop ? { top: 0 } : { bottom: 0 }),
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 2,
+            height: CONN_H,
+            background: cfg.color,
+            opacity: 0.65,
+          }}
+        />
 
-        {/* Connector bar */}
-        <div style={{
-          position: 'absolute',
-          ...(isTop ? { top: 0 } : { bottom: 0 }),
-          left: '50%', transform: 'translateX(-50%)',
-          width: 2, height: CONN_H,
-          background: cfg.color, opacity: 0.65,
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: DOT_SIZE,
+            height: DOT_SIZE,
+            borderRadius: '50%',
+            background: cfg.color,
+            border: `2.5px solid var(--background)`,
+            boxShadow: `0 0 0 3px ${cfg.rawColor}33, 0 0 12px ${cfg.rawColor}66`,
+            zIndex: 2,
+          }}
+        />
 
-        {/* Dot — centred at SPINE_H/2, sits exactly on the center line */}
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: DOT_SIZE, height: DOT_SIZE, borderRadius: '50%',
-          background: cfg.color,
-          border: `2.5px solid var(--background)`,
-          boxShadow: `0 0 0 3px ${cfg.rawColor}33, 0 0 12px ${cfg.rawColor}66`,
-          zIndex: 2,
-        }} />
-
-        {/* Year label — below dot for top cards, above dot for bottom cards */}
-        <span style={{
-          position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-          ...(isTop
-            ? { top: SPINE_H / 2 + DOT_SIZE / 2 + YEAR_OFFSET }
-            : { bottom: SPINE_H / 2 + DOT_SIZE / 2 + YEAR_OFFSET }),
-          fontSize: 28, fontWeight: 900, lineHeight: 1, whiteSpace: 'nowrap',
-          color: cfg.color,
-          userSelect: 'none',
-        }}>
+        <span
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            ...(isTop
+              ? { top: SPINE_H / 2 + DOT_SIZE / 2 + YEAR_OFFSET }
+              : { bottom: SPINE_H / 2 + DOT_SIZE / 2 + YEAR_OFFSET }),
+            fontSize: 28,
+            fontWeight: 900,
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+            color: cfg.color,
+            userSelect: 'none',
+          }}
+        >
           {event.year}
         </span>
       </div>
 
       {/* Bottom content half */}
-      <div style={{ height: CONTENT_H, width: '100%', flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-        {!isTop && <CardBody event={event} cfg={cfg} />}
+      <div
+        style={{
+          height: CONTENT_H,
+          width: '100%',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+        }}
+      >
+        {!isTop && (
+          <div style={{ position: 'relative', width: '100%', height: '100%', perspective: 1200 }}>
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                transformStyle: 'preserve-3d',
+                transition: 'transform var(--transition-slow)',
+                transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              }}
+            >
+              <CardFace />
+              <CardFace back />
+            </div>
+          </div>
+        )}
+        {/* End of modification by Christella - 04/15/2026 */}
       </div>
     </div>
   );
