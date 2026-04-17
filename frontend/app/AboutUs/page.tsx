@@ -146,7 +146,7 @@ export default function AboutUs() {
                                 className="text-lg leading-relaxed"
                                 style={{ color: 'var(--color-gray-dark)' }}
                             >
-                                Providing clear, digestible statistics and up-to-date information so you can understand where the need is greatest.
+                                Providing clear, accessible statistics and up-to-date information so you can understand where the need is greatest.
                             </p>
                         </div>
 

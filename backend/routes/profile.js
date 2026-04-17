@@ -15,6 +15,8 @@ const fs = require('fs').promises // Import fs module for file system operations
 
 const { getDb } = require('../database');
 const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
+const { sendNewsletterToUser } = require('../helpers/newsletterhelper'); // Added by Damon
+const { createNotification } = require('../helpers/notificationshelper');
 
 // Added by Marisol Morales 1/28/26 
 // Configure multer storage to save uploaded files
@@ -495,5 +497,83 @@ router.get('/user-images', async (req, res) => {
   }
 });
 // End of Marisol Morales Code 1/28/26 =====================
+
+// PATCH /api/profile/newsletter-optin - opt in or out of the weekly email newsletter
+// Added by Damon
+router.patch('/newsletter-optin', async (req, res) => {
+  try {
+    const { email, optIn } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    if (typeof optIn !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'optIn must be a boolean' });
+    }
+
+    const db = getDb();
+    const result = await db
+      .collection('users')
+      .updateOne({ email }, { $set: { weeklyNewsletterOptIn: optIn } });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // If opting in, send a welcome newsletter immediately
+    if (optIn) {
+      await createNotification(
+        email,
+        'You are now opted in to the weekly newsletter.'
+      );
+
+      const emailResult = await sendNewsletterToUser(email).catch(err => {
+        console.error('Error sending welcome newsletter:', err);
+        return { success: false, message: err.message };
+      });
+      
+      if (!emailResult.success) {
+        console.warn(`[NewsletterOptIn] Email send failed for ${email}:`, emailResult.message);
+        // Still mark as opted in even if email failed, but log the issue
+      } else {
+        console.log(`[NewsletterOptIn] Welcome newsletter sent to ${email}`);
+      }
+    }
+
+    res.json({ success: true, weeklyNewsletterOptIn: optIn });
+  } catch (error) {
+    console.error('Newsletter opt-in error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// GET /api/profile/settings?email=... - return user preference settings
+// Added by Damon
+router.get('/settings', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const db = getDb();
+    const user = await db
+      .collection('users')
+      .findOne({ email }, { projection: { weeklyNewsletterOptIn: 1 } });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      weeklyNewsletterOptIn: user.weeklyNewsletterOptIn === true,
+    });
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 module.exports = router;
