@@ -7,6 +7,7 @@ const { getDb, ObjectId } = require('../database');
 const { createNotification } = require('../helpers/notificationshelper');
 const { createMessage } = require('../helpers/messagesHelper');
 const { logActivity } = require('./activitylog'); // Added by Marisol - 03/05/2026
+const UserPoints = require('../models/UserPoints'); // added daniel q. 4/22/26
 
 // Added by Christella - 12/10/2025
 // Create a story
@@ -58,6 +59,20 @@ router.post('/', async(req, res) => {
     if (userEmail) {
       createNotification(userEmail, `Your story "${title || 'Untitled'}" was published successfully!`);
       await logActivity(userEmail, 'Posted story', title || 'Untitled story', req); // Added by Marisol - 03/05/2026
+    }
+    if (userEmail) {
+      try {
+        const UserPoints = require('../models/UserPoints');
+        await UserPoints.addPoints(
+          userEmail,
+          100,
+          'Submitted a personal story to share experiences'
+        );
+        
+        console.log(`[POINTS] Awarded 100 points to ${userEmail} for submitting story: "${title || 'Untitled'}"`);
+      } catch (pointsError) {
+        console.error('[POINTS ERROR] Failed to award points for story submission:', pointsError);
+      }
     }
 
     res.status(201).json({

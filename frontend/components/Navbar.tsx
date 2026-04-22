@@ -400,6 +400,23 @@ export default function Navbar() {
                                 >
                                     {isLoggedIn ? (
                                         <>
+                                            {/* daniel q. added 4/22/26 start */}
+                                            <Link 
+                                                href="/rewards-shop" 
+                                                className="block px-4 py-2.5 text-sm transition-all duration-200"
+                                                style={{ color: 'var(--foreground)' }}
+                                                onMouseEnter={(e) => {
+                                                    const isDark = document.documentElement.classList.contains('dark');
+                                                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                }}
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                Rewards Shop
+                                            </Link>
+                                            {/* daniel q. added 4/22/26 end */}
                                             <Link 
                                                 href="/profile" 
                                                 className="block px-4 py-2.5 text-sm transition-all duration-200"

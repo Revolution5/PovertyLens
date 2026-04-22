@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDb, ObjectId } = require('../database');
+const UserPoints = require('../models/UserPoints'); // added daniel q. 4/22/26 
 
 async function createNotification(userId, message) { // added daniel q. 4/4/26 
   try {
@@ -157,6 +158,21 @@ router.patch('/:id/complete', async (req, res) => {
       );
     }
     // added daniel q. 4/4/26 end
+    if (pledge.userEmail) {
+      try {
+        const UserPoints = require('../models/UserPoints');
+        await UserPoints.addPoints(
+          pledge.userEmail,
+          50,
+          'Completed a pledge on the Pledge Wall'
+        );
+        
+        console.log(`[POINTS] Awarded 50 points to ${pledge.userEmail} for completing pledge: "${pledge.pledgeText.substring(0, 50)}"`);
+        
+      } catch (pointsError) {
+        console.error('[POINTS ERROR] Failed to award points for pledge completion:', pointsError);
+      }
+    }
 
     res.json({ success: true, message: 'Pledge marked as completed!' });
   } catch (err) {
