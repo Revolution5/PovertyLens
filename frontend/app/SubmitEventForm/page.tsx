@@ -191,7 +191,7 @@ export default function SubmitEventForm() {
         ? 'rgba(255,255,255,0.1)'
         : '#e0e0e0'
     }`,
-    color: 'var(--foreground)',
+    color: isDark ? '#ffffff' : '#000000',
     outline: 'none',
     width: '100%',
     padding: '0.75rem 1rem',
@@ -355,9 +355,18 @@ export default function SubmitEventForm() {
                 onChange={handleChange}
                 style={{ ...inputStyle(!!form.type, !!errors.type), cursor: 'pointer' }}
               >
-                <option value="">Select a type...</option>
+                <option 
+                  value=""
+                  style={{
+                    color: isDark ? '#ffffff' : '#000000',
+                    backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+                  }}
+                  >Select a type...</option>
                 {EVENT_TYPES.map(t => (
-                  <option key={t} value={t}>
+                  <option key={t} value={t} style={{
+                    color: isDark ? '#ffffff' : '#000000',
+                    backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+                  }}>
                     {t}
                   </option>
                 ))}
