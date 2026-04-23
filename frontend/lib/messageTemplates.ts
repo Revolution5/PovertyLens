@@ -10,7 +10,12 @@ export type MessageType =
   | 'ban_issued'
   | 'story_report_cleared'
   | 'contact_received'
-  | 'contact_reply';
+  // Added by Christella - 04/13/2026
+  | 'contact_reply'
+  | 'event_under_review'
+  | 'event_approved'
+  | 'event_denied';
+  // End of Addition by Christella - 04/13/2026
   
 export interface Message {
   id: string;
@@ -113,6 +118,32 @@ export function generateMessage(
       subject: 'A reply to your message',
       body: 'The PovertyLens team has replied to your contact form submission. Please see the message above.',
     };
+  
+    // Added by Christella - 04/13/2026 - template messages for event submissions
+    case 'event_under_review':
+      return {
+        type,
+        from,
+        subject: 'Thank you for submitting your event',
+        body: 'Thank you for submitting your event. The PovertyLens will review your submission and will get back to you as soon as possible.',
+      };
+    
+    case 'event_approved':
+      return{
+        type,
+        from,
+        subject: 'Your event has been approved!',
+        body: 'Your event submission has been approved. Please allow 1-2 hours for the event to show up on our calendar.'
+      };
+    
+    case 'event_denied':
+      return {
+        type,
+        from,
+        subject: 'Your event has been denied.',
+        body: 'Your event submission was denied due to suspicious activity or inaccuracy. If you believe this is an error, please contact us using the contact form.'
+      }
+    // End of addition by Christella - 04/13/2026
     }
   }
 

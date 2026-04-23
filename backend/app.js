@@ -27,6 +27,7 @@ const newsletterRouter = require('./routes/newsletter'); // Added by Damon
 const adminRoutes = require('./routes/admin'); // Added by Marisol for WORK REVIEW 3
 const contactRouter = require('./routes/contact'); // Added by Marisol for WORK REVIEW 3
 const messagesRouter = require('./routes/messages');
+const eventsRouter = require('./routes/event'); // Added by Christella - 04/14/2026 for Awareness Calendar - Work Review 4
 const rewardsRouter = require('./routes/rewards'); // d.q. added 4/22/26
 
 //===== Created by Christella - 11/22/2025 =====//
@@ -61,6 +62,7 @@ app.use('/api/timeline', timelineRouter); // Added by Christella - 03/13/2026
 app.use('/api/glossary', glossaryRoutes); // Added by Christella - 03/17/2026
 app.use('/api/currency', currencyRouter); // added by daniel q. - 3/17/36
 app.use('/api/chat', chatRouter); // Added by Reymes - 03/24/2026
+app.use('/api/events', eventsRouter); // Added by Christella - 04/14/2026 for Work Review 4
 app.use('/api/newsletter', newsletterRouter); // Added by Damon
 app.use('/api/rewards', rewardsRouter); // d.q. added 4/22/26
 

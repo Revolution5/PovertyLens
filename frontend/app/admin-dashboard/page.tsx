@@ -80,6 +80,22 @@ interface UserGrowthPoint { month: string; users: number; stories: number; }
 interface DonationPoint { month: string; amount: number; }
 interface RicePoint { period: string; grains: number; players: number; }
 
+// Addition by Christella - 04/14/2026 - Awareness Calendar Interfaces for Event Approval
+interface PendingEvent{
+  _id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  location?: string;
+  sourceUrl?: string;
+  sourceLabel?: string;
+  submittedBy?: string;
+  submittedEmail?: string;
+  createdAt?: string;
+}
+// End of addition by Christella - 04/14/2026
+
 // ============== Stat Card ==============
 interface StatCardProps {
   title: string; value: string; change: string;
@@ -138,7 +154,7 @@ export default function AdminDashboardPage() {
   const isDark = theme === 'dark';
 
   // START Added by Marisol for Work Review 3 - added 'contacts' to tab union
-  const [adminTab, setAdminTab] = useState<'analytics' | 'reports' | 'users' | 'contacts'>('analytics');
+  const [adminTab, setAdminTab] = useState<'analytics' | 'reports' | 'users' | 'contacts' | 'events'>('analytics'); // Edited by Christella - 04/14/2026 - for Awareness Calendar Event Approval
   // END Added by Marisol for Work Review 3
 
   // Reports state
@@ -172,6 +188,22 @@ export default function AdminDashboardPage() {
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [replyLoading, setReplyLoading] = useState<string | null>(null);
   // END Added by Marisol for Work Review 3
+  
+  // Addition by Christella - 04/14/2026 - Awareness Calendar Constants
+  const [pendingEvents, setPendingEvents] = useState<PendingEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState('');
+  const [eventReviewNotes, setEventReviewNotes] = useState<Record<string, string>>({});
+  const [eventStatusView, setEventStatusView] = useState<'pending' | 'approved' | 'rejected'>('pending');
+  const [approvedEvents, setApprovedEvents] = useState<PendingEvent[]>([]);
+  const [rejectedEvents, setRejectedEvents] = useState<PendingEvent[]>([]);
+  const visibleEvents =
+  eventStatusView === 'pending'
+    ? pendingEvents
+    : eventStatusView === 'approved'
+    ? approvedEvents
+    : rejectedEvents;
+  // End of Addition by Christella - 04/14/2026
 
   const getTrendFromChange = (change: string): 'up' | 'down' | 'neutral' => {
     const value = parseFloat(change.replace('%', ''));
@@ -367,6 +399,113 @@ export default function AdminDashboardPage() {
   }, [replyText, fetchContacts]);
   // END Added by Marisol for Work Review 3
 
+  // Addition by Christella - 04/14/2026 for Awareness Calendar Events
+  const fetchPendingEvents = useCallback(async () => {
+    setEventsLoading(true);
+    setEventsError('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/events/pending`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load pending events');
+      setPendingEvents(Array.isArray(data.events) ? data.events : []);
+    } catch (err: any) {
+      setEventsError(err?.message || 'Failed to load pending events');
+      setPendingEvents([]);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
+  const handleApproveEvent = useCallback(async (eventId: string) => {
+    setActionLoadingKey(`approve-event-${eventId}`);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/events/${eventId}/approve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to approve event');
+      await fetchPendingEvents();
+    } catch (err: any) {
+      setEventsError(err?.message || 'Failed to approve event');
+    } finally {
+      setActionLoadingKey(null);
+    }
+  }, [fetchPendingEvents]);
+
+  const handleRejectEvent = useCallback(async (eventId: string) => {
+    setActionLoadingKey(`reject-event-${eventId}`);
+    try {
+      const reason = eventReviewNotes[eventId]?.trim() || '';
+      const res = await fetch(`${BACKEND_URL}/api/events/${eventId}/reject`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to reject event');
+      setEventReviewNotes(prev => ({ ...prev, [eventId]: '' }));
+      await fetchPendingEvents();
+    } catch (err: any) {
+      setEventsError(err?.message || 'Failed to reject event');
+    } finally {
+      setActionLoadingKey(null);
+    }
+  }, [eventReviewNotes, fetchPendingEvents]);
+
+  const fetchApprovedEvents = useCallback(async () => {
+    setEventsLoading(true);
+    setEventsError('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/events/approved`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load approved events');
+      setApprovedEvents(Array.isArray(data.events) ? data.events : []);
+    } catch (err: any) {
+      setEventsError(err?.message || 'Failed to load approved events');
+      setApprovedEvents([]);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
+  const fetchRejectedEvents = useCallback(async () => {
+    setEventsLoading(true);
+    setEventsError('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/events/rejected`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load denied events');
+      setRejectedEvents(Array.isArray(data.events) ? data.events : []);
+    } catch (err: any) {
+      setEventsError(err?.message || 'Failed to load denied events');
+      setRejectedEvents([]);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
+  const handleResetEvent = useCallback(async (eventId: string) => {
+    setActionLoadingKey(`reset-event-${eventId}`);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/events/${eventId}/reset`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to reset event');
+
+      if (eventStatusView === 'approved') await fetchApprovedEvents();
+      if (eventStatusView === 'rejected') await fetchRejectedEvents();
+      await fetchPendingEvents();
+    } catch (err: any) {
+      setEventsError(err?.message || 'Failed to reset event');
+    } finally {
+      setActionLoadingKey(null);
+    }
+  }, [eventStatusView, fetchApprovedEvents, fetchRejectedEvents, fetchPendingEvents]);
+  // End of Addition by Christella - 04/14/2026
+
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6" style={{ background: 'var(--background)' }}>
       <div className="max-w-7xl mx-auto space-y-8">
@@ -382,7 +521,7 @@ export default function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap"> {/*Modified by Christella - 04/14/2026*/}
             <button
               type="button"
               onClick={() => setAdminTab('analytics')}
@@ -438,6 +577,21 @@ export default function AdminDashboardPage() {
               Contact Forms
             </button>
             {/* END Added by Marisol for Work Review 3 */}
+
+            {/*Addition by Christella - 04/14/2026 - Tab Button for Events Pending Approval */}
+            <button
+              type="button"
+              onClick={async () => { setAdminTab('events'); await fetchPendingEvents(); }}
+              className="px-4 py-2 rounded-full text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: adminTab === 'events' ? '#B388FF' : 'rgba(179,136,255,0.1)',
+                border: '1px solid rgba(179,136,255,0.3)',
+                color: adminTab === 'events' ? '#111' : '#B388FF',
+              }}
+            >
+              Event Reviews
+            </button>
+            {/*End of Addition by Christella - 04/14/2026 */}
           </div>
         </div>
 
@@ -726,7 +880,153 @@ export default function AdminDashboardPage() {
             </ChartCard>
           </>
         )}
+        {/* Addition by Christella - 04/14/2026 - added pending/approved/denied event tabs */}
+        {adminTab === 'events' && (
+          <div
+            className="rounded-xl p-6"
+            style={{
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--color-gray-light)',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
+              Event Submissions
+            </h2>
 
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <button
+                type="button"
+                onClick={async () => { setEventStatusView('pending'); await fetchPendingEvents(); }}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                style={{
+                  backgroundColor: eventStatusView === 'pending' ? '#B388FF' : 'transparent',
+                  border: '1px solid rgba(179,136,255,0.3)',
+                  color: eventStatusView === 'pending' ? '#111' : '#B388FF',
+                }}
+              >
+                Pending
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => { setEventStatusView('approved'); await fetchApprovedEvents(); }}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                style={{
+                  backgroundColor: eventStatusView === 'approved' ? '#22c55e' : 'transparent',
+                  border: '1px solid rgba(34,197,94,0.3)',
+                  color: eventStatusView === 'approved' ? '#111' : '#22c55e',
+                }}
+              >
+                Approved
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => { setEventStatusView('rejected'); await fetchRejectedEvents(); }}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold"
+                style={{
+                  backgroundColor: eventStatusView === 'rejected' ? '#FF5656' : 'transparent',
+                  border: '1px solid rgba(255,86,86,0.3)',
+                  color: eventStatusView === 'rejected' ? '#111' : '#FF5656',
+                }}
+              >
+                Denied
+              </button>
+            </div>
+
+            {eventsLoading && <p style={{ color: 'var(--color-gray)' }}>Loading pending events...</p>}
+            {eventsError && <p className="text-sm text-red-500 mb-3">{eventsError}</p>}
+            {!eventsLoading && !eventsError && pendingEvents.length === 0 && (
+              <p style={{ color: 'var(--color-gray)' }}>No pending event submissions right now.</p>
+            )}
+
+            <div className="space-y-4">
+              {visibleEvents.map((event) => (
+                <div
+                  key={event._id}
+                  className="rounded-lg p-4"
+                  style={{
+                    border: '1px solid var(--color-gray-light)',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#fbfbfb',
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
+                    <div>
+                      <h3 className="font-semibold" style={{ color: 'var(--foreground)' }}>
+                        {event.title}
+                      </h3>
+                      <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                        {event.type} • {event.location || 'Global'}
+                        {event.date ? ` • ${new Date(event.date + 'T00:00:00').toLocaleDateString()}` : ''}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--color-gray)' }}>
+                        Submitted by: {event.submittedBy || 'Anonymous'}
+                        {event.submittedEmail ? ` (${event.submittedEmail})` : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm mb-3 whitespace-pre-wrap" style={{ color: 'var(--foreground)' }}>
+                    {event.description}
+                  </p>
+
+                  {event.sourceUrl && (
+                    <a
+                      href={event.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-sm font-medium mb-3 hover:underline"
+                      style={{ color: '#8CE4FF' }}
+                    >
+                      {event.sourceLabel || 'View Source'}
+                    </a>
+                  )}
+
+                  <div className="space-y-3">
+                    <textarea
+                      rows={2}
+                      placeholder="Optional reason if denying this event..."
+                      value={eventReviewNotes[event._id] || ''}
+                      onChange={(e) =>
+                        setEventReviewNotes((prev) => ({ ...prev, [event._id]: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 rounded-lg text-sm resize-none outline-none"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                        border: '1px solid var(--color-gray-light)',
+                        color: 'var(--foreground)',
+                      }}
+                    />
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        disabled={actionLoadingKey === `approve-event-${event._id}`}
+                        onClick={() => handleApproveEvent(String(event._id))}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                        style={{ backgroundColor: '#22c55e', color: '#fff' }}
+                      >
+                        {actionLoadingKey === `approve-event-${event._id}` ? 'Approving...' : 'Approve'}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={actionLoadingKey === `reject-event-${event._id}`}
+                        onClick={() => handleRejectEvent(String(event._id))}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+                        style={{ backgroundColor: '#FF5656', color: '#fff' }}
+                      >
+                        {actionLoadingKey === `reject-event-${event._id}` ? 'Denying...' : 'Deny'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* End of addition by Christella - 04/14/2026 */}
       </div>
     </div>
   );

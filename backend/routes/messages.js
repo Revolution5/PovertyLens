@@ -11,10 +11,19 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase(); // Added by Christella - 04/14/2026
+
     const db = getDb();
     const messages = await db
       .collection('messages')
-      .find({ recipientEmail: String(email) })
+      // Edited by Christella - 04/14/2026
+      .find({
+        $or: [
+          { email: normalizedEmail },
+          { recipientEmail: normalizedEmail },
+        ],
+      })
+      // End of Addition by Christella - 04/14/2026      
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -67,12 +76,20 @@ router.patch('/read-all', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase(); // Added by Christella - 04/14/2026
+
     const db = getDb();
     await db.collection('messages').updateMany(
-      { recipientEmail: String(email), read: false },
+    // Addition by Christella - 04/14/2026
+      {
+        $or: [
+          { email: normalizedEmail, read: false },
+          { recipientEmail: normalizedEmail, read: false },
+        ],
+      },
       { $set: { read: true, updatedAt: new Date() } }
     );
-
+    // End of Addition by Christella - 04/14/2026
     res.json({ success: true, message: 'Messages marked as read' });
   } catch (err) {
     console.error('Error marking all messages as read:', err);
