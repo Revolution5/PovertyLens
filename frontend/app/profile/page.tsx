@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle, Eye } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28 // Added Eye for Accessibility - Modified by Marisol 3/5/2026
+import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle, Eye, Mail } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28 // Added Eye for Accessibility - Modified by Marisol 3/5/2026 // Added Mail for Email Preferences - Damon
 import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import for profile images 1/28/26
 
 export default function ProfilePage() {
@@ -27,6 +27,11 @@ export default function ProfilePage() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
+  // ============== Damon - Email Preferences state ==============
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  // ============== End Email Preferences state ==============
+
   // ============== marisol morales 3/1/26 - Add Payment Card state ==============
   const [addCardOpen, setAddCardOpen] = useState(false); // Controls Add Card modal visibility
   const [cardForm, setCardForm] = useState({ cardNumber: '', cardName: '', expiryDate: '', cvv: '' }); // Card form field values
@@ -65,6 +70,9 @@ export default function ProfilePage() {
       // Marisol code for fetching profile images 1/28/26 =====================
       fetchUserImages(storedEmail);
       // End of Marisol Morales Code 1/28/26 =====================
+
+      // Damon - fetch newsletter opt-in status
+      fetchNewsletterSettings(storedEmail);
     } else {
       router.push('/');
     }
@@ -90,6 +98,43 @@ export default function ProfilePage() {
     }
   };
   // End of Marisol Morales Code 1/28/26 =====================
+
+  // Damon - fetch and toggle weekly newsletter opt-in
+  const fetchNewsletterSettings = async (email: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:4000/api/profile/settings?email=${encodeURIComponent(email)}`
+      );
+      const data = await res.json();
+      if (data.success) setNewsletterOptIn(data.weeklyNewsletterOptIn);
+    } catch {
+      // silently ignore — default remains false
+    }
+  };
+
+  const handleNewsletterToggle = async () => {
+    const newValue = !newsletterOptIn;
+    setNewsletterLoading(true);
+    try {
+      const res = await fetch('http://localhost:4000/api/profile/newsletter-optin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, optIn: newValue }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewsletterOptIn(newValue);
+        setMessage(newValue ? 'Weekly newsletter enabled!' : 'Weekly newsletter disabled.');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch {
+      setMessage('Error updating email preference.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
+  // End Damon
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -657,6 +702,68 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* ============== Email Preferences Section - Added by Damon ============== */}
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8CE4FF] to-[#4ade80] flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                    Email Preferences
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                    Manage the emails you receive from PovertyLens
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+
+              <div className="flex items-center justify-between p-4 rounded-lg" style={{
+                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.01)'
+              }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{
+                    backgroundColor: 'var(--color-gray-light)'
+                  }}>
+                    <Mail className="w-5 h-5" style={{ color: 'var(--color-gray)' }} />
+                  </div>
+                  <div>
+                    <p className="font-medium" style={{ color: 'var(--foreground)' }}>Weekly Newsletter</p>
+                    <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                      A weekly summary of facts, stories, and pledge reminders — sent every Monday
+                    </p>
+                  </div>
+                </div>
+                {/* Toggle switch */}
+                <button
+                  onClick={handleNewsletterToggle}
+                  disabled={newsletterLoading}
+                  aria-label={newsletterOptIn ? 'Disable weekly newsletter' : 'Enable weekly newsletter'}
+                  className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: newsletterOptIn ? '#4ade80' : (isDark ? '#555' : '#d1d5db')
+                  }}
+                >
+                  <span
+                    className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition duration-200"
+                    style={{ transform: newsletterOptIn ? 'translateX(20px)' : 'translateX(0px)' }}
+                  />
+                </button>
+              </div>
+
+              <p className="text-xs mt-3 px-4" style={{ color: 'var(--color-gray)' }}>
+                You can unsubscribe at any time via the link in the email.
+              </p>
+            </div>
+          </div>
+          {/* ============== End Email Preferences Section ============== */}
 
           {/* ============== Accessibility Section - Added by Marisol 3/5/2026 ============== */}
           <div className="rounded-xl border overflow-hidden shadow-sm" style={{

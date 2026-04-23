@@ -23,10 +23,13 @@ const currencyRouter = require('./routes/currency'); // added by daniel q. - 3/1
 const { router: activityLogRouter } = require('./routes/activitylog'); // Added by Marisol - 03/05/2026
 const glossaryRoutes = require('./routes/glossaryRoutes'); // Added by Christella - 03/17/2026
 const chatRouter = require('./routes/chat'); // Added by Reymes - 03/24/2026
+const newsletterRouter = require('./routes/newsletter'); // Added by Damon
 const adminRoutes = require('./routes/admin'); // Added by Marisol for WORK REVIEW 3
 const contactRouter = require('./routes/contact'); // Added by Marisol for WORK REVIEW 3
 const messagesRouter = require('./routes/messages');
 const eventsRouter = require('./routes/event'); // Added by Christella - 04/14/2026 for Awareness Calendar - Work Review 4
+const rewardsRouter = require('./routes/rewards'); // d.q. added 4/22/26
+
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
 const port = 4000
@@ -60,6 +63,8 @@ app.use('/api/glossary', glossaryRoutes); // Added by Christella - 03/17/2026
 app.use('/api/currency', currencyRouter); // added by daniel q. - 3/17/36
 app.use('/api/chat', chatRouter); // Added by Reymes - 03/24/2026
 app.use('/api/events', eventsRouter); // Added by Christella - 04/14/2026 for Work Review 4
+app.use('/api/newsletter', newsletterRouter); // Added by Damon
+app.use('/api/rewards', rewardsRouter); // d.q. added 4/22/26
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint
@@ -102,4 +107,17 @@ app.get('/', async (req, res) => {
       scheduleDailyReminder();
     }
   }, 5000);
+
+  // Schedule weekly newsletter — every Monday at 9:00 AM UTC
+  // Added by Damon
+  const cron = require('node-cron');
+  const { sendWeeklyNewsletter } = require('./helpers/newsletterhelper');
+  cron.schedule('0 9 * * 1', async () => {
+    console.log('[WeeklyNewsletter] Running scheduled newsletter...');
+    try {
+      await sendWeeklyNewsletter();
+    } catch (err) {
+      console.error('[WeeklyNewsletter] Scheduled send failed:', err);
+    }
+  }, { timezone: 'UTC' });
 })();
