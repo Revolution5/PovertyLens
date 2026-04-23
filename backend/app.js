@@ -28,6 +28,7 @@ const adminRoutes = require('./routes/admin'); // Added by Marisol for WORK REVI
 const contactRouter = require('./routes/contact'); // Added by Marisol for WORK REVIEW 3
 const messagesRouter = require('./routes/messages');
 const rewardsRouter = require('./routes/rewards'); // d.q. added 4/22/26
+const groupsRouter = require('./routes/groups'); // Added by Copilot - 04/22/2026
 
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
@@ -63,6 +64,7 @@ app.use('/api/currency', currencyRouter); // added by daniel q. - 3/17/36
 app.use('/api/chat', chatRouter); // Added by Reymes - 03/24/2026
 app.use('/api/newsletter', newsletterRouter); // Added by Damon
 app.use('/api/rewards', rewardsRouter); // d.q. added 4/22/26
+app.use('/api/groups', groupsRouter); // Added by Copilot - 04/22/2026
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint
