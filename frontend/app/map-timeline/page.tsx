@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { TrendingUp } from 'lucide-react';
+import { getPovertyLineForYear, getPovertyLineMetadata } from '../../data/historicalPovertyLines'; // Reymes - Added year-specific poverty line imports
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
@@ -83,8 +84,11 @@ export default function MapTimelinePage() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s is enough for a single bulk call
 
+        // Reymes - Get the poverty line for the selected year instead of using 2017 line
+        const povertyLine = getPovertyLineForYear(debouncedYear);
+
         const response = await fetch(
-          `${BACKEND_URL}/api/poverty/pip-map-bulk?year=${debouncedYear}&povline=2.15&maxAgeDays=365`,
+          `${BACKEND_URL}/api/poverty/pip-map-bulk?year=${debouncedYear}&povline=${povertyLine}&maxAgeDays=365`,  // Reymes - Use year-specific poverty line
           { signal: controller.signal }
         );
         
@@ -386,7 +390,8 @@ export default function MapTimelinePage() {
               lineHeight: 1.45,
             }}
           >
-            Poverty line: $2.15 per day (2017 PPP). Source: World Bank PIP.
+            {/* Reymes - Display year-specific poverty line instead of hardcoded 2017 line */}
+            Poverty line: ${getPovertyLineForYear(debouncedYear).toFixed(2)} per day ({getPovertyLineMetadata(debouncedYear).ppp}). Source: World Bank PIP.
           </div>
         </aside>
       </section>

@@ -1,4 +1,5 @@
 // Created by Christella - 04/13/2026
+// Updated by Reymes - 04/25/2026 - Improved accessibility, colorblind compatibility, and dark mode
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -19,13 +20,45 @@ type CalendarEvent = {
   verified: boolean;
 };
 
-const TYPE_CONFIG: Record<string, { color: string; bg: string }> = {
-  'Awareness Day': { color: '#8CE4FF', bg: 'rgba(140,228,255,0.15)' },
-  'Volunteering':  { color: '#4CAF50', bg: 'rgba(76,175,80,0.15)'   },
-  'Fundraiser':    { color: '#FFA239', bg: 'rgba(255,162,57,0.15)'   },
-  'Conference':    { color: '#B388FF', bg: 'rgba(179,136,255,0.15)'  },
-  'Campaign':      { color: '#FF5656', bg: 'rgba(255,86,86,0.15)'    },
+// reymes start - UI palette contrast updates
+const TYPE_CONFIG: Record<string, { color: string; darkColor: string; bg: string; darkBg: string; label: string }> = {
+  'Awareness Day': { 
+    color: '#0066CC',      // Accessible blue
+    darkColor: '#8CE4FF',
+    bg: 'rgba(0,102,204,0.12)',
+    darkBg: 'rgba(140,228,255,0.15)',
+    label: 'Awareness Day'
+  },
+  'Volunteering': { 
+    color: '#00A852',      // Accessible green
+    darkColor: '#7CFFA1',
+    bg: 'rgba(0,168,82,0.12)',
+    darkBg: 'rgba(76,175,80,0.15)',
+    label: 'Volunteering'
+  },
+  'Fundraiser': { 
+    color: '#FF8C00',      // Accessible orange (higher contrast)
+    darkColor: '#FFD27A',
+    bg: 'rgba(255,140,0,0.12)',
+    darkBg: 'rgba(255,162,57,0.15)',
+    label: 'Fundraiser'
+  },
+  'Conference': { 
+    color: '#7B3FF2',      // Accessible purple
+    darkColor: '#D3B5FF',
+    bg: 'rgba(123,63,242,0.12)',
+    darkBg: 'rgba(179,136,255,0.15)',
+    label: 'Conference'
+  },
+  'Campaign': { 
+    color: '#CC0000',      // Accessible dark red (high contrast)
+    darkColor: '#FF8A8A',
+    bg: 'rgba(204,0,0,0.12)',
+    darkBg: 'rgba(255,86,86,0.15)',
+    label: 'Campaign'
+  },
 };
+// reymes end - UI palette contrast updates
 
 const MONTHS = [
   'January','February','March','April','May','June',
@@ -116,7 +149,7 @@ export default function AwarenessCalendar() {
 
   const selectedEvents = selectedDay ? (eventsByDay[selectedDay] || []) : [];
 
-  // Upcoming events across all months — next 5
+  // Upcoming events across all months - next 5
   const upcoming = [...events]
     .filter(ev => new Date(ev.date) >= new Date(today.getFullYear(), today.getMonth(), today.getDate()))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -126,46 +159,61 @@ export default function AwarenessCalendar() {
     <div
       className="rounded-2xl overflow-hidden"
       style={{
-        background: isDark ? 'rgba(255,255,255,0.02)' : 'white',
+        background: 'var(--background)',
         border: '1px solid var(--color-gray-light)',
-        boxShadow: 'var(--shadow-lg)',
+        boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.35)' : 'var(--shadow-lg)',
       }}
+      role="region"
+      aria-label="Awareness Calendar"
     >
+      {/* reymes start - calendar surface readability in dark mode */}
       {/* Header */}
       <div
         className="px-6 py-4 flex items-center justify-between"
         style={{
           borderBottom: '1px solid var(--color-gray-light)',
-          background: isDark ? 'rgba(255,255,255,0.03)' : '#fafafa',
+          background: isDark ? 'rgba(255,255,255,0.03)' : 'var(--color-gray-light)',
         }}
       >
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5" style={{ color: 'var(--color-orange)' }} />
-          <h2 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>
+        <div className="flex items-center gap-3">
+          <Calendar className="w-5 h-5" style={{ color: 'var(--color-cyan)' }} aria-hidden="true" />
+          <h2 
+            className="text-lg font-bold" 
+            style={{ color: 'var(--foreground)' }}
+            id="calendar-heading"
+          >
             Awareness Calendar
           </h2>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={prevMonth}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-105"
             style={{
-              background: isDark ? 'rgba(255,255,255,0.07)' : '#f0f0f0',
+              background: isDark ? 'rgba(255,255,255,0.07)' : 'var(--background)',
               color: 'var(--foreground)',
+              border: '1px solid var(--color-gray-light)',
             }}
+            aria-label={`Previous month`}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm font-semibold w-32 text-center" style={{ color: 'var(--foreground)' }}>
+          <span 
+            className="text-sm font-semibold w-40 text-center" 
+            style={{ color: 'var(--foreground)' }}
+            aria-live="polite"
+          >
             {MONTHS[month]} {year}
           </span>
           <button
             onClick={nextMonth}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-105"
             style={{
-              background: isDark ? 'rgba(255,255,255,0.07)' : '#f0f0f0',
+              background: isDark ? 'rgba(255,255,255,0.07)' : 'var(--background)',
               color: 'var(--foreground)',
+              border: '1px solid var(--color-gray-light)',
             }}
+            aria-label={`Next month`}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -175,14 +223,16 @@ export default function AwarenessCalendar() {
     <div className="flex flex-col lg:flex-row">
 
         {/* Calendar grid */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-6">
           {/* Day headers */}
-          <div className="grid grid-cols-7 mb-2">
+          <div className="grid grid-cols-7 mb-3 gap-1">
             {DAYS.map(d => (
               <div
                 key={d}
-                className="text-center text-xs font-semibold py-1"
+                className="text-center text-xs font-bold py-2 uppercase tracking-wider"
                 style={{ color: 'var(--color-gray)' }}
+                role="columnheader"
+                aria-label={d}
               >
                 {d}
               </div>
@@ -190,10 +240,10 @@ export default function AwarenessCalendar() {
           </div>
 
           {/* Day cells */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-2">
             {/* Empty cells before first day */}
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} />
+              <div key={`empty-${i}`} aria-hidden="true" />
             ))}
 
             {/* Day cells */}
@@ -202,29 +252,36 @@ export default function AwarenessCalendar() {
               const hasEvents = !!eventsByDay[day];
               const isSelected = selectedDay === day;
               const isTodayDay = isToday(day);
+              const dayEvents = eventsByDay[day] || [];
 
               return (
                 <button
                   key={day}
                   onClick={() => setSelectedDay(isSelected ? null : day)}
-                  className="relative flex flex-col items-center justify-start rounded-xl py-1.5 px-1 transition-all"
+                  className="relative flex flex-col items-center justify-start rounded-xl py-2 px-1 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{
-                    minHeight: 44,
+                    minHeight: 50,
                     background: isSelected
-                      ? 'var(--gradient-orange-red)'
+                      ? '#005A9E'
                       : isTodayDay
-                      ? (isDark ? 'rgba(255,162,57,0.15)' : 'rgba(255,162,57,0.1)')
+                      ? (isDark ? 'rgba(255,162,57,0.2)' : 'rgba(255,162,57,0.15)')
                       : hasEvents
-                      ? (isDark ? 'rgba(255,255,255,0.04)' : '#f7f7f7')
+                      ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)')
                       : 'transparent',
-                    border: isTodayDay && !isSelected
-                      ? '1.5px solid var(--color-orange)'
-                      : '1.5px solid transparent',
+                    border: isSelected
+                      ? '2px solid #003D6B'
+                      : isTodayDay
+                      ? '2px solid var(--color-orange)'
+                      : '2px solid transparent',
+                    boxShadow: isSelected ? (isDark ? '0 1px 4px rgba(0, 61, 107, 0.2)' : '0 2px 8px rgba(0, 61, 107, 0.35)') : 'none',
                     cursor: hasEvents ? 'pointer' : 'default',
                   }}
+                  aria-label={`${MONTHS[month]} ${day}${isTodayDay ? ', today' : ''}${dayEvents.length > 0 ? `, ${dayEvents.length} event${dayEvents.length !== 1 ? 's' : ''}` : ''}`}
+                  aria-pressed={isSelected}
+                  disabled={!hasEvents && !isTodayDay}
                 >
                   <span
-                    className="text-xs font-semibold"
+                    className="text-sm font-bold leading-tight"
                     style={{
                       color: isSelected ? 'white' : isTodayDay ? 'var(--color-orange)' : 'var(--foreground)',
                     }}
@@ -232,21 +289,29 @@ export default function AwarenessCalendar() {
                     {day}
                   </span>
 
-                  {/* Event dots */}
+                  {/* Event indicators with dots */}
+                  {/* reymes start - selected day contrast/readability */}
                   {hasEvents && (
-                    <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
-                      {eventsByDay[day].slice(0, 3).map((ev, idx) => {
-                        const cfg = TYPE_CONFIG[ev.type] || TYPE_CONFIG['Campaign'];
-                        return (
-                          <div
-                            key={idx}
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: isSelected ? 'white' : cfg.color }}
-                          />
-                        );
-                      })}
-                    </div>
+                    <>
+                      {/* reymes start - dot color legibility in dark mode */}
+                      <div className="flex gap-0.5 mt-1 flex-wrap justify-center" aria-label={`${dayEvents.length} event indicator`}>
+                        {dayEvents.slice(0, 3).map((ev, idx) => {
+                          const cfg = TYPE_CONFIG[ev.type] || TYPE_CONFIG['Campaign'];
+                          return (
+                            <div
+                              key={idx}
+                              className="w-2 h-2 rounded-full"
+                              style={{ background: isSelected ? 'white' : (isDark ? cfg.darkColor : cfg.color) }}
+                              title={ev.type}
+                              aria-label={ev.type}
+                            />
+                          );
+                        })}
+                      </div>
+                      {/* reymes end - dot color legibility in dark mode */}
+                    </>
                   )}
+                  {/* reymes end - selected day contrast/readability */}
                 </button>
               );
             })}
@@ -254,10 +319,13 @@ export default function AwarenessCalendar() {
 
           {/* Selected day events */}
           {selectedDay && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-gray)' }}>
-                {MONTHS[month]} {selectedDay}
-              </p>
+            <div className="mt-6 space-y-3" role="region" aria-live="polite">
+              <h3 
+                className="text-xs font-bold uppercase tracking-wider" 
+                style={{ color: 'var(--color-gray)' }}
+              >
+                Selected Date: {MONTHS[month]} {selectedDay}
+              </h3>
               {selectedEvents.length === 0 ? (
                 <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No events this day.</p>
               ) : (
@@ -269,30 +337,39 @@ export default function AwarenessCalendar() {
 
         {/* Upcoming sidebar */}
         <div
-            className="lg:w-72 p-4 flex flex-col gap-3 border-t lg:border-t-0 lg:border-l"
+            className="lg:w-80 p-6 flex flex-col gap-4 border-t lg:border-t-0 lg:border-l"
             style={{
                 borderColor: 'var(--color-gray-light)',
+                background: isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)',
             }}
+            role="region"
+            aria-label="Upcoming Events"
         >
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-gray)' }}>
+          <h3 
+            className="text-xs font-bold uppercase tracking-wider flex items-center gap-2" 
+            style={{ color: 'var(--color-gray)' }}
+          >
             Upcoming Events
-          </p>
+          </h3>
           {loading ? (
-            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading...</p>
+            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>Loading events...</p>
           ) : upcoming.length === 0 ? (
             <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No upcoming events.</p>
           ) : (
-            upcoming.map(ev => <UpcomingEventRow key={ev._id} event={ev} isDark={isDark} />)
+            <div className="space-y-2">
+              {upcoming.map(ev => <UpcomingEventRow key={ev._id} event={ev} isDark={isDark} />)}
+            </div>
           )}
         </div>
       </div>
 
       {/* Submission Note for User Submitted Events */}
+      {/* reymes end - calendar surface readability in dark mode */}
       <div
         className="px-6 py-4 text-center"
         style={{
           borderTop: '1px solid var(--color-gray-light)',
-          background: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa',
+          background: isDark ? 'rgba(255,255,255,0.01)' : 'var(--color-gray-light)',
         }}
       >
         <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
@@ -300,11 +377,11 @@ export default function AwarenessCalendar() {
           <Link
             href="/SubmitEventForm"
             className="font-semibold hover:underline transition-all"
-            style={{ color: 'var(--color-orange)' }}
+            style={{ color: 'var(--color-cyan)' }}
           >
-            Click here
-          </Link>{' '}
-          to submit an event.
+            Submit an event
+          </Link>
+          .
         </p>
       </div>
       {/* ===== End of added code ===== */}
@@ -315,45 +392,66 @@ export default function AwarenessCalendar() {
 // Full event card shown when a day is clicked
 function EventCard({ event, isDark }: { event: CalendarEvent; isDark: boolean }) {
   const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG['Campaign'];
+  const accent = isDark ? cfg.darkColor : cfg.color;
   return (
     <div
-      className="rounded-xl p-3"
+      className="rounded-xl p-4 transition-all hover:shadow-md"
       style={{
-        background: isDark ? 'rgba(255,255,255,0.04)' : cfg.bg,
-        border: `1px solid ${cfg.color}40`,
+        background: isDark ? 'rgba(255,255,255,0.05)' : cfg.bg,
+        border: `1.5px solid ${accent}`,
       }}
+      role="article"
     >
-      <div className="flex items-start justify-between gap-2 mb-1">
+      {/* reymes start - event card dark-mode readability */}
+      <div className="flex items-start justify-between gap-2 mb-2">
         <span
-          className="text-xs font-semibold px-2 py-0.5 rounded-full"
-          style={{ background: cfg.bg, color: cfg.color }}
+          className="text-xs font-bold px-2.5 py-1 rounded-full"
+          style={{ background: accent, color: isDark ? '#0a0a0a' : 'white' }}
         >
           {event.type}
         </span>
         {event.verified && (
-          <div className="flex items-center gap-1 text-xs" style={{ color: '#4CAF50' }}>
-            <CheckCircle className="w-3 h-3" />
+          <div 
+            className="flex items-center gap-1 text-xs font-medium" 
+            style={{ color: '#00A852' }}
+            title="Verified event"
+          >
+            <CheckCircle className="w-4 h-4" aria-hidden="true" />
             Verified
           </div>
         )}
       </div>
-      <p className="text-sm font-semibold mb-1" style={{ color: 'var(--foreground)' }}>{event.title}</p>
-      <p className="text-xs leading-relaxed mb-2" style={{ color: 'var(--color-gray)' }}>{event.description}</p>
-      <div className="flex items-center justify-between">
-        <span className="text-xs" style={{ color: 'var(--color-gray)' }}>{event.location}</span>
+      <p 
+        className="text-sm font-bold mb-2" 
+        style={{ color: 'var(--foreground)' }}
+      >
+        {event.title}
+      </p>
+      <p 
+        className="text-xs leading-relaxed mb-3" 
+        style={{ color: 'var(--color-gray-dark)' }}
+      >
+        {event.description}
+      </p>
+      <div className="flex items-center justify-between text-xs">
+        <span style={{ color: 'var(--color-gray)' }}>
+          Location: {event.location}
+        </span>
         {event.sourceUrl && (
           <a
             href={event.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs font-medium hover:opacity-70 transition-opacity"
-            style={{ color: cfg.color }}
+            className="inline-flex items-center gap-1 font-semibold hover:opacity-80 transition-opacity"
+            style={{ color: accent }}
+            aria-label={`Learn more about ${event.title}`}
           >
-            <ExternalLink className="w-3 h-3" />
             {event.sourceLabel || 'Learn more'}
+            <ExternalLink className="w-3 h-3" aria-hidden="true" />
           </a>
         )}
       </div>
+      {/* reymes end - event card dark-mode readability */}
     </div>
   );
 }
@@ -361,35 +459,50 @@ function EventCard({ event, isDark }: { event: CalendarEvent; isDark: boolean })
 // Compact row used in the upcoming sidebar
 function UpcomingEventRow({ event, isDark }: { event: CalendarEvent; isDark: boolean }) {
   const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG['Campaign'];
+  const accent = isDark ? cfg.darkColor : cfg.color;
   const d = new Date(event.date);
   const day = d.getDate();
   const mon = MONTHS[d.getMonth()].slice(0, 3);
 
   return (
-    <div className="flex items-start gap-3">
+    <div 
+      className="flex items-start gap-3 p-3 rounded-lg transition-all hover:bg-opacity-70"
+      style={{
+        background: isDark ? 'rgba(255,255,255,0.03)' : cfg.bg,
+        border: `1px solid ${accent}66`,
+      }}
+      role="article"
+    >
+      {/* reymes start - upcoming row dark-mode readability */}
       {/* Date badge */}
+      {/* reymes start - date badge readability */}
       <div
-        className="flex-shrink-0 w-10 rounded-lg flex flex-col items-center justify-center py-1"
-        style={{ background: cfg.bg }}
+        className="flex-shrink-0 w-12 rounded-lg flex flex-col items-center justify-center py-2"
+        style={{ background: isDark ? 'rgba(0,0,0,0.2)' : cfg.bg }}
       >
-        <span className="text-xs font-bold leading-none" style={{ color: cfg.color }}>{mon}</span>
-        <span className="text-sm font-black leading-none mt-0.5" style={{ color: cfg.color }}>{day}</span>
+        <span className="text-xs font-bold leading-none text-center" style={{ color: accent }}>{mon}</span>
+        <span className="text-lg font-black leading-none mt-1" style={{ color: accent }}>{day}</span>
       </div>
+      {/* reymes end - date badge readability */}
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1 mb-0.5">
-          <p className="text-xs font-semibold truncate" style={{ color: 'var(--foreground)' }}>
+        <div className="flex items-start gap-1.5 mb-1">
+          <p 
+            className="text-xs font-bold truncate" 
+            style={{ color: 'var(--foreground)' }}
+          >
             {event.title}
           </p>
-          {event.verified && <CheckCircle className="w-3 h-3 flex-shrink-0" style={{ color: '#4CAF50' }} />}
+          {event.verified && <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#00A852' }} aria-label="Verified" />}
         </div>
         <span
-          className="text-xs px-1.5 py-0.5 rounded-full"
-          style={{ background: cfg.bg, color: cfg.color }}
+          className="text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+          style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)', color: accent }}
         >
-          {event.type}
+          {cfg.label}
         </span>
       </div>
+      {/* reymes end - upcoming row dark-mode readability */}
     </div>
   );
 }
