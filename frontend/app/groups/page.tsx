@@ -42,12 +42,18 @@ type Group = {
   updatedAt: string;
 };
 
+type GroupMember = {
+  email: string;
+  username: string;
+};
+
 type GroupDetails = {
   group: Group;
-  members: string[];
+  members: GroupMember[];
 };
 
 type Notice = { type: 'success' | 'error'; text: string };
+type GroupTab = 'overview' | 'assignments';
 
 const GROUP_TYPE_OPTIONS: GroupType[] = ['classroom', 'nonprofit', 'club', 'corporate'];
 const ASSIGNMENT_TYPE_OPTIONS: GroupAssignmentType[] = [
@@ -81,6 +87,8 @@ export default function GroupsPage() {
   const [assignmentTarget, setAssignmentTarget] = useState<number>(1);
   const [assignmentDueDate, setAssignmentDueDate] = useState<string>('');
   const [copiedCode, setCopiedCode] = useState<string>('');
+  const [showMembersList, setShowMembersList] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<GroupTab>('overview');
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail') || '';
@@ -101,6 +109,11 @@ export default function GroupsPage() {
     if (!selectedGroupId || !userEmail) return;
     void fetchGroupDetails(selectedGroupId);
   }, [selectedGroupId, userEmail]);
+
+  useEffect(() => {
+    setShowMembersList(false);
+    setActiveTab('overview');
+  }, [selectedGroupId]);
 
   const selectedGroup = useMemo(
     () => groups.find((group) => group.id === selectedGroupId) || null,
@@ -321,6 +334,33 @@ export default function GroupsPage() {
           <p className="text-lg" style={{ color: 'var(--color-gray)' }}>
             Build coordinated action with your class or organization, assign goals, and track shared impact.
           </p>
+
+          <div className="mt-5 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('overview')}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold border"
+              style={{
+                borderColor: activeTab === 'overview' ? '#FFA239' : 'var(--color-gray-light)',
+                color: activeTab === 'overview' ? '#FFA239' : 'var(--foreground)',
+                backgroundColor: activeTab === 'overview' ? 'rgba(255,162,57,0.1)' : 'transparent',
+              }}
+            >
+              Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('assignments')}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold border"
+              style={{
+                borderColor: activeTab === 'assignments' ? '#FFA239' : 'var(--color-gray-light)',
+                color: activeTab === 'assignments' ? '#FFA239' : 'var(--foreground)',
+                backgroundColor: activeTab === 'assignments' ? 'rgba(255,162,57,0.1)' : 'transparent',
+              }}
+            >
+              Assignments
+            </button>
+          </div>
         </header>
 
         {notice && (
@@ -336,7 +376,8 @@ export default function GroupsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {activeTab === 'overview' && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <section
             className="xl:col-span-4 rounded-2xl p-5"
             style={{ border: '1px solid var(--color-gray-light)', backgroundColor: 'var(--background)' }}
@@ -461,147 +502,263 @@ export default function GroupsPage() {
 
             {selectedGroup && (
               <div className="rounded-xl p-4 border" style={{ borderColor: 'var(--color-gray-light)' }}>
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-                  <div>
-                    <h3 className="text-2xl font-semibold">{selectedGroup.name}</h3>
-                    <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                      Leader: {selectedGroup.leaderUsername} ({selectedGroup.leaderEmail})
-                    </p>
-                    <div className="mt-1 flex items-center gap-2 flex-wrap">
-                      <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                        Invite code: {selectedGroup.code}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void copyGroupCodeToClipboard(selectedGroup.code)}
-                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold border"
-                        style={{
-                          borderColor: 'var(--color-gray-light)',
-                          color: 'var(--foreground)',
-                          backgroundColor: copiedCode === selectedGroup.code ? 'rgba(34,197,94,0.12)' : 'transparent',
-                        }}
-                        aria-label="Copy invite code"
-                        title="Copy invite code"
-                      >
-                        {copiedCode === selectedGroup.code ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" />
-                            Copied
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" />
-                            Copy
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                    {selectedDetails?.members.length || selectedGroup.memberCount} members
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                  <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)' }}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <ClipboardList className="w-4 h-4" />
-                      <h4 className="font-semibold">Assignments</h4>
-                    </div>
-
-                    {(selectedDetails?.group.assignments || []).length === 0 ? (
-                      <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                        No assignments yet.
-                      </p>
-                    ) : (
-                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                        {(selectedDetails?.group.assignments || []).map((assignment) => (
-                          <div
-                            key={assignment.id}
-                            className="rounded-lg p-3"
-                            style={{ border: '1px solid var(--color-gray-light)' }}
-                          >
-                            <p className="font-medium">{assignment.title}</p>
-                            <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                              Type: {assignment.assignmentType} • Target: {assignment.target}
+                {activeTab === 'overview' && (
+                  <div className="grid grid-cols-1 gap-4 mb-4">
+                    <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)' }}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-2xl font-semibold">{selectedGroup.name}</h3>
+                          <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                            Leader: {selectedGroup.leaderUsername} ({selectedGroup.leaderEmail})
+                          </p>
+                          <div className="mt-1 flex items-center gap-2 flex-wrap">
+                            <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                              Invite code: {selectedGroup.code}
                             </p>
-                            {assignment.dueDate ? (
-                              <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                                Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                              </p>
-                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => void copyGroupCodeToClipboard(selectedGroup.code)}
+                              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold border"
+                              style={{
+                                borderColor: 'var(--color-gray-light)',
+                                color: 'var(--foreground)',
+                                backgroundColor: copiedCode === selectedGroup.code ? 'rgba(34,197,94,0.12)' : 'transparent',
+                              }}
+                              aria-label="Copy invite code"
+                              title="Copy invite code"
+                            >
+                              {copiedCode === selectedGroup.code ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5" />
+                                  Copied
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy
+                                </>
+                              )}
+                            </button>
                           </div>
-                        ))}
+                        </div>
+                        <div className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                          {selectedDetails?.members.length || selectedGroup.memberCount} members
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {isLeader && (
-                  <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)' }}>
-                    <h4 className="font-semibold mb-3">Create Assignment</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={assignmentTitle}
-                        onChange={(event) => setAssignmentTitle(event.target.value)}
-                        placeholder="Assignment title"
-                        className="px-3 py-2 rounded-lg border"
-                        style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
-                      />
-                      <select
-                        value={assignmentType}
-                        onChange={(event) => setAssignmentType(event.target.value as GroupAssignmentType)}
-                        className="px-3 py-2 rounded-lg border"
-                        style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
-                      >
-                        {ASSIGNMENT_TYPE_OPTIONS.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
-
-                      <input
-                        type="number"
-                        min={1}
-                        value={assignmentTarget}
-                        onChange={(event) => setAssignmentTarget(Number(event.target.value))}
-                        placeholder="Target"
-                        className="px-3 py-2 rounded-lg border"
-                        style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
-                      />
-
-                      <input
-                        type="date"
-                        value={assignmentDueDate}
-                        onChange={(event) => setAssignmentDueDate(event.target.value)}
-                        className="px-3 py-2 rounded-lg border"
-                        style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
-                      />
-
-                      <textarea
-                        value={assignmentDescription}
-                        onChange={(event) => setAssignmentDescription(event.target.value)}
-                        placeholder="Description (optional)"
-                        className="md:col-span-2 px-3 py-2 rounded-lg border min-h-20"
-                        style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
-                      />
                     </div>
 
-                    <button
-                      onClick={() => void handleCreateAssignment()}
-                      className="mt-3 px-4 py-2 rounded-lg font-semibold"
-                      style={{ backgroundColor: '#FFA239', color: '#111827' }}
-                    >
-                      Save Assignment
-                    </button>
+                    <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)' }}>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <h4 className="font-semibold">Members</h4>
+                        <button
+                          type="button"
+                          onClick={() => setShowMembersList((previous) => !previous)}
+                          className="px-3 py-1.5 rounded-md text-xs font-semibold border"
+                          style={{
+                            borderColor: 'var(--color-gray-light)',
+                            color: 'var(--foreground)',
+                            backgroundColor: showMembersList ? 'rgba(255,162,57,0.1)' : 'transparent',
+                          }}
+                        >
+                          {showMembersList ? 'Hide Members' : 'View Members'}
+                        </button>
+                      </div>
+
+                      {!showMembersList ? (
+                        <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                          Click "View Members" to display the list.
+                        </p>
+                      ) : (selectedDetails?.members || []).length === 0 ? (
+                        <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                          No members found yet.
+                        </p>
+                      ) : (
+                        <div className="max-h-56 overflow-y-auto pr-1 space-y-2">
+                          {(selectedDetails?.members || []).map((member) => (
+                            <div
+                              key={member.email}
+                              className="flex items-center justify-between rounded-md px-3 py-2"
+                              style={{
+                                backgroundColor: 'rgba(140,228,255,0.08)',
+                                border: '1px solid var(--color-gray-light)',
+                              }}
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold break-all" style={{ color: 'var(--foreground)' }}>
+                                  {member.username}
+                                </p>
+                                <p className="text-xs break-all" style={{ color: 'var(--color-gray)' }}>
+                                  {member.email}
+                                </p>
+                              </div>
+                              {member.email === selectedGroup.leaderEmail && (
+                                <span
+                                  className="ml-3 px-2 py-0.5 rounded-full text-xs font-semibold"
+                                  style={{
+                                    backgroundColor: 'rgba(255,162,57,0.18)',
+                                    color: '#FFA239',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  Leader
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
+
               </div>
             )}
           </section>
-        </div>
+          </div>
+        )}
+
+        {activeTab === 'assignments' && (
+          <section
+            className="rounded-2xl p-5"
+            style={{ border: '1px solid var(--color-gray-light)', backgroundColor: 'var(--background)' }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <ClipboardList className="w-5 h-5" style={{ color: '#FF5656' }} />
+              <h2 className="text-xl font-semibold">Assignments</h2>
+            </div>
+
+            {loading ? (
+              <p style={{ color: 'var(--color-gray)' }}>Loading groups...</p>
+            ) : groups.length === 0 ? (
+              <p style={{ color: 'var(--color-gray)' }}>
+                You are not in any groups yet. Switch to Overview to create or join a group.
+              </p>
+            ) : (
+              <>
+                <div className="mb-4 max-w-md">
+                  <label className="block text-sm mb-2" style={{ color: 'var(--color-gray)' }}>
+                    Group
+                  </label>
+                  <select
+                    value={selectedGroupId}
+                    onChange={(event) => setSelectedGroupId(event.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border"
+                    style={{ borderColor: 'var(--color-gray-light)', background: 'transparent', color: 'var(--foreground)' }}
+                  >
+                    {groups.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedGroup ? (
+                  <>
+                    <div className="grid grid-cols-1 gap-4 mb-4">
+                      <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <ClipboardList className="w-4 h-4" />
+                          <h4 className="font-semibold">Assignments for {selectedGroup.name}</h4>
+                        </div>
+
+                        {(selectedDetails?.group.assignments || []).length === 0 ? (
+                          <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                            No assignments yet.
+                          </p>
+                        ) : (
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            {(selectedDetails?.group.assignments || []).map((assignment) => (
+                              <div
+                                key={assignment.id}
+                                className="rounded-lg p-3"
+                                style={{ border: '1px solid var(--color-gray-light)' }}
+                              >
+                                <p className="font-medium">{assignment.title}</p>
+                                <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                                  Type: {assignment.assignmentType} • Target: {assignment.target}
+                                </p>
+                                {assignment.dueDate ? (
+                                  <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                                    Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {isLeader && (
+                      <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-gray-light)' }}>
+                        <h4 className="font-semibold mb-3">Create Assignment</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            value={assignmentTitle}
+                            onChange={(event) => setAssignmentTitle(event.target.value)}
+                            placeholder="Assignment title"
+                            className="px-3 py-2 rounded-lg border"
+                            style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
+                          />
+                          <select
+                            value={assignmentType}
+                            onChange={(event) => setAssignmentType(event.target.value as GroupAssignmentType)}
+                            className="px-3 py-2 rounded-lg border"
+                            style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
+                          >
+                            {ASSIGNMENT_TYPE_OPTIONS.map((type) => (
+                              <option key={type} value={type}>
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+
+                          <input
+                            type="number"
+                            min={1}
+                            value={assignmentTarget}
+                            onChange={(event) => setAssignmentTarget(Number(event.target.value))}
+                            placeholder="Target"
+                            className="px-3 py-2 rounded-lg border"
+                            style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
+                          />
+
+                          <input
+                            type="date"
+                            value={assignmentDueDate}
+                            onChange={(event) => setAssignmentDueDate(event.target.value)}
+                            className="px-3 py-2 rounded-lg border"
+                            style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
+                          />
+
+                          <textarea
+                            value={assignmentDescription}
+                            onChange={(event) => setAssignmentDescription(event.target.value)}
+                            placeholder="Description (optional)"
+                            className="md:col-span-2 px-3 py-2 rounded-lg border min-h-20"
+                            style={{ borderColor: 'var(--color-gray-light)', background: 'transparent' }}
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => void handleCreateAssignment()}
+                          className="mt-3 px-4 py-2 rounded-lg font-semibold"
+                          style={{ backgroundColor: '#FFA239', color: '#111827' }}
+                        >
+                          Save Assignment
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p style={{ color: 'var(--color-gray)' }}>Select a group to view assignments.</p>
+                )}
+              </>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

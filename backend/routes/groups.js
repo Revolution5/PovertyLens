@@ -181,10 +181,26 @@ router.get('/:groupId', async (req, res) => {
 
     const progressRows = await GroupProgress.listByGroup(groupId);
 
+    const db = getDb();
+    const memberEmails = Array.isArray(group.memberEmails) ? group.memberEmails : [];
+    const users = await db
+      .collection('users')
+      .find(
+        { email: { $in: memberEmails } },
+        { projection: { email: 1, username: 1 } }
+      )
+      .toArray();
+
+    const usernameByEmail = new Map(users.map((user) => [user.email, user.username]));
+    const members = memberEmails.map((memberEmail) => ({
+      email: memberEmail,
+      username: usernameByEmail.get(memberEmail) || memberEmail.split('@')[0],
+    }));
+
     res.json({
       success: true,
       group: mapGroup(group),
-      members: group.memberEmails,
+      members,
       progress: progressRows.map((row) => ({
         id: row._id.toString(),
         userEmail: row.userEmail,
