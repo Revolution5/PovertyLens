@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle, Eye, Mail } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28 // Added Eye for Accessibility - Modified by Marisol 3/5/2026 // Added Mail for Email Preferences - Damon
+import { Camera, User, Shield, ChevronRight, Image as ImageIcon, KeyRound, CreditCard, CheckCircle, Eye, Mail, Bot } from 'lucide-react'; // Added CreditCard + CheckCircle for Payment Card feature - marisol morales 2-28 // Added Eye for Accessibility - Modified by Marisol 3/5/2026 // Added Mail for Email Preferences - Damon // Added Bot for AI Chat History - Added by Marisol for Work Review 4
 import ImageUpload from '@/components/ImageUpload'; // Marisol code for adding import for profile images 1/28/26
 
 export default function ProfilePage() {
@@ -39,6 +39,14 @@ export default function ProfilePage() {
   const [cardSubmitting, setCardSubmitting] = useState(false); // True while mock API call is running
   const [cardSuccess, setCardSuccess] = useState(false); // True after submission, triggers success banner
   // ============== End Add Card State ==============
+
+  // ============== AI Chat History state - Added by Marisol for Work Review 4 ==============
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const [chatPage, setChatPage] = useState(1);
+  // ============== End AI Chat History state ==============
   
   // ============== Marisol Code for Dark Mode Detection 1/12/2026 ============== //
   const [isDark, setIsDark] = useState(false);
@@ -73,6 +81,9 @@ export default function ProfilePage() {
 
       // Damon - fetch newsletter opt-in status
       fetchNewsletterSettings(storedEmail);
+
+      // Added by Marisol for Work Review 4 - fetch AI chat history for the settings page
+      fetchChatHistory(storedEmail);
     } else {
       router.push('/');
     }
@@ -135,6 +146,49 @@ export default function ProfilePage() {
     }
   };
   // End Damon
+
+  // ============== AI Chat History helpers - Added by Marisol for Work Review 4 ==============
+  const fetchChatHistory = async (email: string) => {
+    setChatHistoryLoading(true);
+    try {
+      const res = await fetch(`http://localhost:4000/api/chat/history?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (data.success) {
+        setChatHistory(data.sessions || []);
+        setChatPage(1);
+      }
+    } catch {
+      // silently ignore — history section will show empty state
+    } finally {
+      setChatHistoryLoading(false);
+    }
+  };
+
+  const handleClearChatHistory = async () => {
+    if (!window.confirm('Are you sure you want to clear your entire AI chat history? This cannot be undone.')) return;
+    setClearingHistory(true);
+    try {
+      const res = await fetch('http://localhost:4000/api/chat/history', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatHistory([]);
+        setExpandedSession(null);
+        setChatPage(1);
+        setMessage('Chat history cleared.');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch {
+      setMessage('Error clearing chat history.');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setClearingHistory(false);
+    }
+  };
+  // ============== End AI Chat History helpers ==============
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -823,6 +877,265 @@ export default function ProfilePage() {
             </div>
           </div>
           {/* ============== End Accessibility Section - marisol morales ============== */}
+
+          {/* ============== START Added by Marisol for Work Review 4 - AI Chat History Section ============== */}
+          <div className="rounded-xl border overflow-hidden shadow-sm" style={{
+            backgroundColor: 'var(--background)',
+            borderColor: 'var(--color-gray-light)'
+          }}>
+            <div className="p-6">
+              {/* Section header + Clear All button */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8CE4FF] to-[#FFA239] flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
+                      AI Chat History
+                    </h2>
+                    <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                      Your recent conversations with the PovertyLens AI assistant
+                    </p>
+                  </div>
+                </div>
+                {chatHistory.length > 0 && (
+                  <button
+                    onClick={handleClearChatHistory}
+                    disabled={clearingHistory}
+                    className="text-sm px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      borderColor: 'var(--color-gray-light)',
+                      color: isDark ? '#e5e5e5' : '#374151',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)';
+                    }}
+                  >
+                    {clearingHistory ? 'Clearing...' : 'Clear All'}
+                  </button>
+                )}
+              </div>
+
+              <div className="h-px mb-6" style={{ backgroundColor: 'var(--color-gray-light)' }}></div>
+
+              {/* Loading spinner */}
+              {chatHistoryLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <div
+                    className="animate-spin rounded-full h-7 w-7 border-2 border-t-transparent"
+                    style={{ borderColor: 'var(--color-cyan)', borderTopColor: 'transparent' }}
+                  />
+                </div>
+
+              ) : chatHistory.length === 0 ? (
+                /* Empty state */
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <div
+                    className="w-14 h-14 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--color-gray-light)' }}
+                  >
+                    <Bot className="w-7 h-7" style={{ color: 'var(--color-gray)' }} />
+                  </div>
+                  <p className="text-sm text-center" style={{ color: 'var(--color-gray)' }}>
+                    No chat history yet. Start a conversation with the AI assistant!
+                  </p>
+                </div>
+
+              ) : (
+                /* Session list with pagination */
+                (() => {
+                  const SESSIONS_PER_PAGE = 5;
+                  const totalPages = Math.ceil(chatHistory.length / SESSIONS_PER_PAGE);
+                  // Page 1 = most recent 5, page 2 = next 5, etc.
+                  const pagedSessions = chatHistory.slice(
+                    (chatPage - 1) * SESSIONS_PER_PAGE,
+                    chatPage * SESSIONS_PER_PAGE
+                  );
+
+                  return (
+                    <>
+                      <div className="space-y-2">
+                        {pagedSessions.map((session: any) => {
+                          const sessionId = session._id?.toString() || String(session.createdAt);
+                          const isExpanded = expandedSession === sessionId;
+                          const dateStr = new Date(session.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
+
+                          return (
+                            <div
+                              key={sessionId}
+                              className="rounded-lg border overflow-hidden"
+                              style={{ borderColor: 'var(--color-gray-light)' }}
+                            >
+                              {/* Collapsed row — click to expand */}
+                              <div
+                                className="flex items-center justify-between p-4 cursor-pointer transition-colors"
+                                style={{
+                                  backgroundColor: isExpanded
+                                    ? isDark ? 'rgba(140,228,255,0.07)' : 'rgba(140,228,255,0.07)'
+                                    : 'transparent',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isExpanded) e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isExpanded) e.currentTarget.style.backgroundColor = 'transparent';
+                                }}
+                                onClick={() => setExpandedSession(isExpanded ? null : sessionId)}
+                              >
+                                <div className="flex-1 min-w-0 mr-4">
+                                  <p className="font-medium text-sm truncate" style={{ color: 'var(--foreground)' }}>
+                                    {session.title}
+                                  </p>
+                                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-gray)' }}>
+                                    {dateStr} · {session.messageCount} message{session.messageCount !== 1 ? 's' : ''}
+                                  </p>
+                                </div>
+                                <ChevronRight
+                                  className="w-4 h-4 flex-shrink-0 transition-transform duration-200"
+                                  style={{
+                                    color: 'var(--color-gray)',
+                                    transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                                  }}
+                                />
+                              </div>
+
+                              {/* Expanded message thread */}
+                              {isExpanded && (
+                                <div
+                                  className="px-4 pb-4 border-t"
+                                  style={{ borderColor: 'var(--color-gray-light)' }}
+                                >
+                                  <div className="pt-3 space-y-2 max-h-80 overflow-y-auto pr-1">
+                                    {session.messages.map((msg: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                                      >
+                                        <div
+                                          className="flex-shrink-0 w-6 h-6 rounded flex items-center justify-center mt-0.5 text-white"
+                                          style={{
+                                            background:
+                                              msg.role === 'assistant'
+                                                ? 'linear-gradient(135deg, var(--color-cyan) 0%, var(--color-orange) 100%)'
+                                                : 'var(--color-orange)',
+                                          }}
+                                        >
+                                          {msg.role === 'assistant' ? (
+                                            <Bot className="w-3.5 h-3.5" />
+                                          ) : (
+                                            <User className="w-3.5 h-3.5" />
+                                          )}
+                                        </div>
+                                        <div
+                                          className="max-w-[80%] rounded-xl px-3 py-2"
+                                          style={{
+                                            backgroundColor:
+                                              msg.role === 'assistant'
+                                                ? isDark ? 'rgba(140,228,255,0.1)' : 'rgba(140,228,255,0.15)'
+                                                : isDark ? 'rgba(255,162,57,0.15)' : 'rgba(255,162,57,0.2)',
+                                            border: `1px solid ${
+                                              msg.role === 'assistant'
+                                                ? 'rgba(140,228,255,0.25)'
+                                                : 'rgba(255,162,57,0.25)'
+                                            }`,
+                                          }}
+                                        >
+                                          <p
+                                            className="text-xs leading-relaxed whitespace-pre-wrap"
+                                            style={{ color: 'var(--foreground)' }}
+                                          >
+                                            {msg.content}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Pagination controls — only shown when there is more than one page */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t" style={{ borderColor: 'var(--color-gray-light)' }}>
+                          {/* Prev button */}
+                          <button
+                            onClick={() => { setChatPage((p) => Math.max(1, p - 1)); setExpandedSession(null); }}
+                            disabled={chatPage === 1}
+                            className="px-3 py-1.5 rounded-lg border text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={{
+                              borderColor: 'var(--color-gray-light)',
+                              color: 'var(--foreground)',
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                            }}
+                            onMouseEnter={(e) => { if (chatPage !== 1) e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)'; }}
+                          >
+                            ← Prev
+                          </button>
+
+                          {/* Page number pills */}
+                          <div className="flex items-center gap-1.5">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                              <button
+                                key={p}
+                                onClick={() => { setChatPage(p); setExpandedSession(null); }}
+                                className="w-8 h-8 rounded-lg text-sm font-medium transition-colors"
+                                style={{
+                                  backgroundColor:
+                                    chatPage === p
+                                      ? 'var(--color-cyan)'
+                                      : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                                  color: chatPage === p ? '#fff' : 'var(--foreground)',
+                                  border: `1px solid ${chatPage === p ? 'var(--color-cyan)' : 'var(--color-gray-light)'}`,
+                                }}
+                              >
+                                {p}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Next button */}
+                          <button
+                            onClick={() => { setChatPage((p) => Math.min(totalPages, p + 1)); setExpandedSession(null); }}
+                            disabled={chatPage === totalPages}
+                            className="px-3 py-1.5 rounded-lg border text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            style={{
+                              borderColor: 'var(--color-gray-light)',
+                              color: 'var(--foreground)',
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                            }}
+                            onMouseEnter={(e) => { if (chatPage !== totalPages) e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.05)'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)'; }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
+              )}
+
+              <p className="text-xs mt-5 px-1" style={{ color: 'var(--color-gray)' }}>
+                Showing up to 20 most recent sessions. Sessions are saved automatically when you close the chat.
+              </p>
+            </div>
+          </div>
+          {/* ============== END Added by Marisol for Work Review 4 - AI Chat History Section ============== */}
 
           {/* Delete Account */}
           <div className="rounded-xl border-2 border-red-200 overflow-hidden shadow-sm" style={{
