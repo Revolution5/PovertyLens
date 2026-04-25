@@ -29,6 +29,7 @@ const contactRouter = require('./routes/contact'); // Added by Marisol for WORK 
 const messagesRouter = require('./routes/messages');
 const eventsRouter = require('./routes/event'); // Added by Christella - 04/14/2026 for Awareness Calendar - Work Review 4
 const rewardsRouter = require('./routes/rewards'); // d.q. added 4/22/26
+const groupsRouter = require('./routes/groups'); // Added by Copilot - 04/22/2026
 
 //===== Created by Christella - 11/22/2025 =====//
 const app = express()
@@ -65,6 +66,7 @@ app.use('/api/chat', chatRouter); // Added by Reymes - 03/24/2026
 app.use('/api/events', eventsRouter); // Added by Christella - 04/14/2026 for Work Review 4
 app.use('/api/newsletter', newsletterRouter); // Added by Damon
 app.use('/api/rewards', rewardsRouter); // d.q. added 4/22/26
+app.use('/api/groups', groupsRouter); // Added by Copilot - 04/22/2026
 
 //===== Created by Christella - 11/22/2025 =====//
 // Root endpoint

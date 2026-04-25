@@ -417,6 +417,21 @@ export default function Navbar() {
                                                 Rewards Shop
                                             </Link>
                                             {/* daniel q. added 4/22/26 end */}
+                                            <Link
+                                                href="/groups"
+                                                className="block px-4 py-2.5 text-sm transition-all duration-200"
+                                                style={{ color: 'var(--foreground)' }}
+                                                onMouseEnter={(e) => {
+                                                    const isDark = document.documentElement.classList.contains('dark');
+                                                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                }}
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                Groups Hub
+                                            </Link>
                                             <Link 
                                                 href="/profile" 
                                                 className="block px-4 py-2.5 text-sm transition-all duration-200"
@@ -536,6 +551,18 @@ export default function Navbar() {
                             >
                                 Statistics
                             </Link>
+
+                            {isLoggedIn && (
+                                <Link
+                                    href="/groups"
+                                    className={`font-medium text-sm transition-colors px-2 py-2 ${
+                                        isActive('/groups') ? 'text-[#FFA239]' : 'text-gray-700 dark:text-gray-200'
+                                    }`}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    Groups Hub
+                                </Link>
+                            )}
 
                             {/* Mobile Resources Section */}
                             <div>
