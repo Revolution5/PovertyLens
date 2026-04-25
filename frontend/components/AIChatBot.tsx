@@ -36,11 +36,20 @@ export default function AIChatBot() {
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null); // Added by Reymes 4/4/2026 - store user's profile image URL for chat avatars
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Added by Marisol for Work Review 4 - keep a live ref to messages so the close-handler never reads a stale snapshot
+  const messagesRef = useRef<Message[]>([WELCOME_MESSAGE]);
+  // Added by Marisol for Work Review 4 - guard that prevents a spurious save on the initial (closed) mount
+  const hasOpenedRef = useRef(false);
 
   // Added by Marisol for Work Review 3 - unread badge counter + quick questions visibility + dark mode detection
   const [unreadCount, setUnreadCount] = useState(0);
   const [showQuickQuestions, setShowQuickQuestions] = useState(true);
   const [isDark, setIsDark] = useState(false);
+
+  // Added by Marisol for Work Review 4 - keep messagesRef in sync so the save-on-close effect always has the latest messages
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.classList.contains("dark"));
@@ -53,7 +62,37 @@ export default function AIChatBot() {
   useEffect(() => {
     if (isOpen) setUnreadCount(0);
   }, [isOpen]);
-  // End added by Marisol for Work Review 3
+
+  // START Added by Marisol for Work Review 4 - save the chat session to the backend whenever
+  // the window is closed and the user has sent at least one message.
+  // Uses messagesRef to avoid stale closure.
+  useEffect(() => {
+    if (isOpen) {
+      // Chat just opened — mark that it has been opened at least once, and reset save guard
+      hasOpenedRef.current = true;
+      return;
+    }
+
+    // Skip the very first render (chat was never opened)
+    if (!hasOpenedRef.current) return;
+
+    const snapshot = messagesRef.current;
+    const userMessages = snapshot.filter((m) => m.id !== "welcome" && m.role === "user");
+    if (userMessages.length === 0) return;
+
+    const email = localStorage.getItem("userEmail");
+    if (!email) return;
+
+    const sessionMessages = snapshot.filter((m) => m.id !== "welcome");
+    const title = userMessages[0].content.slice(0, 100);
+
+    fetch(`${BACKEND_URL}/api/chat/save-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, messages: sessionMessages, title }),
+    }).catch((err) => console.error("Failed to save chat session:", err));
+  }, [isOpen]);
+  // END Added by Marisol for Work Review 4
 
   // Added by Reymes 4/4/2026 - load signed-in user's profile image for chat avatars
   useEffect(() => {

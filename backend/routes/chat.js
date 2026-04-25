@@ -580,4 +580,98 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ── Chat History Routes ────────────────────────────────────────────────────────
+// START Added by Marisol for Work Review 4
+
+// POST /save-session — saves a completed chat session to the database for the user's history
+router.post('/save-session', async (req, res) => {
+  try {
+    const { email, messages: sessionMessages, title } = req.body;
+
+    if (!email || !Array.isArray(sessionMessages) || sessionMessages.length === 0) {
+      return res.status(400).json({ success: false, message: 'Email and messages are required' });
+    }
+
+    const db = getDb();
+    if (!db) return res.status(503).json({ success: false, message: 'Database unavailable' });
+
+    // Derive a readable title from the first user message if none provided
+    const firstUserMsg = sessionMessages.find((m) => m.role === 'user');
+    const sessionTitle = String(title || firstUserMsg?.content || 'Chat session').slice(0, 100);
+
+    // Sanitise stored messages — only keep role + content, cap content length
+    const cleanMessages = sessionMessages
+      .filter((m) => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string')
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
+
+    await db.collection('chatSessions').insertOne({
+      email,
+      title: sessionTitle,
+      messages: cleanMessages,
+      messageCount: cleanMessages.length,
+      createdAt: new Date(),
+    });
+
+    // Enforce a cap of 50 sessions per user — delete oldest beyond that
+    const allSessions = await db
+      .collection('chatSessions')
+      .find({ email }, { projection: { _id: 1 } })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    if (allSessions.length > 50) {
+      const idsToDelete = allSessions.slice(50).map((s) => s._id);
+      await db.collection('chatSessions').deleteMany({ _id: { $in: idsToDelete } });
+    }
+
+    return res.json({ success: true, message: 'Session saved' });
+  } catch (error) {
+    console.error('Save chat session error:', error);
+    return res.status(500).json({ success: false, message: 'Server error saving session' });
+  }
+});
+
+// GET /history?email=... — returns up to 20 most recent sessions for the user (messages included)
+router.get('/history', async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const db = getDb();
+    if (!db) return res.status(503).json({ success: false, message: 'Database unavailable' });
+
+    const sessions = await db
+      .collection('chatSessions')
+      .find({ email }, { projection: { messages: 1, title: 1, createdAt: 1, messageCount: 1 } })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    return res.json({ success: true, sessions });
+  } catch (error) {
+    console.error('Get chat history error:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching history' });
+  }
+});
+
+// DELETE /history — permanently removes all chat sessions for the user
+router.delete('/history', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const db = getDb();
+    if (!db) return res.status(503).json({ success: false, message: 'Database unavailable' });
+
+    const result = await db.collection('chatSessions').deleteMany({ email });
+    return res.json({ success: true, message: `Deleted ${result.deletedCount} session(s)` });
+  } catch (error) {
+    console.error('Clear chat history error:', error);
+    return res.status(500).json({ success: false, message: 'Server error clearing history' });
+  }
+});
+
+// END Added by Marisol for Work Review 4
+// ── End Chat History Routes ────────────────────────────────────────────────────
+
 module.exports = router;
