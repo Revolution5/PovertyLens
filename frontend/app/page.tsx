@@ -588,6 +588,18 @@ export default function Home() {
                         {/* ============== End Dark Mode Card Styling ============== */}
                         {/* ============== Marisol Modified for fav resources code 2/5/2026 End ==============*/}
                     </div>
+
+                    {/* ============== Reymes - Added Awareness Calendar to dashboard 4/25/2026 ============== */}
+                    <div className="mt-16">
+                        <h2 
+                            className="text-3xl font-bold mb-8"
+                            style={{ color: 'var(--foreground)' }}
+                        >
+                            Awareness Calendar
+                        </h2>
+                        <AwarenessCalendar />
+                    </div>
+                    {/* ============== End Awareness Calendar ============== */}
                 </main>
 
                 {/* ============== User App Tour Component - Added by Marisol 2/25/2026 ============== */}
