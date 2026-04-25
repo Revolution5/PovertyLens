@@ -846,6 +846,56 @@ export default function StatisticsPage() {
   }, []);
 // End of Marisol code to detect dark mode changes - 2/8/2026
 
+// added daniel q. 4/24/26 start
+const exportCountryStatsToCSV = () => {
+  if (!liveResult?.metric || !selectedCountry) {
+    alert('Please select a country first');
+    return;
+  }
+
+  type ExportRow = {
+    Country: string;
+    'ISO Code': string;
+    'Export Date': string;
+    'Headcount Rate (%)': string;
+    'Poverty Gap (%)': string;
+    'Poverty Severity (%)': string;
+    'Poverty Line (USD)': string | number;
+    'Data Year': string | number;
+    Source: string;
+  };
+
+  const row: ExportRow = {
+    'Country': countryNames[selectedCountry] || selectedCountry,
+    'ISO Code': selectedCountry,
+    'Export Date': new Date().toLocaleString(),
+    'Headcount Rate (%)': liveResult.metric.headcount ? (liveResult.metric.headcount * 100).toFixed(2) : 'N/A',
+    'Poverty Gap (%)': liveResult.metric.poverty_gap ? (liveResult.metric.poverty_gap * 100).toFixed(2) : 'N/A',
+    'Poverty Severity (%)': liveResult.metric.poverty_severity ? (liveResult.metric.poverty_severity * 100).toFixed(2) : 'N/A',
+    'Poverty Line (USD)': liveResult.povline || 'N/A',
+    'Data Year': liveResult.year || 'N/A',
+    'Source': liveResult.source || 'Unknown'
+  };
+
+  const headers = Object.keys(row) as (keyof ExportRow)[];
+  const csvRows = [
+    headers.join(','),
+    headers.map(header => `"${row[header]}"`).join(',')
+  ];
+  const csvContent = csvRows.join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.setAttribute('download', `poverty_stats_${selectedCountry}_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+  // added daniel q. 4/24/26 end
+
   // Added by Christella - 1/30/2026
   const selectedGeoId = useMemo(() => {
     if (!selectedCountry) return null;
@@ -1617,6 +1667,24 @@ useEffect(() => {
                   ))}
                 </div>
 
+                {/* added daniel q. 4/24/26 start */}
+                <button
+                  onClick={exportCountryStatsToCSV}
+                  className="w-full px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors hover:opacity-80 flex items-center justify-center gap-2"
+                  style={{
+                    borderColor: 'var(--color-gray-light)',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f0f0f0',
+                    color: 'var(--foreground)'
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Export as CSV
+                </button>
+                {/* added daniel q. 4/24/26 end */}
               </div>
             )}
 
