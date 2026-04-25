@@ -57,6 +57,41 @@ router.post('/', async(req, res) => {
     const result = await storiesCollection.insertOne(newStory);
 
     if (userEmail) {
+      const normalizedStoryEmail = String(userEmail).trim().toLowerCase();
+      const completionTime = new Date();
+
+      await db.collection('groups').updateMany(
+        {
+          memberEmails: normalizedStoryEmail,
+          assignments: {
+            $elemMatch: {
+              assignmentType: 'stories',
+              assignedTo: normalizedStoryEmail,
+              completed: { $ne: true },
+            },
+          },
+        },
+        {
+          $set: {
+            'assignments.$[assignment].completed': true,
+            'assignments.$[assignment].completedAt': completionTime,
+            'assignments.$[assignment].completedBy': normalizedStoryEmail,
+            updatedAt: completionTime,
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              'assignment.assignmentType': 'stories',
+              'assignment.assignedTo': normalizedStoryEmail,
+              'assignment.completed': { $ne: true },
+            },
+          ],
+        }
+      );
+    }
+
+    if (userEmail) {
       createNotification(userEmail, `Your story "${title || 'Untitled'}" was published successfully!`);
       await logActivity(userEmail, 'Posted story', title || 'Untitled story', req); // Added by Marisol - 03/05/2026
     }

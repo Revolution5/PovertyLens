@@ -269,6 +269,9 @@ router.post('/:groupId/assignments', async (req, res) => {
       target,
       dueDate,
       createdBy: email,
+      completed: false,
+      completedAt: null,
+      completedBy: null,
       createdAt: new Date(),
     };
 
@@ -292,6 +295,107 @@ router.post('/:groupId/assignments', async (req, res) => {
   } catch (error) {
     console.error('Error creating assignment:', error);
     res.status(500).json({ success: false, message: 'Server error while creating assignment' });
+  }
+});
+
+router.patch('/:groupId/assignments/:assignmentId/assign', async (req, res) => {
+  try {
+    const groupId = String(req.params.groupId || '').trim();
+    const assignmentId = String(req.params.assignmentId || '').trim();
+    const leaderEmail = normalizeEmail(req.body.email);
+    const memberEmail = normalizeEmail(req.body.memberEmail);
+
+    if (!ObjectId.isValid(groupId)) {
+      return res.status(400).json({ success: false, message: 'Invalid group id' });
+    }
+
+    if (!leaderEmail || !memberEmail || !assignmentId) {
+      return res.status(400).json({ success: false, message: 'email, memberEmail, and assignmentId are required' });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    if (group.leaderEmail !== leaderEmail) {
+      return res.status(403).json({ success: false, message: 'Only the group leader can assign assignments' });
+    }
+
+    if (!group.memberEmails.includes(memberEmail)) {
+      return res.status(400).json({ success: false, message: 'Target user is not a member of this group' });
+    }
+
+    const updated = await Group.assignToMember(groupId, assignmentId, memberEmail);
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Assignment not found in this group' });
+    }
+
+    await createNotification(
+      memberEmail,
+      `You have been assigned an assignment in "${group.name}" by the group leader.`
+    );
+
+    await logActivity(leaderEmail, 'Assigned group assignment', `Group: ${group.name}, assignee: ${memberEmail}`, req);
+
+    res.json({
+      success: true,
+      message: 'Assignment assigned successfully',
+      group: mapGroup(updated),
+    });
+  } catch (error) {
+    console.error('Error assigning group assignment:', error);
+    res.status(500).json({ success: false, message: 'Server error while assigning assignment' });
+  }
+});
+
+router.delete('/:groupId/assignments/:assignmentId', async (req, res) => {
+  try {
+    const groupId = String(req.params.groupId || '').trim();
+    const assignmentId = String(req.params.assignmentId || '').trim();
+    const email = normalizeEmail(req.query.email);
+
+    if (!ObjectId.isValid(groupId)) {
+      return res.status(400).json({ success: false, message: 'Invalid group id' });
+    }
+
+    if (!email || !assignmentId) {
+      return res.status(400).json({ success: false, message: 'email and assignmentId are required' });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    if (group.leaderEmail !== email) {
+      return res.status(403).json({ success: false, message: 'Only the group leader can delete assignments' });
+    }
+
+    const deletedAssignment = (group.assignments || []).find((a) => a.id === assignmentId);
+    if (!deletedAssignment) {
+      return res.status(404).json({ success: false, message: 'Assignment not found' });
+    }
+
+    const updated = await Group.removeAssignment(groupId, assignmentId);
+
+    if (deletedAssignment.assignedTo) {
+      await createNotification(
+        deletedAssignment.assignedTo,
+        `An assignment ("${deletedAssignment.title}") in "${group.name}" was deleted by the group leader.`
+      );
+    }
+
+    await logActivity(email, 'Deleted group assignment', `${group.name}: ${deletedAssignment.title}`, req);
+
+    res.json({
+      success: true,
+      message: 'Assignment deleted',
+      group: mapGroup(updated),
+    });
+  } catch (error) {
+    console.error('Error deleting group assignment:', error);
+    res.status(500).json({ success: false, message: 'Server error while deleting assignment' });
   }
 });
 
@@ -338,6 +442,47 @@ router.patch('/:groupId/progress', async (req, res) => {
   } catch (error) {
     console.error('Error updating group progress:', error);
     res.status(500).json({ success: false, message: 'Server error while updating group progress' });
+  }
+});
+
+router.delete('/:groupId', async (req, res) => {
+  try {
+    const groupId = String(req.params.groupId || '').trim();
+    const email = normalizeEmail(req.query.email);
+
+    if (!ObjectId.isValid(groupId)) {
+      return res.status(400).json({ success: false, message: 'Invalid group id' });
+    }
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    if (group.leaderEmail !== email) {
+      return res.status(403).json({ success: false, message: 'Only the group leader can delete the group' });
+    }
+
+    await Group.deleteGroup(groupId);
+    await GroupProgress.deleteByGroup(groupId);
+
+    const membersToNotify = (group.memberEmails || []).filter((m) => m !== email);
+    await Promise.all(
+      membersToNotify.map((memberEmail) =>
+        createNotification(memberEmail, `The group "${group.name}" has been deleted by the leader.`)
+      )
+    );
+
+    await logActivity(email, 'Deleted group', `Group: ${group.name}`, req);
+
+    res.json({ success: true, message: 'Group deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting group:', error);
+    res.status(500).json({ success: false, message: 'Server error while deleting group' });
   }
 });
 

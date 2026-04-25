@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { PlusCircle, Users, KeyRound, ClipboardList, Copy, Check } from 'lucide-react';
+import { PlusCircle, Users, KeyRound, ClipboardList, Copy, Check, UserPlus, Trash2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
@@ -22,6 +22,10 @@ type GroupAssignment = {
   description?: string;
   target: number;
   dueDate?: string | null;
+  assignedTo?: string;
+  completed?: boolean;
+  completedAt?: string | null;
+  completedBy?: string | null;
   createdBy: string;
   createdAt: string;
 };
@@ -89,6 +93,7 @@ export default function GroupsPage() {
   const [copiedCode, setCopiedCode] = useState<string>('');
   const [showMembersList, setShowMembersList] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<GroupTab>('overview');
+  const [assigningAssignmentId, setAssigningAssignmentId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedEmail = localStorage.getItem('userEmail') || '';
@@ -301,6 +306,70 @@ export default function GroupsPage() {
       }, 1800);
     } catch (error) {
       console.error('Could not copy passcode:', error);
+    }
+  }
+
+  async function handleDeleteAssignment(assignmentId: string) {
+    if (!selectedGroup) return;
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/api/groups/${selectedGroup.id}/assignments/${assignmentId}?email=${encodeURIComponent(userEmail)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Could not delete assignment');
+      }
+      setAssigningAssignmentId(null);
+      await fetchGroupDetails(selectedGroup.id);
+      await fetchGroups();
+    } catch (error) {
+      console.error('Error deleting assignment:', error);
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Failed to delete assignment.' });
+    }
+  }
+
+  async function handleDeleteGroup() {
+    if (!selectedGroup) return;
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/api/groups/${selectedGroup.id}?email=${encodeURIComponent(userEmail)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Could not delete group');
+      }
+      setSelectedGroupId('');
+      setSelectedDetails(null);
+      await fetchGroups();
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Failed to delete group.' });
+    }
+  }
+
+  async function handleAssignMember(assignmentId: string, memberEmail: string) {
+    if (!selectedGroup) return;
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/api/groups/${selectedGroup.id}/assignments/${assignmentId}/assign`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail, memberEmail }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Could not assign assignment');
+      }
+      setAssigningAssignmentId(null);
+      await fetchGroupDetails(selectedGroup.id);
+      await fetchGroups();
+    } catch (error) {
+      console.error('Error assigning assignment:', error);
+      setNotice({ type: 'error', text: error instanceof Error ? error.message : 'Failed to assign assignment.' });
     }
   }
 
@@ -541,8 +610,26 @@ export default function GroupsPage() {
                             </button>
                           </div>
                         </div>
-                        <div className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                          {selectedDetails?.members.length || selectedGroup.memberCount} members
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                            {selectedDetails?.members.length || selectedGroup.memberCount} members
+                          </div>
+                          {isLeader && (
+                            <button
+                              type="button"
+                              onClick={() => void handleDeleteGroup()}
+                              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold border"
+                              style={{
+                                borderColor: 'rgba(239,68,68,0.4)',
+                                color: '#EF4444',
+                                backgroundColor: 'transparent',
+                              }}
+                              title="Delete group"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete Group
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -662,29 +749,160 @@ export default function GroupsPage() {
                           <h4 className="font-semibold">Assignments for {selectedGroup.name}</h4>
                         </div>
 
-                        {(selectedDetails?.group.assignments || []).length === 0 ? (
-                          <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
-                            No assignments yet.
-                          </p>
-                        ) : (
+                        {(() => {
+                          const visibleAssignments = (selectedDetails?.group.assignments || []).filter(
+                            (a) => isLeader || a.assignedTo === userEmail
+                          );
+                          if (visibleAssignments.length === 0) {
+                            return (
+                              <p className="text-sm" style={{ color: 'var(--color-gray)' }}>
+                                {isLeader ? 'No assignments yet.' : 'No assignments have been assigned to you yet.'}
+                              </p>
+                            );
+                          }
+                          return (
                           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                            {(selectedDetails?.group.assignments || []).map((assignment) => (
+                            {visibleAssignments.map((assignment) => {
+                              const assignedMember = assignment.assignedTo
+                                ? (selectedDetails?.members || []).find((m) => m.email === assignment.assignedTo)
+                                : null;
+                              const isAssignPopupOpen = assigningAssignmentId === assignment.id;
+
+                              return (
+                                <div
+                                  key={assignment.id}
+                                  className="rounded-lg p-3"
+                                  style={{ border: '1px solid var(--color-gray-light)' }}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="font-medium">{assignment.title}</p>
+                                      <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                                        Type: {assignment.assignmentType} • Target: {assignment.target}
+                                      </p>
+                                      {assignment.dueDate ? (
+                                        <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
+                                          Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                                        </p>
+                                      ) : null}
+                                      {assignedMember ? (
+                                        <p className="text-xs mt-1" style={{ color: '#FFA239' }}>
+                                          Assigned to: <span className="font-semibold">{assignedMember.username}</span>
+                                        </p>
+                                      ) : assignment.assignedTo ? (
+                                        <p className="text-xs mt-1" style={{ color: '#FFA239' }}>
+                                          Assigned to: <span className="font-semibold">{assignment.assignedTo}</span>
+                                        </p>
+                                      ) : null}
+                                      {assignment.completed ? (
+                                        <p className="text-xs mt-1" style={{ color: '#22C55E' }}>
+                                          Completed{assignment.completedAt ? ` on ${new Date(assignment.completedAt).toLocaleDateString()}` : ''}
+                                        </p>
+                                      ) : null}
+                                    </div>
+
+                                    {isLeader && (
+                                      <div className="flex-shrink-0 flex items-center gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setAssigningAssignmentId(isAssignPopupOpen ? null : assignment.id)
+                                          }
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border"
+                                          style={{
+                                            borderColor: isAssignPopupOpen ? '#FFA239' : 'var(--color-gray-light)',
+                                            color: isAssignPopupOpen ? '#FFA239' : 'var(--foreground)',
+                                            backgroundColor: isAssignPopupOpen ? 'rgba(255,162,57,0.1)' : 'transparent',
+                                          }}
+                                          title="Assign to member"
+                                        >
+                                          <UserPlus className="w-3.5 h-3.5" />
+                                          Assign
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => void handleDeleteAssignment(assignment.id)}
+                                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border"
+                                          style={{
+                                            borderColor: 'rgba(239,68,68,0.4)',
+                                            color: '#EF4444',
+                                            backgroundColor: 'transparent',
+                                          }}
+                                          title="Delete assignment"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                          Delete
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          );
+                        })()}
+
+                        {isLeader && assigningAssignmentId && (
+                          <div
+                            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                            style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+                            onClick={() => setAssigningAssignmentId(null)}
+                          >
+                            <div
+                              className="w-full max-w-md rounded-xl overflow-hidden"
+                              style={{
+                                border: '1px solid var(--color-gray-light)',
+                                backgroundColor: 'var(--background)',
+                              }}
+                              onClick={(event) => event.stopPropagation()}
+                            >
                               <div
-                                key={assignment.id}
-                                className="rounded-lg p-3"
-                                style={{ border: '1px solid var(--color-gray-light)' }}
+                                className="px-4 py-3"
+                                style={{ borderBottom: '1px solid var(--color-gray-light)' }}
                               >
-                                <p className="font-medium">{assignment.title}</p>
-                                <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                                  Type: {assignment.assignmentType} • Target: {assignment.target}
+                                <p className="text-sm font-semibold">Pick a member</p>
+                                <p className="text-xs mt-1" style={{ color: 'var(--color-gray)' }}>
+                                  Assign this task to a group member.
                                 </p>
-                                {assignment.dueDate ? (
-                                  <p className="text-xs" style={{ color: 'var(--color-gray)' }}>
-                                    Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                                  </p>
-                                ) : null}
                               </div>
-                            ))}
+
+                              <div className="max-h-72 overflow-y-auto">
+                                {(selectedDetails?.members || []).map((member) => (
+                                  <button
+                                    key={member.email}
+                                    type="button"
+                                    onClick={() => void handleAssignMember(assigningAssignmentId, member.email)}
+                                    className="w-full text-left px-4 py-3 text-sm hover:opacity-80"
+                                    style={{
+                                      color: 'var(--foreground)',
+                                      borderBottom: '1px solid var(--color-gray-light)',
+                                    }}
+                                  >
+                                    <span className="font-medium">{member.username}</span>
+                                    <span className="block text-xs" style={{ color: 'var(--color-gray)' }}>
+                                      {member.email}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div className="px-4 py-3 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => setAssigningAssignmentId(null)}
+                                  className="px-3 py-1.5 rounded-md text-xs font-semibold border"
+                                  style={{
+                                    borderColor: 'var(--color-gray-light)',
+                                    color: 'var(--foreground)',
+                                    backgroundColor: 'transparent',
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>

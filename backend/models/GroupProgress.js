@@ -102,6 +102,12 @@ class GroupProgress {
       .sort({ updatedAt: -1 })
       .toArray();
   }
+
+  static async deleteByGroup(groupId) {
+    if (!ObjectId.isValid(groupId)) return null;
+    const col = this.collection();
+    return col.deleteMany({ groupId: new ObjectId(groupId) });
+  }
 }
 
 module.exports = GroupProgress;

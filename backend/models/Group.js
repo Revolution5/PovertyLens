@@ -91,6 +91,24 @@ class Group {
     );
   }
 
+  static async assignToMember(groupId, assignmentId, memberEmail) {
+    if (!ObjectId.isValid(groupId)) return null;
+    const col = this.collection();
+    return col.findOneAndUpdate(
+      { _id: new ObjectId(groupId), 'assignments.id': assignmentId },
+      {
+        $set: {
+          'assignments.$.assignedTo': memberEmail,
+          'assignments.$.completed': false,
+          'assignments.$.completedAt': null,
+          'assignments.$.completedBy': null,
+          updatedAt: new Date(),
+        },
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
   static async addAssignment(groupId, assignment) {
     if (!ObjectId.isValid(groupId)) return null;
     const col = this.collection();
@@ -103,6 +121,25 @@ class Group {
       },
       { returnDocument: 'after' }
     );
+  }
+
+  static async removeAssignment(groupId, assignmentId) {
+    if (!ObjectId.isValid(groupId)) return null;
+    const col = this.collection();
+    return col.findOneAndUpdate(
+      { _id: new ObjectId(groupId) },
+      {
+        $pull: { assignments: { id: assignmentId } },
+        $set: { updatedAt: new Date() },
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async deleteGroup(groupId) {
+    if (!ObjectId.isValid(groupId)) return null;
+    const col = this.collection();
+    return col.deleteOne({ _id: new ObjectId(groupId) });
   }
 
   static makeJoinCode() {
