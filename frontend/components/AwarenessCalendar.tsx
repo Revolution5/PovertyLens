@@ -72,6 +72,25 @@ export default function AwarenessCalendar() {
   const [isDark, setIsDark] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [favorites, setFavorites] = useState<string[]>(() => { // added daniel q. 4/25/26 start
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('favoriteEvents');
+    return saved ? JSON.parse(saved) : [];
+  }
+  return [];
+}); // added daniel q. 4/25/26 end
+  const toggleFavorite = (eventId: string) => {
+    setFavorites(prev => {
+      const newFavorites = prev.includes(eventId)
+        ? prev.filter(id => id !== eventId)
+        : [...prev, eventId];
+      
+      localStorage.setItem('favoriteEvents', JSON.stringify(newFavorites));
+      return newFavorites;
+    });
+  };
+
+  const isFavorite = (eventId: string) => favorites.includes(eventId);
 
   useEffect(() => {
     const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
@@ -329,7 +348,7 @@ export default function AwarenessCalendar() {
               {selectedEvents.length === 0 ? (
                 <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No events this day.</p>
               ) : (
-                selectedEvents.map(ev => <EventCard key={ev._id} event={ev} isDark={isDark} />)
+                selectedEvents.map(ev => <EventCard key={ev._id} event={ev} isDark={isDark} isFavorite={isFavorite(ev._id)} onToggleFavorite={() => toggleFavorite(ev._id)} />)
               )}
             </div>
           )}
@@ -357,7 +376,7 @@ export default function AwarenessCalendar() {
             <p className="text-sm" style={{ color: 'var(--color-gray)' }}>No upcoming events.</p>
           ) : (
             <div className="space-y-2">
-              {upcoming.map(ev => <UpcomingEventRow key={ev._id} event={ev} isDark={isDark} />)}
+              {upcoming.map(ev => <UpcomingEventRow key={ev._id} event={ev} isDark={isDark} isFavorite={isFavorite(ev._id)} onToggleFavorite={() => toggleFavorite(ev._id)}/>)}
             </div>
           )}
         </div>
@@ -390,7 +409,7 @@ export default function AwarenessCalendar() {
 }
 
 // Full event card shown when a day is clicked
-function EventCard({ event, isDark }: { event: CalendarEvent; isDark: boolean }) {
+function EventCard({ event, isDark, isFavorite, onToggleFavorite }: { event: CalendarEvent; isDark: boolean, isFavorite: boolean, onToggleFavorite: () => void }) {
   const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG['Campaign'];
   const accent = isDark ? cfg.darkColor : cfg.color;
   return (
@@ -410,16 +429,31 @@ function EventCard({ event, isDark }: { event: CalendarEvent; isDark: boolean })
         >
           {event.type}
         </span>
-        {event.verified && (
-          <div 
-            className="flex items-center gap-1 text-xs font-medium" 
-            style={{ color: '#00A852' }}
-            title="Verified event"
+        <div>
+          {event.verified && (
+            <div 
+              className="flex items-center gap-1 text-xs font-medium" 
+              style={{ color: '#00A852' }}
+              title="Verified event"
+            >
+              <CheckCircle className="w-4 h-4" aria-hidden="true" />
+              Verified
+            </div>
+          )}
+          {/* added daniel q. 4/25/26 start */}
+          <button
+            onClick={onToggleFavorite}
+            className="p-1 rounded-full transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            style={{ 
+              color: isFavorite ? '#FFD700' : 'var(--color-gray)',
+              fontSize: '1.25rem'
+            }}
           >
-            <CheckCircle className="w-4 h-4" aria-hidden="true" />
-            Verified
-          </div>
-        )}
+            {isFavorite ? '★' : '☆'}
+          </button>
+        </div>
+        {/* added daniel q. 4/25/26 end */}
       </div>
       <p 
         className="text-sm font-bold mb-2" 
@@ -457,7 +491,7 @@ function EventCard({ event, isDark }: { event: CalendarEvent; isDark: boolean })
 }
 
 // Compact row used in the upcoming sidebar
-function UpcomingEventRow({ event, isDark }: { event: CalendarEvent; isDark: boolean }) {
+function UpcomingEventRow({ event, isDark, isFavorite, onToggleFavorite }: { event: CalendarEvent; isDark: boolean; isFavorite: boolean; onToggleFavorite: () => void }) {
   const cfg = TYPE_CONFIG[event.type] || TYPE_CONFIG['Campaign'];
   const accent = isDark ? cfg.darkColor : cfg.color;
   const d = new Date(event.date);
@@ -494,6 +528,19 @@ function UpcomingEventRow({ event, isDark }: { event: CalendarEvent; isDark: boo
             {event.title}
           </p>
           {event.verified && <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#00A852' }} aria-label="Verified" />}
+          {/* added daniel q. 4/25/26 start */}
+          <button
+            onClick={onToggleFavorite}
+            className="flex-shrink-0 p-0.5 rounded transition-all hover:scale-110 ml-auto"
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            style={{ 
+              color: isFavorite ? '#FFD700' : 'var(--color-gray)',
+              fontSize: '0.875rem'
+            }}
+          >
+            {isFavorite ? '★' : '☆'}
+          </button>
+          {/* added daniel q. 4/25/26 end */}
         </div>
         <span
           className="text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1"
