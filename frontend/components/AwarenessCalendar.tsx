@@ -78,7 +78,7 @@ export default function AwarenessCalendar() {
     return saved ? JSON.parse(saved) : [];
   }
   return [];
-}); // added daniel q. 4/25/26 end
+});
   const toggleFavorite = (eventId: string) => {
     setFavorites(prev => {
       const newFavorites = prev.includes(eventId)
@@ -90,7 +90,7 @@ export default function AwarenessCalendar() {
     });
   };
 
-  const isFavorite = (eventId: string) => favorites.includes(eventId);
+  const isFavorite = (eventId: string) => favorites.includes(eventId);  // added daniel q. 4/25/26 end
 
   useEffect(() => {
     const checkTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
