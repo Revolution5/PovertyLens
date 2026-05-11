@@ -270,7 +270,7 @@ Then follow the Getting Started steps above. You do not need to create any accou
 
 ---
 
-## API Routes
+## API Routes 
 
 | Method | Route | Description |
 |--------|-------|-------------|
